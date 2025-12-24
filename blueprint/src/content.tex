@@ -5,3 +5,32 @@
 % If you want to split the blueprint content into several files then
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
+
+\chapter{Definitions}
+\label{chap:def}
+
+\begin{definition}
+    \label{def:class}
+    \lean{MvPolynomial.cls}
+    \leanok
+    The class of a multivariate polynomial `p` is the largest variable index appearing in `p`.
+\end{definition}
+
+\begin{definition}
+    \label{def:initialOf}
+    \lean{MvPolynomial.initialOf}
+    \leanok
+    The "initial" of a polynomial `p` with respect to a variable `i`.
+    It is the coefficient of the highest power of `X i` appearing in `p`.
+\end{definition}
+
+\chapter{Theorems}
+\label{chap:thm}
+
+\begin{theorem}
+    \label{thm:initialOf_decomposition}
+    \lean{MvPolynomial.initialOf_decomposition}
+    \leanok
+    \uses{def:initialOf}
+    p = initᵢ(p) * Xᵢ ^ degᵢ(p) + tail, where degᵢ(tail) < degᵢ(p).
+\end{theorem}

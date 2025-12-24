@@ -1,2 +1,7 @@
 /.lake
+/.venv
 backup/
+/blueprint/print
+/blueprint/web
+/blueprint/lean_decls
+/blueprint/src/web.paux
