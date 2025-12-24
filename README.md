@@ -24,7 +24,7 @@ Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomia
 - [`MvPolynomial.Classical.hasBasicSet`](./CharacteristicSet/AscendingSet.lean): For any set of polynomials, there exists a Basic Set (a minimal ascending set) contained within it.
 - [`StandardAscendingSet.basicSet_minimal`](./CharacteristicSet/StandardAscendingSet.lean) and [`WeakAscendingSet.basicSet_minimal`](./WeakAscendingSet.lean): The provided algorithms correctly compute the Basic Set according to Ritt's and Wu's definitions respectively.
 - [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./CharacteristicSet/CharacteristicSet.lean): The computed Characteristic Set $CS$ satisfies the key algebraic property (pseudo-remainder of input polynomials is 0) and the geometric property ( $Zero(PS) \subseteq Zero(CS)$ ).
-- [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./CharacteristicSet/CharacteristicSet.lean): **Zero Decomposition Theorem**. The zero set of a polynomial system $PS$ can be decomposed into a finite union of "quasi-varieties" defined by triangular sets:  
+- [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./CharacteristicSet/CharacteristicSet.lean): **Zero Decomposition Theorem**. The zero set of a polynomial system $PS$ can be decomposed into a finite union of "quasi-varieties" defined by triangular sets:
   $Zero(PS) = \bigcup_{CS \in \mathcal{D}} Zero(CS / \text{InitialProd}(CS))$
 
 ## Project Resources
