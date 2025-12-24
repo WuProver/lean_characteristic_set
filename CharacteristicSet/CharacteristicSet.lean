@@ -70,39 +70,38 @@ variable [Field R] [DecidableEq R] [LinearOrder σ] {α : Type*} [Membership R[�
 /-! ### Characteristic Set Properties -/
 
 /-- A Triangulated Set `CS` is a Characteristic Set for `a` if:
-    1. Every element in `a` pseudo-divides to 0 with respect to `CS`.
-    2. `Zero(a) ⊆ Zero(CS)` (geometric containment). -/
+1. Every element in `a` reduce to 0 modulo `CS`.
+2. `Zero(a) ⊆ Zero(CS)` (geometric containment). -/
 def TriangulatedSet.isCharacteristicSet [CommSemiring K] [Algebra R K]
     (CS : TriangulatedSet σ R) (a : α) : Prop :=
-  (∀ g ∈ a, (g.setPseudo CS).remainder = 0) ∧ vanishingSet K a ⊆ vanishingSet K CS
+  (∀ g ∈ a, (0 : R[σ]).isSetRemainder g CS) ∧ vanishingSet K a ⊆ vanishingSet K CS
 
 namespace CharacteristicSet
 
 variable [Field K] [Algebra R K] {PS : α} {CS : TriangulatedSet σ R}
 
-/-- The "Difference" property: `Zero(CS/IP) ⊆ Zero(PS)`.
-    If `g` reduces to 0 modulo `CS`, then any zero of `CS`
-    that isn't a zero of `IP` must be a zero of `g`. -/
+/-- A "Difference" property: `Zero(CS/IP) ⊆ Zero(PS)`.
+If all polynomials in `PS` reduce to 0 modulo `CS`, then any zero of `CS`
+that isn't a zero of `IP` must be a zero of `PS`. -/
 theorem vanishingSet_diff_initialProd_subset
-    (h : (∀ g ∈ PS, (g.setPseudo CS).remainder = 0)) :
+    (h : (∀ g ∈ PS, (0 : R[σ]).isSetRemainder g CS)) :
     vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) ⊆
       vanishingSet K PS := by
   refine Set.diff_subset_iff.mpr (fun x hx ↦ ?_)
   simp only [vanishingSet, singleVanishingSet, Set.mem_setOf_eq, Set.mem_union] at *
   simp only [or_iff_not_imp_right, not_forall, forall_exists_index, initialProd]
   intro p hp1 hp2
+  rcases (h p hp1).2 with ⟨es, qs, h1, h2⟩
+  rewrite [add_zero] at h2
   -- If x is a zero of CS but not of initials, and rem(p, CS) = 0, then p(x) must be 0.
-  have : ∃ i : Fin (p.setPseudo CS).exponents.length,
-      (aeval x) (CS i).initial = 0 ∧ ¬(p.setPseudo CS).exponents[i] = 0 := by
-    have h := h p hp1
-    have := @add_zero R[σ] _ _ ▸  h ▸ setPseudo_equation p CS
-    have := congr_arg (aeval x) this
-    simpa [(forall_mem_iff_forall_index' (length_setPseudo_quotients p _)).mp hx, hp2,
-      Finset.prod_eq_zero_iff] using this
+  have : ∃ i : Fin es.length, (aeval x) (CS i).initial = 0 ∧ ¬es[i] = 0 := by
+    have := congr_arg (aeval x) h2
+    simpa [(forall_mem_iff_forall_index' h1.2).mp hx, hp2, Finset.prod_eq_zero_iff] using this
   rcases this with ⟨⟨i, hi1⟩, (hi2 : (aeval x) (CS i).initial = 0), _⟩
   rewrite [map_prod, Finset.prod_eq_zero_iff]
-  exact ⟨CS i, mem_toFinset_iff.mpr <| apply_mem <| length_setPseudo_exponents p _ ▸ hi1, hi2⟩
+  exact ⟨CS i, mem_toFinset_iff.mpr <| apply_mem <| h1.1 ▸ hi1, hi2⟩
 
+/-- A "Difference" property: `Zero(CS/IP) = Zero(PS/IP)`. -/
 theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
     vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) =
       vanishingSet K PS \ singleVanishingSet K (initialProd CS.toFinset) := by
@@ -166,21 +165,20 @@ noncomputable def characteristicSet : TriangulatedSet σ R :=
     else go (l₀ ++ RS ++ lBS)
     termination_by l.basicSet
     decreasing_by
-      -- `by assumption` uses the hypothesis `RS ≠ []` from `if`
       exact characteristicSetGo_decreasing l₀ l _ _ _ (by assumption) rfl rfl rfl
   go l
 
 lemma characteristicSetGo_remainder_eq_zero : l₀ ⊆ l → ∀ p ∈ l₀,
-    (p.setPseudo (characteristicSet.go l₀ l)).remainder = 0 := by
+    (0 : R[σ]).isSetRemainder p (characteristicSet.go l₀ l) := by
   induction l using characteristicSet.go.induct l₀ with
   | case1 l BS lBS RS h =>
     intro hl p hp1
     rewrite [characteristicSet.go, if_pos h]
+    apply isSetRemainder_of_eq_setPseudo_remainder
     rcases em (p ∈ lBS) with hp2 | hp2
-    · apply setPseudo_remainder_eq_zero_of_mem
-      exact mem_toList_iff.mp hp2
+    · exact setPseudo_remainder_eq_zero_of_mem BS (mem_toList_iff.mp hp2)
     have h : ∀ a ∈ l \ lBS, (a.setPseudo BS).remainder = 0 := by simpa [RS] using h
-    exact h p <| List.mem_diff_of_mem (hl hp1) hp2
+    exact (h p <| List.mem_diff_of_mem (hl hp1) hp2)
   | case2 l BS lBS RS h ih =>
     intro hl
     rewrite [characteristicSet.go, if_neg h]
@@ -301,7 +299,7 @@ theorem isAscendingSet_of_mem_zeroDecomposition :
   exact ih p (List.mem_filter_of_mem (mem_toList_iff.mpr hp1) (decide_eq_true hp2)) _ hp3
 
 theorem remainder_eq_zero_of_mem_zeroDecomposition :
-    ∀ CS ∈ l.zeroDecomposition, ∀ g ∈ l, (g.setPseudo CS).remainder = 0 := by
+    ∀ CS ∈ l.zeroDecomposition, ∀ g ∈ l, (0 : R[σ]).isSetRemainder g CS := by
   induction l using zeroDecomposition.induct with | case1 l CS ih =>
   intro CS' hCS'
   have hCS' : CS' = CS ∨ ∃ p, (p ∈ CS ∧ ¬p.cls = ⊥) ∧

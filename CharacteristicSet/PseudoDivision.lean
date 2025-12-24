@@ -232,6 +232,11 @@ section Field
 
 variable {R σ : Type*} [Field R] [DecidableEq R] [LinearOrder σ] (g f : R[σ])
 
+/-- A remainder `r` of `g` by `f` is a polynomial which is reduced with respect to `f` and
+suffices `f.initial ^ s * g = q * f + r` for some `s : ℕ` and `q : R[σ]`. -/
+def isRemainder (r g f : R[σ]) : Prop :=
+  r.reducedTo f ∧ ∃ (s : ℕ) (q : R[σ]), f.initial ^ s * g = q * f + r
+
 /-- General pseudo-division of `g` by `f`.
 If `f` is constant, it performs standard division.
 If `f` is non-constant, it performs pseudo-division with respect to `cls(f)`. -/
@@ -297,6 +302,13 @@ theorem pseudo_remainder_reducedTo (h : f ≠ 0) : (g.pseudo f).remainder.reduce
   | ⊥ => simp only; trivial
   | some c => exact g.pseudoOf_remainder_reducedTo h
 
+theorem pseudo_remainder_isRemainder (h : f ≠ 0) : (g.pseudo f).remainder.isRemainder g f :=
+  ⟨g.pseudo_remainder_reducedTo f h, _, _, g.pseudo_equation f⟩
+
+theorem isRemainder_of_eq_pseudo_remainder {r g f : R[σ]} (h : f ≠ 0) :
+    (g.pseudo f).remainder = r → r.isRemainder g f := fun hr ↦
+  hr ▸ g.pseudo_remainder_isRemainder f h
+
 theorem pseudo_remainder_eq_zero_of_dvd {g f : R[σ]} (h : f ∣ g) : (g.pseudo f).remainder = 0 := by
   unfold pseudo
   split <;> expose_names
@@ -317,8 +329,15 @@ open TriangulatedSet List
 
 variable (S : TriangulatedSet σ R)
 
+/-- A remainder `r` of `g` by `S` is a polynomial which is reduced with respect to `S` and
+suffices `(∏ i, (S i).initial ^ es[i]) * g = (∑ i, qs[i] * S i) + r`
+for some `es : List ℕ` and `qs : List R[σ]`. -/
+def isSetRemainder (r g : R[σ]) (S : TriangulatedSet σ R) : Prop := r.reducedToSet S ∧
+  ∃ (es : List ℕ) (qs : List R[σ]), (es.length = S.length ∧ qs.length = S.length) ∧
+    (∏ i : Fin es.length, (S i).initial ^ es[i]) * g = (∑ i : Fin qs.length, qs[i] * S i) + r
+
 /-- Pseudo-divides `g` successively by elements of `S`.
-Typically, this involves dividing by `S[length-1]`, then `S[length-2]`, ..., down to `S[0]`. -/
+Typically, this involves dividing by `S_{length-1}`, then `S_{length-2}`, ..., down to `S_{0}`. -/
 noncomputable def setPseudo : SetPseudoResult R[σ] :=
   let rec go (f : ℕ → R[σ]) (fuel : ℕ) (es : List ℕ) (qs : List R[σ]) (r : R[σ]) :=
     if fuel = 0 then ⟨es, qs, r⟩
@@ -474,6 +493,14 @@ theorem setPseudo_remainder_reducedToSet : (g.setPseudo S).remainder.reducedToSe
   intro i hi
   apply setPseudoRem_reducedTo _ toList_non_zero toList_pairwise
   exact mem_toList_iff.mpr <| apply_mem hi
+
+theorem setPseudo_remainder_isSetRemainder : (g.setPseudo S).remainder.isSetRemainder g S :=
+  ⟨g.setPseudo_remainder_reducedToSet S, _, _,
+    ⟨g.length_setPseudo_exponents S, g.length_setPseudo_quotients S⟩, g.setPseudo_equation S⟩
+
+theorem isSetRemainder_of_eq_setPseudo_remainder {r g : R[σ]} {S : TriangulatedSet σ R} :
+    (g.setPseudo S).remainder = r → r.isSetRemainder g S := fun h ↦
+  h ▸ g.setPseudo_remainder_isSetRemainder S
 
 lemma setPseudoRem_eq_self_of_cls_lt (l : List R[σ]) (hl1 : ∀ ⦃p⦄, p ∈ l → p ≠ 0)
     (hl2 : l.Pairwise fun p q ↦ p.cls < q.cls) : ∀ ⦃g : R[σ]⦄,
