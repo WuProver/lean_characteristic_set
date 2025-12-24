@@ -4,6 +4,10 @@ The goal of this project is the formalization of the Characteristic Set Method (
 
 This project is still work in process. Any fix and suggestions will be welcomed.
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/WuProver/lean_characteristic_set)
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/WuProver/lean_characteristic_set)
+
 ## Introduction
 
 ### Definitions
