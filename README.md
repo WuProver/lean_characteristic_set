@@ -1,13 +1,24 @@
 # Lean Characteristic Set
 
-## GitHub configuration
+## Introduction
 
-To set up your new GitHub repository, follow these steps:
+### Definitions
 
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
+### Main Statements
 
-After following the steps above, you can remove this section from the README file.
+
+## Project Resources
+
+
+## Build
+To use this project, you'll need to have Lean 4 and its package manager lake installed. If you don’t already have Lean 4 set up, follow the [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
+
+Once Lean is installed, you can clone this repository and build the project:
+```bash
+git clone https://github.com/WuProver/lean_characteristic_set.git
+cd lean_characteristic_set
+lake exe cache get
+lake build
+```
+
+## Reference
