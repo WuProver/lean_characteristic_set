@@ -54,7 +54,7 @@ jobs:
 
       - name: Build project API documentation
         run: ~/.elan/bin/lake -R -Kenv=dev build CharacteristicSet:docs
-      
+
       - name: Check for `home_page` folder # this is meant to detect a Jekyll-based website
         id: check_home_page
         run: |
@@ -78,7 +78,8 @@ jobs:
             git config --global --add safe.directory `pwd`
             python3 -m venv env
             source env/bin/activate
-            pip install --upgrade pip requests wheel
+            # pip install --upgrade pip requests wheel
+            pip install "pip<23" requests wheel
             pip install pygraphviz --global-option=build_ext --global-option="-L/usr/lib/graphviz/" --global-option="-R/usr/lib/graphviz/"
             pip install leanblueprint
             leanblueprint pdf
@@ -124,4 +125,3 @@ jobs:
 
       - name: Make sure the API documentation cache works
         run: mv home_page/docs .lake/build/doc
-     
