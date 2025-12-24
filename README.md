@@ -28,6 +28,17 @@ Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomia
   $Zero(PS) = \bigcup_{CS \in \mathcal{D}} Zero(CS / \text{InitialProd}(CS))$
 
 ## Project Resources
+We maintain a set of web-based resources to track and explore the formalization effort:
+
+- 📘 **[Project Homepage](https://wuprover.github.io/lean_characteristic_set/)**
+
+- 📐 **[Formalization Blueprint](https://wuprover.github.io/lean_characteristic_set/blueprint/)**
+  A detailed list of definitions, lemmas, and theorems, including their proof status and logical dependencies.
+
+- 🔗 **[Dependency Graph](https://wuprover.github.io/lean_characteristic_set/blueprint/dep_graph_document.html)**
+  A visual representation of the dependency structure of the formalized components.
+
+These tools help us manage development, track formalization progress, and guide future contributors.
 
 ## Build
 
