@@ -1,6 +1,6 @@
 # Characteristic Set
 
-The goal of this project is the formalization of the Characteristic Set Method (also known as Wu's Method) in the Lean 4 theorem prover. This project establishes the mathematical infrastructure for algebraic geometry based on triangular decomposition, bridging the gap between Lean and algorithmic methods for solving systems of multivariate polynomial equations.
+The goal of this project is the formalization of the Characteristic Set Method (also known as Wu's Method) in  Lean 4 theorem prover. This project establishes the mathematical infrastructure for algebraic geometry based on triangular decomposition, bridging the gap between Lean and algorithmic methods for solving systems of multivariate polynomial equations.
 
 This project is still work in process. Any fix and suggestions will be welcomed.
 
