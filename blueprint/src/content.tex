@@ -13,15 +13,15 @@
     \label{def:class}
     \lean{MvPolynomial.cls}
     \leanok
-    The class of a multivariate polynomial `p` is the largest variable index appearing in `p`.
+    The class of a multivariate polynomial $p$ is the largest variable index appearing in $p$.
 \end{definition}
 
 \begin{definition}
     \label{def:initialOf}
     \lean{MvPolynomial.initialOf}
     \leanok
-    The "initial" of a polynomial `p` with respect to a variable `i`.
-    It is the coefficient of the highest power of `X i` appearing in `p`.
+    The initial of a polynomial $p$ with respect to a variable $i$.
+    It is the coefficient of the highest power of $x_i$ appearing in $p$.
 \end{definition}
 
 \chapter{Theorems}
@@ -32,5 +32,5 @@
     \lean{MvPolynomial.initialOf_decomposition}
     \leanok
     \uses{def:initialOf}
-    p = initᵢ(p) * Xᵢ ^ degᵢ(p) + tail, where degᵢ(tail) < degᵢ(p).
+    $p = init_i(p) x_i ^ d + q$, where $deg_i(q) < d = deg_i(p)$.
 \end{theorem}
