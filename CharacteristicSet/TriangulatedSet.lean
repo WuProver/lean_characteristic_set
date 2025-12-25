@@ -312,7 +312,10 @@ theorem eq_empty_of_forall_notMem : (∀ p, p ∉ S) → S = ∅ := fun h ↦ by
 section Rank
 
 /-- The rank of a Triangulated Set is a lexicographic sequence of ranks of its polynomials.
-This rank strictly decreases in the characteristic set algorithm. -/
+A more intuitive definition is `rank_lt_iff`, `S < T` if one of the following two occurs:
+1. There exists some `k < S.length` such that
+   `S₀ ≈ T₀`, `S₁ ≈ T₁`, ..., `Sₖ₋₁ ≈ Tₖ₋₁` and `Sₖ < Tₖ`.
+2. `S.length > T.length` and `∀ i < T.length, Sᵢ ≈ Tᵢ` -/
 noncomputable def rank (S : TriangulatedSet σ R) : Lex (ℕ → WithTop (WithBot σ ×ₗ ℕ)) :=
   fun i ↦ if i < S.length then WithTop.some (S i).rank else ⊤
 

@@ -17,11 +17,243 @@
 \end{definition}
 
 \begin{definition}
+    \label{def:degree}
+    \lean{MvPolynomial.degree}
+    \leanok
+    \uses{def:class}
+    The degree of $p$ with respect to its class.
+\end{definition}
+
+\begin{definition}
+    \label{def:MvPolynomial.rank}
+    \lean{MvPolynomial.rank}
+    \leanok
+    \uses{def:class, def:degree}
+    The rank of a polynomial $p$ is the pair $(cls(p), deg(p))$ ordered lexicographically.
+\end{definition}
+
+\begin{definition}
+    \label{def:reducedTo}
+    \lean{MvPolynomial.reducedTo}
+    \leanok
+    \uses{def:degree, def:class}
+    $q$ is reduced with respect to $p$ if the degree of $q$ in the main variable of $p$ is strictly less than the main degree of $p$.
+\end{definition}
+
+\begin{definition}
+    \label{def:reducedToSet}
+    \lean{MvPolynomial.reducedToSet}
+    \leanok
+    \uses{def:reducedTo}
+    $q$ is reduced with respect to a polynomial set $PS$ if it is reduced with respect to all elements of $PS$.
+\end{definition}
+
+\begin{definition}
     \label{def:initialOf}
     \lean{MvPolynomial.initialOf}
     \leanok
+    \uses{def:degree}
     The initial of a polynomial $p$ with respect to a variable $i$.
     It is the coefficient of the highest power of $x_i$ appearing in $p$.
+\end{definition}
+
+\begin{definition}
+    \label{def:initial}
+    \lean{MvPolynomial.initial}
+    \leanok
+    \uses{def:class, def:initialOf}
+    The initial of a polynomial $p$ is the initial with respect to its class.
+\end{definition}
+
+\begin{definition}
+    \label{def:initialProd}
+    \lean{MvPolynomial.initialProd}
+    \leanok
+    \uses{def:initial}
+    The product of initials of a set of polynomials.
+\end{definition}
+
+\begin{definition}
+    \label{def:TriangulatedSet}
+    \lean{TriangulatedSet}
+    \leanok
+    \uses{def:class}
+    A Triangulated Set is a finite ordered sequence of non-zero polynomials with strictly increasing classes.
+\end{definition}
+
+\begin{definition}
+    \label{def:TriangulatedSet.rank}
+    \lean{TriangulatedSet.rank}
+    \leanok
+    \uses{def:TriangulatedSet, def:MvPolynomial.rank}
+    The rank of a Triangulated Set is a lexicographic sequence of ranks of its polynomials.
+    More intuitively, $S < T$ if one of the following two occurs:
+    \begin{itemize}
+        \item There exists some $k < S.length$ such that $S_0 \sim T_0, S_1 \sim T_1, ..., S_{k-1} \sim T_{k-1}$, while $S_k < T_k$.
+        \item $S.length > T.length$ and $\forall i < T.length, S_i \sim T_i$.
+    \end{itemize}
+\end{definition}
+
+\begin{definition}
+    \label{def:isRemainder}
+    \lean{MvPolynomial.isRemainder}
+    \leanok
+    \uses{def:reducedTo, def:initial}
+    A remainder $r$ of $g$ by $f$ is a polynomial which is reduced with respect to $f$ and
+    satisfies $init(f)^s \cdot g = q \cdot f + r$ for some $s \in \mathbb{N}$ and $q \in R[X_{\sigma}]$.
+\end{definition}
+
+\begin{definition}
+    \label{def:isSetRemainder}
+    \lean{MvPolynomial.isSetRemainder}
+    \leanok
+    \uses{def:reducedTo, def:initial}
+    A remainder $r$ of $g$ by a set $S$ is a polynomial which is reduced with respect to $S$ and
+    satisfies $(\prod S_i^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
+\end{definition}
+
+\begin{definition}
+    \label{def:pseudoOf}
+    \lean{MvPolynomial.pseudoOf}
+    \leanok
+    \uses{def:initialOf}
+    Pseudo-division of $g$ by $f$ with respect to the variable $x_i$.
+    
+    Returns a triple containing the exponent, the quotient and the remainder.
+\end{definition}
+
+\begin{definition}
+    \label{def:pseudo}
+    \lean{MvPolynomial.pseudo}
+    \leanok
+    \uses{def:class, def:pesudoOf}
+    Pseudo-division of $g$ by $f$.
+
+    If $f$ is constant, it performs standard division.
+    If $f$ is non-constant, it performs pseudo-division with respect to $cls(f)$.
+
+    Returns a triple containing the exponent, the quotient and the remainder.
+\end{definition}
+
+\begin{definition}
+    \label{def:setPseudo}
+    \lean{MvPolynomial.setPseudo}
+    \leanok
+    \uses{def:TriangulatedSet, def:initial, def:pesudo}
+    Pseudo-divides $g$ successively by elements of $S$.
+    Typically, this involves dividing by $S_{l-1}$, then $S_{l-2}$, ..., down to $S_0$.
+
+    Returns a triple containing the exponents, the quotients and the remainder.
+\end{definition}
+
+\begin{definition}
+    \label{def:isAscendingSet}
+    \lean{TriangulatedSet.isAscendingSet}
+    \leanok
+    \uses{def:TriangulatedSet, def:reducedTo}
+    A Triangulated Set is an Ascending Set if every element is reduced with respect to its predecessors.
+    Here "reduced" is an abstract predicate.
+\end{definition}
+
+\begin{definition}
+    \label{def:isStandardAscendingSet}
+    \lean{StandardAscendingSet.isAscendingSet}
+    \leanok
+    \uses{def:reducedTo, def:TriangulatedSet}
+    A Triangulated Set is a Standard Ascending Set if every element is reduced with respect to its predecessors.
+\end{definition}
+
+\begin{definition}
+    \label{def:isWeakAscendingSet}
+    \lean{WeakAscendingSet.isAscendingSet}
+    \leanok
+    \uses{def:initial, def:reducedTo, def:TriangulatedSet}
+    A Triangulated Set is a Weak Ascending Set if the initial of every element is reduced with respect to its predecessors.
+\end{definition}
+
+\begin{definition}
+    \label{def:isMinimal}
+    \lean{isMinimal}
+    \leanok
+    \uses{def:TriangulatedSet.rank}
+    An ascending set $AS$ is minimal in a polynomial set $PS$ if $AS \subseteq PS$ and $AS \le AS'$ for any other ascending set $AS' \subseteq PS$.
+    It is also called a "Basic Set" of $PS$.
+\end{definition}
+
+\begin{definition}
+    \label{def:HasBasicSet}
+    \lean{HasBasicSet}
+    \leanok
+    \uses{def:TriangulatedSet, def:isAscendingSet, def:reducedToSet, def:TriangulatedSet.rank}
+    The interface for algorithms computing Basic Sets.
+    Any instance of this class provides a "basicSet" function that computes a minimal ascending set
+    contained in a given list of polynomials.
+\end{definition}
+
+\begin{definition}
+    \label{def:StandardAscendingSet.basicSet}
+    \lean{StandardAscendingSet.basicSet}
+    \leanok
+    \uses{def:TriangulatedSet, def:reducedToSet, def:TriangulatedSet.rank}
+    Computes the Standard Basic Set of a list of polynomials.
+
+    The algorithm works by:
+    \begin{enumerate}
+        \item Sort the list and set $BS = \emptyset$.
+        \item Pick the first (minimal) element $B$ in the list.
+        \item Append $B$ to the tail of the current basic set $BS$.
+        \item Filter the remaining list to keep only elements reduced w.r.t. the new $BS$ and go to step 2.
+    \end{enumerate}
+\end{definition}
+
+\begin{definition}
+    \label{def:WeakAscendingSet.basicSet}
+    \lean{WeakAscendingSet.basicSet}
+    \leanok
+    \uses{def:class, def:initial, def:TriangulatedSet, def:reducedToSet, def:TriangulatedSet.rank}
+    Computes the Weak Basic Set of a list of polynomials.
+
+    Difference from Standard:
+    The filter condition includes $cls(p) > cls(B)$.
+
+    This is because $init(p) reduced w.r.t. B$ does NOT imply $cls(p) > cls(B)$ (unlike strong reduction).
+    We must enforce the triangular structure explicitly.
+\end{definition}
+
+\begin{definition}
+    \label{def:isCharacteristicSet}
+    \lean{TriangulatedSet.isCharacteristicSet}
+    \leanok
+    \uses{def:TriangulatedSet, def:isSetRemainder}
+    $CS$ is a characteristic set of $PS$ if every polynomial in $PS$ reduce to 0 modulo $CS$, and $Zero(PS) \subseteq Zero(CS)$.
+\end{definition}
+
+\begin{definition}
+    \label{def:characteristicSet}
+    \lean{MvPolynomial.List.characteristicSet}
+    \leanok
+    \uses{def:TriangulatedSet, def:HasBasicSet, def:setPseudo, inst:TriangulatedSet.wellFoundedLT}
+    Computes the Characteristic Set of a polynomial list $l$.
+
+    Algorithm:
+    \begin{enumerate}
+        \item Set $l_0 = l$.
+        \item Compute $BS = BasicSet(l)$.
+        \item Compute remainders $RS$ of $l \setminus BS$ with respect to $BS$.
+        \item If $RS = \emptyset$, $BS$ is the characteristic set.
+        \item If not, set $l = l₀ ++ RS ++ BS$ and go to step 2.
+    \end{enumerate}
+    Termination is guaranteed by the well-ordering of ranks.
+\end{definition}
+
+\begin{definition}
+    \label{def:zeroDecomposition}
+    \lean{MvPolynomial.List.zeroDecomposition}
+    \leanok
+    \uses{def:characteristicSet}
+    Decomposes the zero set of a polynomial list into a union of zero sets of triangular sets.
+    The algorithm recursively computes the characteristic set $CS$
+    and adds branches for the initials of $CS$.
 \end{definition}
 
 \chapter{Theorems}
@@ -33,4 +265,115 @@
     \leanok
     \uses{def:initialOf}
     $p = init_i(p) x_i ^ d + q$, where $deg_i(q) < d = deg_i(p)$.
+\end{theorem}
+
+\begin{theorem}
+    \label{inst:MvPolynomial.wellFoundedLT}
+    \lean{MvPolynomial.instWellFoundedLT}
+    \leanok
+    \uses{def:MvPolynomial.rank}
+    The polynomial ring is well-founded under the rank ordering (given well-founded variables).
+\end{theorem}
+
+\begin{theorem}
+    \label{inst:TriangulatedSet.wellFoundedLT}
+    \lean{TriangulatedSet.instWellFoundedLT}
+    \leanok
+    \uses{def:TriangulatedSet, def:TriangulatedSet.rank}
+    The set of Triangulated Sets is well-founded under the lexicographic rank ordering. This guarantees the termination of the Characteristic Set Algorithm.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:pseudo_remainder_isRemainder}
+    \lean{MvPolynomial.pseudo_remainder_isRemainder}
+    \leanok
+    \uses{def:isRemainder, def:pseudo}
+    The remainder $r$ of pseudo-division of $g$ by $f$ is reduced with respect to $f$ and
+    satisfies $init(f)^s \cdot g = q \cdot f + r$ for some $s \in \mathbb{N}$ and $q \in R[X_{\sigma}]$.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:setPseudo_remainder_isSetRemainder}
+    \lean{MvPolynomial.setPseudo_remainder_isSetRemainder}
+    \leanok
+    \uses{def:isSetRemainder, def:setPseudo}
+    A remainder $r$ of pseudo-division of $g$ by a set $S$ is reduced with respect to $S$ and
+    satisfies $(\prod S_i^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
+\end{theorem}
+
+\begin{theorem}
+    \label{inst:StandardAscendingSet.instHasBasicSet}
+    \lean{StandardAscendingSet.instHasBasicSet}
+    \leanok
+    \uses{def:isStandardAscendingSet, def:isMinimal, def:StandardAscendingSet.basicSet}
+    The algorithm computes a minimal standard ascending set contained in the input list.
+\end{theorem}
+
+\begin{theorem}
+    \label{inst:WeakAscendingSet.instHasBasicSet}
+    \lean{WeakAscendingSet.instHasBasicSet}
+    \leanok
+    \uses{def:isWeakAscendingSet, def:isMinimal, def:WeakAscendingSet.basicSet}
+    The algorithm computes a minimal weak ascending set contained in the input list.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:vanishingSet_diff_initialProd_subset}
+    \lean{CharacteristicSet.vanishingSet_diff_initialProd_subset}
+    \leanok
+    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initialProd}
+    Well-ordering principle (1):
+    $Zero(CS/IP) \subseteq Zero(PS)$, where $IP$ is the initial-product of $CS$.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:vanishingSet_diff_initialProd_eq}
+    \lean{CharacteristicSet.vanishingSet_diff_initialProd_eq}
+    \leanok
+    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initialProd}
+    Well-ordering principle (2):
+    $Zero(CS/IP) = Zero(PS/IP)$, where $IP$ is the initial-product of $CS$.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:vanishingSet_decomposition}
+    \lean{CharacteristicSet.vanishingSet_decomposition}
+    \leanok
+    \uses{def:TriangulatedSet, def:isCharacteristicSet ,def:initial}
+    Well-ordering principle (3):
+    $Zero(PS) = (Zero(CS/IP)) \cup \bigcup_{p \in CS} (Zero(PS) \cap Zero(init(p)))$.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:characteristicSet_isCharacteristicSet}
+    \lean{MvPolynomial.List.characteristicSet_isCharacteristicSet}
+    \leanok
+    \uses{def:characteristicSet, def:isCharacteristicSet}
+    The algorithm computes a valid characteristic set for the input list.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:characteristicSet_isAscendingSet}
+    \lean{MvPolynomial.List.characteristicSet_isAscendingSet}
+    \leanok
+    \uses{def:characteristicSet, def:isAscendingSet}
+    The computed characteristicSet is an ascending set.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:characteristicSet_le_basicSet}
+    \lean{MvPolynomial.List.characteristicSet_le_basicSet}
+    \leanok
+    \uses{def:characteristicSet, def:TriangulatedSet.rank, def:HasBasicSet}
+    The rank of computed characteristicSet $\le$ the rank of the input list.
+\end{theorem}
+
+\begin{theorem}
+    \label{thm:vanishingSet_eq_zeroDecomposition_union}
+    \lean{MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union}
+    \leanok
+    \uses{def:isCharacteristicSet, def:zeroDecomposition, thm:characteristicSet_isCharacteristicSet, thm:vanishingSet_decomposition, inst:TriangulatedSet.wellFoundedLT}
+    \textbf{Zero Decomposition Theorem}:
+    The zero set of a polynomial system $PS$ is the union of the zero sets of the triangular systems computed by the algorithm:
+    $$ Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS/IP(CS)) $$
 \end{theorem}

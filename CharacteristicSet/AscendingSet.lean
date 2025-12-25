@@ -15,28 +15,28 @@ We introduce two type classes:
 
 -/
 
-section IsMinimalOf
+section isMinimal
 
 variable {α β γ : Type*} [Membership γ α] [Membership γ β]
 
 /-- `a` is minimal in `b` if `a ⊆ b` and `a ≤ a'` for any `a' ⊆ b`.
 This captures the definition of a Basic Set. -/
-def isMinimalOf [LE α] (a : α) (b : β) : Prop :=
+def isMinimal [LE α] (a : α) (b : β) : Prop :=
   (∀ ⦃c⦄, c ∈ a → c ∈ b) ∧ ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a ≤ a'
 
-theorem isMinimalOf_def [LE α] (a : α) (b : β) : isMinimalOf a b ↔
+theorem isMinimal_def [LE α] (a : α) (b : β) : isMinimal a b ↔
     (∀ ⦃c⦄, c ∈ a → c ∈ b) ∧ ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a ≤ a' := Iff.rfl
 
-theorem antisymmRel_of_isMinimalOf [LE α] {a₁ a₂ : α} {b : β} (h₁ : isMinimalOf a₁ b)
-    (h₂ : isMinimalOf a₂ b) : AntisymmRel (· ≤ ·) a₁ a₂ := And.intro (h₁.2 h₂.1) (h₂.2 h₁.1)
+theorem antisymmRel_of_isMinimal [LE α] {a₁ a₂ : α} {b : β} (h₁ : isMinimal a₁ b)
+    (h₂ : isMinimal a₂ b) : AntisymmRel (· ≤ ·) a₁ a₂ := And.intro (h₁.2 h₂.1) (h₂.2 h₁.1)
 
 variable [Preorder α] {a a₁ a₂ : α} {b b₁ b₂ : β}
 
-theorem minimal_of_isMinimalOf_of_antisymmRel (h₁ : AntisymmRel (· ≤ ·) a₁ a₂)
-    (h₂ : isMinimalOf a₂ b) : ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a₁ ≤ a' :=
+theorem minimal_of_isMinimal_of_antisymmRel (h₁ : AntisymmRel (· ≤ ·) a₁ a₂)
+    (h₂ : isMinimal a₂ b) : ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a₁ ≤ a' :=
   fun _ h ↦ le_of_antisymmRel_of_le h₁ (h₂.2 h)
 
-end IsMinimalOf
+end isMinimal
 
 open MvPolynomial
 
@@ -287,13 +287,13 @@ variable [AscendingSetTheory σ R] [Finite σ] {α : Type*} [Membership R[σ] α
 
 /-- The classical existence of a Basic Set for any set of polynomials `a`.
 This is guaranteed by the well-foundedness of the rank. -/
-protected theorem hasBasicSet (a : α) : ∃ S : AscendingSet σ R, isMinimalOf S a :=
+protected theorem hasBasicSet (a : α) : ∃ S : AscendingSet σ R, isMinimal S a :=
   AscendingSet.Set.has_min _ ⟨∅, fun n hn ↦ absurd hn <| notMem_empty n⟩
 
 /-- Non-computable choice of a Basic Set for `a`. -/
 protected def basicSet (a : α) : AscendingSet σ R := (Classical.hasBasicSet a).choose
 
-protected theorem basicSet_isMinimalOf (a : α) : isMinimalOf (Classical.basicSet a) a :=
+protected theorem basicSet_isMinimal (a : α) : isMinimal (Classical.basicSet a) a :=
   (Classical.hasBasicSet a).choose_spec
 
 end
@@ -306,23 +306,23 @@ variable [HasBasicSet σ R] (l : List R[σ]) {l1 l2 : List R[σ]} {S T : Ascendi
 /-- The Basic Set of a list `l`, as computed by the `HasBasicSet` instance. -/
 def basicSet : AscendingSet σ R := ⟨HasBasicSet.basicSet l, HasBasicSet.basicSet_isAscendingSet l⟩
 
-theorem basicSet_isMinimalOf (l : List R[σ]) : isMinimalOf l.basicSet l :=
+theorem basicSet_isMinimal (l : List R[σ]) : isMinimal l.basicSet l :=
   ⟨HasBasicSet.basicSet_subset l, fun ⟨_, hS⟩ ↦ HasBasicSet.basicSet_minimal l hS⟩
 
-theorem basicSet_subset : ↑l.basicSet ⊆ {p | p ∈ l} := l.basicSet_isMinimalOf.1
+theorem basicSet_subset : ↑l.basicSet ⊆ {p | p ∈ l} := l.basicSet_isMinimal.1
 
-theorem basicSet_minimal : ∀ ⦃S⦄, ↑S ⊆ {p | p ∈ l} → l.basicSet ≤ S := l.basicSet_isMinimalOf.2
+theorem basicSet_minimal : ∀ ⦃S⦄, ↑S ⊆ {p | p ∈ l} → l.basicSet ≤ S := l.basicSet_isMinimal.2
 
-theorem so_basicSet_of_isMinimalOf {l : List R[σ]} (h : isMinimalOf S l) : S ≈ l.basicSet := by
-  apply antisymmRel_of_isMinimalOf h (basicSet_isMinimalOf l)
+theorem so_basicSet_of_isMinimal {l : List R[σ]} (h : isMinimal S l) : S ≈ l.basicSet := by
+  apply antisymmRel_of_isMinimal h (basicSet_isMinimal l)
 
-noncomputable instance instDecidableRelIsMinimalOf :
-    @DecidableRel (AscendingSet σ R) (List R[σ]) isMinimalOf := fun S l ↦
+noncomputable instance instDecidableRelIsMinimal :
+    @DecidableRel (AscendingSet σ R) (List R[σ]) isMinimal := fun S l ↦
   if h₁ : ∀ i < S.length, S i ∈ l then
     if h₂ : AntisymmRel (· ≤ ·) S l.basicSet then
       isTrue ⟨S.val.forall_mem_iff_forall_index.mpr h₁,
-        minimal_of_isMinimalOf_of_antisymmRel h₂ l.basicSet_isMinimalOf⟩
-    else isFalse fun h₃ ↦ absurd h₂ <| not_not.mpr <| so_basicSet_of_isMinimalOf h₃
+        minimal_of_isMinimal_of_antisymmRel h₂ l.basicSet_isMinimal⟩
+    else isFalse fun h₃ ↦ absurd h₂ <| not_not.mpr <| so_basicSet_of_isMinimal h₃
   else isFalse (not_and_of_not_left _ <| (not_iff_not.mpr S.val.forall_mem_iff_forall_index).mpr h₁)
 
 theorem basicSet_toList_so : l.basicSet.toList.basicSet ≈ l.basicSet := by

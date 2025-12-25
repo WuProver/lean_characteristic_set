@@ -65,10 +65,10 @@ variable (l : List R[σ])
 /--
 Computes the Standard Basic Set of a list of polynomials.
 The algorithm works by:
-1. Sorting the list.
-2. Picking the minimal element `B`.
-3. Updating the current basic set `BS` with `B` using `takeConcat` (which handles replacements).
-4. Filtering the remaining list to keep only elements reduced with respect to the new `BS`.
+1. Sort the list and set `BS = ∅`.
+2. Pick the first (minimal) element `B` in the list.
+3. Update the current basic set `BS` with `B` using `takeConcat` (which handles replacements).
+4. Filter the remaining list to keep only elements reduced w.r.t. the new `BS` and go to step 2.
 -/
 noncomputable def basicSet : TriangulatedSet σ R :=
   let rec go (l : List R[σ]) (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l, p ≠ 0) :

@@ -42,7 +42,8 @@ section VanishingSet
 variable [CommSemiring R] {α : Type*} [Membership R[σ] α]
 variable (K : Type*) [CommSemiring K] [Algebra R K] (p : R[σ]) (a : α)
 
-/-- The set of points in `K ^ σ` where all polynomials in `a` vanish. -/
+/-- The set of points in `K ^ σ` where all polynomials in `a` vanish.
+It is the same as `zeroLocus K (Ideal.span a)` for `a : Set R[σ]` -/
 def vanishingSet : Set (σ → K) := {x | ∀ p ∈ a, aeval x p = 0}
 
 theorem vanishingSet_def : vanishingSet K a = {x | ∀ p ∈ a, aeval x p = 0} := rfl
@@ -80,7 +81,7 @@ namespace CharacteristicSet
 
 variable [Field K] [Algebra R K] {PS : α} {CS : TriangulatedSet σ R}
 
-/-- A "Difference" property: `Zero(CS/IP) ⊆ Zero(PS)`.
+/-- Well-Ordering Principle (1): `Zero(CS/IP) ⊆ Zero(PS)`.
 If all polynomials in `PS` reduce to 0 modulo `CS`, then any zero of `CS`
 that isn't a zero of `IP` must be a zero of `PS`. -/
 theorem vanishingSet_diff_initialProd_subset
@@ -101,7 +102,7 @@ theorem vanishingSet_diff_initialProd_subset
   rewrite [map_prod, Finset.prod_eq_zero_iff]
   exact ⟨CS i, mem_toFinset_iff.mpr <| apply_mem <| h1.1 ▸ hi1, hi2⟩
 
-/-- A "Difference" property: `Zero(CS/IP) = Zero(PS/IP)`. -/
+/-- Well-Ordering Principle (2): `Zero(CS/IP) = Zero(PS/IP)`. -/
 theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
     vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) =
       vanishingSet K PS \ singleVanishingSet K (initialProd CS.toFinset) := by
@@ -109,7 +110,7 @@ theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
   refine Set.subset_diff.mpr ⟨?_ ,Set.disjoint_sdiff_left⟩
   exact vanishingSet_diff_initialProd_subset K h.1
 
-/-- Well-Ordering Principle / Decomposition: `Zero(PS) = Zero(CS/IP) ∪ (⋃ Zero(PS ∪ {Iᵢ}))` -/
+/-- Well-Ordering Principle (3): `Zero(PS) = Zero(CS/IP) ∪ (⋃ Zero(PS ∪ {Iᵢ}))` -/
 theorem vanishingSet_decomposition (h : CS.isCharacteristicSet K PS) : vanishingSet K PS =
       vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) ∪
       ⋃ p ∈ CS, vanishingSet K PS ∩ singleVanishingSet K p.initial := by
@@ -146,7 +147,7 @@ lemma characteristicSetGo_decreasing (BS : TriangulatedSet σ R) (lBS RS : List 
   exact Setoid.symm l.basicSet_toList_so
 
 /--
-Computes the Characteristic Set of a polynomial system `l`.
+Computes the Characteristic Set of a polynomial list `l`.
 Algorithm:
 1. Set `l₀ = l`.
 2. Compute `BS = BasicSet(l)`.

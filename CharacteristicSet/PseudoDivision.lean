@@ -226,16 +226,34 @@ theorem pseudoOf_remainder_reducedTo {c : σ} (g : R[σ]) {f : R[σ]} (hc : f.cl
     (g.pseudoOf c f).remainder.reducedTo f :=
   pseudoOfGo_remainder_reducedTo hc rfl rfl _ _ _ (le_refl _)
 
+/-- A remainder `r` of `g` by `f` is a polynomial which is reduced with respect to `f` and
+suffices `f.initial ^ s * g = q * f + r` for some `s : ℕ` and `q : R[σ]`. -/
+def isRemainder (r g f : R[σ]) : Prop :=
+  r.reducedTo f ∧ ∃ (s : ℕ) (q : R[σ]), f.initial ^ s * g = q * f + r
+
+omit [NoZeroDivisors R] in
+theorem isRemainder_def (r g f : R[σ]) : r.isRemainder g f ↔
+    r.reducedTo f ∧ ∃ (s : ℕ) (q : R[σ]), f.initial ^ s * g = q * f + r := Iff.rfl
+
+/-- A remainder `r` of `g` by `S` is a polynomial which is reduced with respect to `S` and
+suffices `(∏ i, (S i).initial ^ es[i]) * g = (∑ i, qs[i] * S i) + r`
+for some `es : List ℕ` and `qs : List R[σ]`. -/
+def isSetRemainder (r g : R[σ]) (S : TriangulatedSet σ R) : Prop := r.reducedToSet S ∧
+  ∃ (es : List ℕ) (qs : List R[σ]), (es.length = S.length ∧ qs.length = S.length) ∧
+    (∏ i : Fin es.length, (S i).initial ^ es[i]) * g = (∑ i : Fin qs.length, qs[i] * S i) + r
+
+omit [NoZeroDivisors R] in
+theorem isSetRemainder_def (r g : R[σ]) (S: TriangulatedSet σ R) : r.isSetRemainder g S ↔
+    r.reducedToSet S ∧ ∃ (es : List ℕ) (qs : List R[σ]),
+      (es.length = S.length ∧ qs.length = S.length) ∧
+      (∏ i : Fin es.length, (S i).initial ^ es[i]) * g = (∑ i : Fin qs.length, qs[i] * S i) + r
+  := Iff.rfl
+
 end CommRing
 
 section Field
 
 variable {R σ : Type*} [Field R] [DecidableEq R] [LinearOrder σ] (g f : R[σ])
-
-/-- A remainder `r` of `g` by `f` is a polynomial which is reduced with respect to `f` and
-suffices `f.initial ^ s * g = q * f + r` for some `s : ℕ` and `q : R[σ]`. -/
-def isRemainder (r g f : R[σ]) : Prop :=
-  r.reducedTo f ∧ ∃ (s : ℕ) (q : R[σ]), f.initial ^ s * g = q * f + r
 
 /-- General pseudo-division of `g` by `f`.
 If `f` is constant, it performs standard division.
@@ -329,15 +347,8 @@ open TriangulatedSet List
 
 variable (S : TriangulatedSet σ R)
 
-/-- A remainder `r` of `g` by `S` is a polynomial which is reduced with respect to `S` and
-suffices `(∏ i, (S i).initial ^ es[i]) * g = (∑ i, qs[i] * S i) + r`
-for some `es : List ℕ` and `qs : List R[σ]`. -/
-def isSetRemainder (r g : R[σ]) (S : TriangulatedSet σ R) : Prop := r.reducedToSet S ∧
-  ∃ (es : List ℕ) (qs : List R[σ]), (es.length = S.length ∧ qs.length = S.length) ∧
-    (∏ i : Fin es.length, (S i).initial ^ es[i]) * g = (∑ i : Fin qs.length, qs[i] * S i) + r
-
 /-- Pseudo-divides `g` successively by elements of `S`.
-Typically, this involves dividing by `S_{length-1}`, then `S_{length-2}`, ..., down to `S_{0}`. -/
+Typically, this involves dividing by `Sₗ₋₁`, then `Sₗ₋₂`, ..., down to `S₀`. -/
 noncomputable def setPseudo : SetPseudoResult R[σ] :=
   let rec go (f : ℕ → R[σ]) (fuel : ℕ) (es : List ℕ) (qs : List R[σ]) (r : R[σ]) :=
     if fuel = 0 then ⟨es, qs, r⟩
