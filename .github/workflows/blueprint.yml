@@ -22,6 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Build project
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf "/usr/local/lib/android"
+          sudo rm -rf "/usr/share/dotnet"
+          sudo rm -rf "/opt/ghc"
+          sudo rm -rf "/usr/local/share/boost"
+          sudo apt-get clean
+
       - name: Checkout project
         uses: actions/checkout@v4
         with:
