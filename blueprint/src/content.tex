@@ -36,7 +36,7 @@
     \label{def:reducedTo}
     \lean{MvPolynomial.reducedTo}
     \leanok
-    \uses{def:degree, def:class}
+    \uses{def:class}
     $q$ is reduced with respect to $p$ if the degree of $q$ in the main variable of $p$ is strictly less than the main degree of $p$.
 \end{definition}
 
@@ -52,7 +52,6 @@
     \label{def:initialOf}
     \lean{MvPolynomial.initialOf}
     \leanok
-    \uses{def:degree}
     The initial of a polynomial $p$ with respect to a variable $i$.
     It is the coefficient of the highest power of $x_i$ appearing in $p$.
 \end{definition}
@@ -246,7 +245,7 @@
     \label{def:zeroDecomposition}
     \lean{MvPolynomial.List.zeroDecomposition}
     \leanok
-    \uses{def:characteristicSet, thm:initialOf_reducedToSet_of_cls_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
+    \uses{def:characteristicSet, thm:initial_reducedToSet_of_cls_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
     Decomposes the zero set of a polynomial list into a union of zero sets of triangular sets.
     The algorithm recursively computes the characteristic set $CS$
     and adds branches for the initials of $CS$.
@@ -304,7 +303,7 @@
 
 \begin{lemma}
     \label{lem:initialOf_add_eq_of_degreeOf_lt}
-    \lean{MvPolynomial:initialOf_add_of_degreeOf_lt}
+    \lean{MvPolynomial.initialOf_add_eq_of_degreeOf_lt}
     \leanok
     \uses{def:initialOf, lem:degreeOf_add_eq_of_degreeOf_lt}
     $init_i(p + q) = init_i(p)$ if $deg_i(q) < deg_i(p)$.
@@ -377,8 +376,8 @@
 \end{theorem}
 
 \begin{theorem}
-    \label{thm:initialOf_reducedToSet_of_cls_ne_bot}
-    \lean{AscendingSet.initialOf_reducedToSet_of_cls_ne_bot}
+    \label{thm:initial_reducedToSet_of_cls_ne_bot}
+    \lean{AscendingSet.initial_reducedToSet_of_cls_ne_bot}
     \leanok
     \uses{def:initial, def:reducedToSet, def:class, def:isAscendingSet}
     If $p$ is in $S$ and $cls(p) \neq \bot$, then $init(p)$ is in $S$.
