@@ -117,15 +117,16 @@ variable {i j : σ}
 theorem ne_zero_of_degreeOf_ne_zero : p.degreeOf i ≠ 0 → p ≠ 0 :=
   mt fun h ↦ h ▸ degreeOf_zero i
 
-theorem le_degreeOf_of_mem_support {s : σ →₀ ℕ} : s ∈ p.support → s i ≤ p.degreeOf i := fun h ↦ by
+theorem le_degreeOf_of_mem_support (i : σ) {s : σ →₀ ℕ} :
+    s ∈ p.support → s i ≤ p.degreeOf i := fun h ↦ by
   by_cases si : s i = 0
   · simp only [si, zero_le]
   have : 0 < s i := Nat.zero_lt_of_ne_zero si
   rewrite [degreeOf_eq_sup, Finset.le_sup_iff this]
   use s
 
-theorem notMem_support_of_degreeOf_lt {s : σ →₀ ℕ} (i : σ) : p.degreeOf i < s i → s ∉ p.support :=
-  fun h ↦ by contrapose! h; exact le_degreeOf_of_mem_support h
+theorem notMem_support_of_degreeOf_lt (i : σ) {s : σ →₀ ℕ} : p.degreeOf i < s i → s ∉ p.support :=
+  fun h ↦ by contrapose! h; exact le_degreeOf_of_mem_support i h
 
 @[simp] theorem degreeOf_X_self_pow [Nontrivial R] (i : σ) (k : ℕ) :
     ((X i : R[σ]) ^ k).degreeOf i = k :=
@@ -164,7 +165,7 @@ theorem degreeOf_mul_X_pow_of_ne (k : ℕ) (h : i ≠ j) :
   | zero => rw [pow_zero, mul_one]
   | succ k hk => rw [pow_add, pow_one, ← mul_assoc, degreeOf_mul_X_of_ne _ h, hk]
 
-theorem degreeOf_add_of_degreeOf_lt (h : q.degreeOf i < p.degreeOf i) :
+theorem degreeOf_add_eq_of_degreeOf_lt (h : q.degreeOf i < p.degreeOf i) :
     (p + q).degreeOf i = p.degreeOf i := by
   apply le_antisymm ((max_eq_left_of_lt h) ▸ degreeOf_add_le i p q)
   nth_rewrite 2 [degreeOf_eq_sup]
@@ -176,7 +177,7 @@ theorem degreeOf_add_of_degreeOf_lt (h : q.degreeOf i < p.degreeOf i) :
   have ⟨s, hs1, hs2⟩ := Finset.exists_mem_eq_sup _ this (fun s ↦ s i)
   rewrite [← degreeOf_eq_sup i p] at hs2
   refine ⟨s, ?_, by rw [hs2]⟩
-  have : s ∉ q.support := by contrapose! h; exact hs2 ▸ le_degreeOf_of_mem_support h
+  have : s ∉ q.support := by contrapose! h; exact hs2 ▸ le_degreeOf_of_mem_support i h
   simp only [mem_support_iff, ne_eq, coeff_add, not_not] at hs1 ⊢ this
   rewrite [this, add_zero]
   exact hs1
@@ -186,8 +187,8 @@ theorem degreeOf_eq_of_degreeOf_add_lt {p q : R[σ]}
   contrapose! h
   apply le_trans (Nat.le_max_left _ (q.degreeOf i))
   rcases Nat.lt_or_lt_of_ne h with h | h
-  · simp only [add_comm p q, degreeOf_add_of_degreeOf_lt h, max_eq_right_of_lt h, le_refl]
-  simp only [degreeOf_add_of_degreeOf_lt h, max_eq_left_of_lt h, le_refl]
+  · simp only [add_comm p q, degreeOf_add_eq_of_degreeOf_lt h, max_eq_right_of_lt h, le_refl]
+  simp only [degreeOf_add_eq_of_degreeOf_lt h, max_eq_left_of_lt h, le_refl]
 
 variable [LinearOrder σ] {c : σ}
 

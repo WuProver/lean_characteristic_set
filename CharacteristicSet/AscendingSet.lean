@@ -48,7 +48,7 @@ Different instances can implement Ritt's strong ascending sets or Wu's weak asce
 class AscendingSetTheory (σ R : Type*) [CommSemiring R] [DecidableEq R] [LinearOrder σ] where
   /-- The reduction relation used to define the ascending property. -/
   protected reducedTo' : R[σ] → R[σ] → Prop
-  decidableReducedTo : DecidableRel reducedTo'
+  decidableReducedTo : DecidableRel reducedTo' := by infer_instance
   /-- A key property linking the ascending set structure to the initial.
   If `S` is an ascending set, the initial of any non-constant element in `S`
   must be reduced with respect to `S`. -/

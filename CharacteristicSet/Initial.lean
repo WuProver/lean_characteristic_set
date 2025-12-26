@@ -86,15 +86,15 @@ theorem degreeOf_initialOf_le : (p.initialOf i).degreeOf j ≤ p.degreeOf j := b
   rewrite [Finsupp.erase_ne (Ne.symm hi)]
   apply Finset.le_sup <| mem_support_iff.mpr hs.1
 
-theorem initialOf_add_of_degreeOf_lt {i : σ} {p q : R[σ]} (h : q.degreeOf i < p.degreeOf i) :
+theorem initialOf_add_eq_of_degreeOf_lt {i : σ} {p q : R[σ]} (h : q.degreeOf i < p.degreeOf i) :
     (p + q).initialOf i = p.initialOf i := by
   simp only [initialOf_def, coeff_add, map_add]
   have qs_zero (s : σ →₀ ℕ) (hs : s i = p.degreeOf i) : q.coeff s = 0 := by
     contrapose! h
-    exact hs ▸ le_degreeOf_of_mem_support (mem_support_iff.mpr h)
+    exact hs ▸ le_degreeOf_of_mem_support i (mem_support_iff.mpr h)
   have set_eq : (p + q).support.filter (fun s ↦ s i = (p + q).degreeOf i)
       = p.support.filter (fun s ↦ s i = p.degreeOf i) := Finset.ext fun s ↦ by
-    have : (p + q).degreeOf i = p.degreeOf i := degreeOf_add_of_degreeOf_lt h
+    have : (p + q).degreeOf i = p.degreeOf i := degreeOf_add_eq_of_degreeOf_lt h
     simp only [Finset.mem_filter, mem_support_iff, coeff_add, ne_eq, this, and_congr_left_iff]
     intro hs
     suffices q.coeff s = 0 by rw [this, add_zero]
@@ -115,7 +115,7 @@ theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ
   have d_eq := degreeOf_mul_X_self_pow_eq_add_of_ne_zero i d q_ne
   have : r.degreeOf i < (q * X i ^ d).degreeOf i :=
     d_eq ▸ (lt_of_lt_of_le hr <| Nat.le_add_left d _)
-  rewrite [decomp, degreeOf_add_of_degreeOf_lt this, d_eq]
+  rewrite [decomp, degreeOf_add_eq_of_degreeOf_lt this, d_eq]
   exact Nat.le_add_left d _
 
 open Classical in
@@ -152,7 +152,7 @@ protected lemma _initialOf_decomposition :
       by ext t; simp only [hf, coeff_monomial]; rewrite [← ite_and]; simp only [and_comm, ite_and]
     simp only [hf, ne_eq, Finset.sum_ite_eq', mem_support_iff, ite_eq_right_iff,
       Classical.not_imp] at hs
-    have : s i ≤ p.degreeOf i := le_degreeOf_of_mem_support <| mem_support_iff.mpr hs.1
+    have : s i ≤ p.degreeOf i := le_degreeOf_of_mem_support i <| mem_support_iff.mpr hs.1
     by_cases d_zero : p.degreeOf i = 0
     · rewrite [d_zero] at this ⊢
       exact this
@@ -232,11 +232,11 @@ theorem initialOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : �
   have hp2 := congrArg (initialOf i) hp2
   have := degreeOf_mul_X_self_pow_eq_add_of_ne_zero i d q_ne
   have i1 : (q * X i ^ d + r).initialOf i = (q * X i ^ d).initialOf i :=
-    initialOf_add_of_degreeOf_lt (this ▸ (lt_of_lt_of_le hr <| Nat.le_add_left d _))
+    initialOf_add_eq_of_degreeOf_lt (this ▸ (lt_of_lt_of_le hr <| Nat.le_add_left d _))
   have : p.initialOf i ≠ 0 := initialOf_ne_zero i fun h ↦ by absurd hr; simp [← d_eq, h]
   have := degreeOf_mul_X_self_pow_eq_add_of_ne_zero i d this
   have i2 : (p.initialOf i * X i ^ d + p').initialOf i = (p.initialOf i * X i ^ d).initialOf i :=
-    initialOf_add_of_degreeOf_lt (this ▸ (lt_of_lt_of_le hp1 <| Nat.le_add_left d _))
+    initialOf_add_eq_of_degreeOf_lt (this ▸ (lt_of_lt_of_le hp1 <| Nat.le_add_left d _))
   rewrite [i1, i2, initialOf_mul_X_self_pow, initialOf_mul_X_self_pow,
     initialOf_eq_of_degreeOf_eq_zero hq] at hp2
   rw [hp2, initialOf_eq_of_degreeOf_eq_zero <| degreeOf_initialOf_self i p]

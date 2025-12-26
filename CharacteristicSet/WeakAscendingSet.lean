@@ -48,7 +48,6 @@ theorem initial_reducedTo_of_ne {i j : ℕ} (h : isAscendingSet S) :
 /-- The weak ascending set theory uses weak reduction `p.initial.reducedTo`. -/
 noncomputable scoped instance : AscendingSetTheory σ R where
   reducedTo' := fun p ↦ p.initial.reducedTo
-  decidableReducedTo := inferInstance
   initial_reducedToSet_of_cls_ne_bot := fun _ i h hc _ ⟨j, hj1, hj2⟩ ↦
     match em (i = j) with
     | .inl hij => hj2 ▸ hij ▸ initial_reducedTo_self hc

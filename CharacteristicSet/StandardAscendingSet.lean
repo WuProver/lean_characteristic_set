@@ -44,7 +44,6 @@ theorem reducedTo_of_ne {i j : ℕ} (h : isAscendingSet S) :
 /-- The standard ascending set theory uses strong reduction `reducedTo`. -/
 noncomputable scoped instance : AscendingSetTheory σ R where
   reducedTo' := reducedTo
-  decidableReducedTo := inferInstance
   initial_reducedToSet_of_cls_ne_bot := fun _ i h hc _ ⟨j, hj1, hj2⟩ ↦
     match em (i = j) with
     | .inl hij => hj2 ▸ hij ▸ initial_reducedTo_self hc
@@ -65,7 +64,7 @@ variable (l : List R[σ])
 /--
 Computes the Standard Basic Set of a list of polynomials.
 The algorithm works by:
-1. Sort the list and set `BS = ∅`.
+1. Sort the list and let `BS = ∅`.
 2. Pick the first (minimal) element `B` in the list.
 3. Update the current basic set `BS` with `B` using `takeConcat` (which handles replacements).
 4. Filter the remaining list to keep only elements reduced w.r.t. the new `BS` and go to step 2.

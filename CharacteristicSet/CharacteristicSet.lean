@@ -149,7 +149,7 @@ lemma characteristicSetGo_decreasing (BS : TriangulatedSet σ R) (lBS RS : List 
 /--
 Computes the Characteristic Set of a polynomial list `l`.
 Algorithm:
-1. Set `l₀ = l`.
+1. Let `l₀ = l`.
 2. Compute `BS = BasicSet(l)`.
 3. Compute remainders `RS` of `l \ BS` with respect to `BS`.
 4. If `RS` is empty, `BS` is the characteristic set.
@@ -258,7 +258,6 @@ protected alias cs_isAscendingSet := characteristicSet_isAscendingSet
 
 /--
 Decomposes the zero set of `l` into a union of zero sets of triangular sets.
-`Zero(l) = ⋃ Zero(CSᵢ/init(CSᵢ))`.
 The algorithm recursively computes the characteristic set `CS`
 and adds branches for the initials of `CS`.
 -/
