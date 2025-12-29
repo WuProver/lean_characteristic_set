@@ -352,7 +352,7 @@ instance instWellFoundedLT [WellFoundedLT σ] : WellFoundedLT R[σ] :=
 theorem wellFoundedLT_iff [Nontrivial R] : WellFoundedLT R[σ] ↔ WellFoundedLT σ :=
   ⟨wellFoundedLT_variables_of_wellFoundedLT, @instWellFoundedLT _ _ _ _⟩
 
-variable [WellFoundedLT σ] (PS : Set R[σ])
+variable [WellFoundedLT R[σ]] (PS : Set R[σ])
 
 theorem Set.has_min (h : PS.Nonempty) : ∃ p ∈ PS, ∀ q ∈ PS, ¬q < p :=
   haveI : WellFounded (· < ·) := @wellFounded_lt (R[σ]) _ _

@@ -169,7 +169,7 @@ noncomputable def characteristicSet : TriangulatedSet σ R :=
       exact characteristicSetGo_decreasing l₀ l _ _ _ (by assumption) rfl rfl rfl
   go l
 
-lemma characteristicSetGo_remainder_eq_zero : l₀ ⊆ l → ∀ p ∈ l₀,
+lemma zero_isSetRemainder_characteristicSetGo : l₀ ⊆ l → ∀ p ∈ l₀,
     (0 : R[σ]).isSetRemainder p (characteristicSet.go l₀ l) := by
   induction l using characteristicSet.go.induct l₀ with
   | case1 l BS lBS RS h =>
@@ -219,7 +219,7 @@ lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingS
 /-- The computed `characteristicSet` satisfies the required properties. -/
 theorem characteristicSet_isCharacteristicSet :
     l.characteristicSet.isCharacteristicSet K l where
-  left := characteristicSetGo_remainder_eq_zero l l fun _ ↦ id
+  left := zero_isSetRemainder_characteristicSetGo l l fun _ ↦ id
   right := characteristicSetGo_vanishingSet_subset K l l rfl
 
 lemma characteristicSetGo_le_basicSet : characteristicSet.go l₀ l ≤ l.basicSet := by
@@ -273,7 +273,7 @@ noncomputable def zeroDecomposition (l : List R[σ]) : List (TriangulatedSet σ 
     change ([p.initial] ++ CS.toList ++ l).basicSet < l.basicSet
     -- 1. Adding elements can only decrease rank
     apply lt_of_le_of_lt (basicSet_ge_of_subset <| List.subset_append_left _ l)
-    -- 2. Rank(CS) <= Rank(l)
+    -- 2. Rank(CS) ≤ Rank(l)
     apply lt_of_lt_of_le ?_
       (le_trans (basicSet_toList_le_of_isAscendingSet l.cs_isAscendingSet) l.cs_le_basicSet)
     -- 3. Adding initial to CS strictly decreases rank because initial is reduced wrt CS
@@ -298,7 +298,7 @@ theorem isAscendingSet_of_mem_zeroDecomposition :
   · exact hCS' ▸ l.cs_isAscendingSet
   exact ih p (List.mem_filter_of_mem (mem_toList_iff.mpr hp1) (decide_eq_true hp2)) _ hp3
 
-theorem remainder_eq_zero_of_mem_zeroDecomposition :
+theorem zero_isSetRemainder_of_mem_zeroDecomposition :
     ∀ CS ∈ l.zeroDecomposition, ∀ g ∈ l, (0 : R[σ]).isSetRemainder g CS := by
   induction l using zeroDecomposition.induct with | case1 l CS ih =>
   intro CS' hCS'
@@ -306,7 +306,7 @@ theorem remainder_eq_zero_of_mem_zeroDecomposition :
       CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition := by
     unfold zeroDecomposition at hCS'; simpa using hCS'
   rcases hCS' with hCS' | ⟨p, ⟨hp1, hp2⟩, hp3⟩
-  · exact hCS' ▸ characteristicSetGo_remainder_eq_zero l l fun _ ↦ id
+  · exact hCS' ▸ zero_isSetRemainder_characteristicSetGo l l fun _ ↦ id
   have := ih p (List.mem_filter_of_mem (mem_toList_iff.mpr hp1) (decide_eq_true hp2)) _ hp3
   intro g hg
   exact this g <| List.mem_cons.mpr <| Or.inr <| List.mem_append.mpr (Or.inr hg)

@@ -125,11 +125,21 @@
 \end{definition}
 
 \begin{definition}
+    \label{def:pseudoOf}
+    \lean{MvPolynomial.pseudoOf}
+    \leanok
+    \uses{def:initialOf}
+    Pseudo-division of $g$ by $f$ with respect to $i$.
+
+    Returns a triple containing the exponent, the quotient and the remainder.
+\end{definition}
+
+\begin{definition}
     \label{def:pseudo}
     \lean{MvPolynomial.pseudo}
     \leanok
-    \uses{def:initialOf, def:initial, def:class}
-    Pseudo-division of $g$ by $f$.
+    \uses{def:pseudoOf, def:class}
+    Pseudo-division of $g$ by $f$ with respect to $cls(f)$.
 
     Returns a triple containing the exponent, the quotient and the remainder.
 \end{definition}
@@ -138,7 +148,7 @@
     \label{def:setPseudo}
     \lean{MvPolynomial.setPseudo}
     \leanok
-    \uses{def:TriangulatedSet, def:initial, def:pesudo}
+    \uses{def:TriangulatedSet, def:initial, def:pseudo}
     Pseudo-divides $g$ successively by elements of $S$.
     Typically, this involves dividing by $S_{l-1}$, then $S_{l-2}$, ..., down to $S_0$.
 
@@ -174,7 +184,6 @@
     \label{def:isMinimal}
     \lean{isMinimal}
     \leanok
-    \uses{def:TriangulatedSet.rank}
     An ascending set $AS$ is minimal in a polynomial set $PS$ if $AS \subseteq PS$ and $AS \le AS'$ for any other ascending set $AS' \subseteq PS$.
     It is also called a "Basic Set" of $PS$.
 \end{definition}
@@ -183,7 +192,7 @@
     \label{def:HasBasicSet}
     \lean{HasBasicSet}
     \leanok
-    \uses{def:TriangulatedSet, def:isAscendingSet, def:reducedToSet, def:TriangulatedSet.rank}
+    \uses{def:TriangulatedSet, def:isAscendingSet, def:isMinimal, def:reducedToSet, def:TriangulatedSet.rank}
     The interface for algorithms computing Basic Sets.
     Any instance of this class provides a "basicSet" function that computes a minimal ascending set
     contained in a given list of polynomials.
@@ -227,7 +236,7 @@
     \label{def:characteristicSet}
     \lean{MvPolynomial.List.characteristicSet}
     \leanok
-    \uses{def:TriangulatedSet, def:HasBasicSet, def:setPseudo, inst:TriangulatedSet.wellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
+    \uses{def:TriangulatedSet, def:HasBasicSet, def:setPseudo, inst:TriangulatedSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
     Computes the Characteristic Set of a polynomial list $l$.
 
     Algorithm:
@@ -261,13 +270,28 @@
     $deg_i(p + q) = deg_i(p)$ if $deg_i(q) < deg_i(p)$.
 \end{lemma}
 
-\begin{theorem}
-    \label{inst:MvPolynomial.wellFoundedLT}
-    \lean{MvPolynomial.instWellFoundedLT}
+\begin{proof}
     \leanok
-    \uses{def:MvPolynomial.rank}
-    The polynomial ring is well-founded under the rank ordering (given well-founded variables).
-\end{theorem}
+    % TODO
+\end{proof}
+
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:reducedTo_of_cls_lt}
+    \lean{MvPolynomial.reducedTo_of_cls_lt}
+    \leanok
+    \uses{def:class, def:reducedTo}
+    $q$ is reduced w.r.t. $p$ if $cls(q) < cls(p)$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
 
 \begin{lemma}
     \label{lem:reducedTo_iff_gt_of_cls_eq}
@@ -277,13 +301,24 @@
     If $cls(p) = cls(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
 \end{lemma}
 
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
 \begin{lemma}
     \label{lem:cls_lt_of_reducedTo_of_le}
     \lean{MvPolynomial.cls_lt_of_reducedTo_of_le}
     \leanok
-    \uses{lem:reducedTo_iff_gt_of_cls_eq}
+    \uses{def:class, def:reducedTo}
     $cls(p) < cls(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
 \end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:reducedTo_iff_gt_of_cls_eq}
+    % TODO
+\end{proof}
 
 \begin{lemma}
     \label{lem:initialOf_eq_of_degreeOf_eq_zero}
@@ -293,6 +328,38 @@
     $init_i(p) = p$ if $deg_i(p) = 0$ (i.e. $x_i$ does not appear in $p$).
 \end{lemma}
 
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:degreeOf_initialOf_self}
+    \lean{MvPolynomial.degreeOf_initialOf_self}
+    \leanok
+    \uses{def:initialOf}
+    $deg_i(init_i(p)) = 0$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:initialOf_initialOf_self}
+    \lean{MvPolynomial.initialOf_initialOf_self}
+    \leanok
+    \uses{def:initialOf}
+    $init_i(init_i(p)) = init_i(p)$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_initialOf_self, lem:initialOf_eq_of_degreeOf_eq_zero}
+    % TODO
+\end{proof}
+
 \begin{lemma}
     \label{lem:degreeOf_initialOf_le}
     \lean{MvPolynomial.degreeOf_initialOf_le}
@@ -301,13 +368,24 @@
     $\forall i j, deg_j(init_i(p)) \le deg_j(p)$
 \end{lemma}
 
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
 \begin{lemma}
     \label{lem:initialOf_add_eq_of_degreeOf_lt}
     \lean{MvPolynomial.initialOf_add_eq_of_degreeOf_lt}
     \leanok
-    \uses{def:initialOf, lem:degreeOf_add_eq_of_degreeOf_lt}
+    \uses{def:initialOf}
     $init_i(p + q) = init_i(p)$ if $deg_i(q) < deg_i(p)$.
 \end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_add_eq_of_degreeOf_lt}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:initialOf_decomposition}
@@ -317,63 +395,219 @@
     $p = init_i(p) x_i ^ d + q$, where $deg_i(q) < d = deg_i(p)$.
 \end{theorem}
 
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:degreeOf_add_lt_of_initialOf_cancel}
+    \lean{MvPolynomial.degreeOf_add_lt_of_initialOf_cancel}
+    \leanok
+    \uses{def:initialOf}
+    $deg_i(p + q) < deg_i(p)$ if $deg_i(p) = deg_i(q)$ and $init_i(p) + init_i(q) = 0$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{thm:initialOf_decomposition}
+    % TODO
+\end{proof}
+
 \begin{theorem}
     \label{thm:degreeOf_mul}
     \lean{MvPolynomial.initialOf_mul}
     \leanok
-    \uses{lem:initialOf_add_eq_of_degreeOf_lt, lem:initialOf_eq_of_degreeOf_eq_zero, thm:initialOf_decomposition}
     $deg_i(p \cdot q) = deg_i(p) + deg_i(q)$ if there is no zero divisors in the coefficient ring.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_initialOf_self, lem:initialOf_add_eq_of_degreeOf_lt, lem:initialOf_eq_of_degreeOf_eq_zero, thm:initialOf_decomposition}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:initialOf_mul}
     \lean{MvPolynomial.initialOf_mul}
     \leanok
-    \uses{lem:initialOf_add_eq_of_degreeOf_lt, lem:initialOf_eq_of_degreeOf_eq_zero, thm:initialOf_decomposition}
+    \uses{def:initialOf}
     $init_i(p \cdot q) = init_i(p) \cdot init_i(q)$ if there is no zero divisors in the coefficient ring.
 \end{theorem}
 
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_initialOf_self, lem:initialOf_add_eq_of_degreeOf_lt, lem:initialOf_eq_of_degreeOf_eq_zero, thm:initialOf_decomposition}
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:cls_initial_lt}
+    \lean{MvPolynomial.cls_initial_lt}
+    \leanok
+    \uses{def:class, def:initial}
+    $cls(init(p)) < cls(p)$ for non-constant $p$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:initial_reducedTo}
+    \lean{MvPolynomial.initial_reducedTo}
+    \leanok
+    \uses{def:initial, def:reducedTo}
+    $init_i(p)$ is reduced w.r.t. $q$ if $p$ is reduced w.r.t. to $q$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_initialOf_le}
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:initial_reducedTo_self}
+    \lean{MvPolynomial.initial_reducedTo_self}
+    \leanok
+    \uses{def:initial, def:reducedTo}
+    $init_i(p)$ is reduced w.r.t. $p$ for non-constant $p$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:reducedTo_of_cls_lt, lem:cls_initial_lt}
+    % TODO
+\end{proof}
+
 \begin{theorem}
-    \label{inst:TriangulatedSet.wellFoundedLT}
+    \label{inst:TriangulatedSet.instWellFoundedLT}
     \lean{TriangulatedSet.instWellFoundedLT}
     \leanok
-    \uses{inst:MvPolynomial.wellFoundedLT, def:TriangulatedSet, def:TriangulatedSet.rank}
+    \uses{def:TriangulatedSet, def:TriangulatedSet.rank}
     The set of Triangulated Sets is well-founded under the lexicographic rank ordering. This guarantees the termination of the Characteristic Set Algorithm.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:takeConcat_lt_of_reducedToSet}
     \lean{TriangulatedSet.takeConcat_lt_of_reducedToSet}
     \leanok
-    \uses{def:takeConcat, def:reducedToSet, def:TriangulatedSet.rank, lem:reducedTo_iff_gt_of_cls_eq}
+    \uses{def:takeConcat, def:reducedToSet, def:TriangulatedSet.rank}
     If $p \neq 0$ and is reduced with respect to $S$, then modifying $S$ by appending $p$ (using "takeConcat") strictly decreases the rank of $S$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{lem:reducedTo_iff_gt_of_cls_eq}
+    % TODO
+\end{proof}
+
+\begin{lemma}
+    \label{lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
+    \lean{MvPolynomial.degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
+    \leanok
+    \uses{def:pseudoOf}
+    $deg_i(r) < deg_i(g)$ where $r$ is the remainder of $g$ by $f$ w.r.t. $i$ if $deg_i(f) \ne 0$.
+\end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_initialOf_self, lem:initialOf_initialOf_self, lem:degreeOf_add_lt_of_initialOf_cancel, thm:degreeOf_mul, thm:initialOf_mul}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:pseudo_remainder_isRemainder}
     \lean{MvPolynomial.pseudo_remainder_isRemainder}
     \leanok
-    \uses{def:isRemainder, def:pseudo, thm:degreeOf_mul, thm:initialOf_mul}
+    \uses{def:isRemainder, def:pseudo}
     The remainder $r$ of $g$ by $f$ is reduced with respect to $f$ and
     satisfies $init(f)^s \cdot g = q \cdot f + r$ for some $s \in \mathbb{N}$ and $q \in R[X_{\sigma}]$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
+    % TODO
+\end{proof}
 
 \begin{lemma}
     \label{lem:degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero}
     \lean{MvPolynomial.degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero}
     \leanok
-    \uses{def:pseudo, lem:degreeOf_initialOf_le}
+    \uses{def:pseudo}
     The remainder $r$ of $g$ by $f$ satisfies $deg_i(r) \le deg_i(g)$ if $deg_i(f) = 0$
 \end{lemma}
+
+\begin{proof}
+    \leanok
+    \uses{lem:degreeOf_initialOf_le}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:setPseudo_remainder_isSetRemainder}
     \lean{MvPolynomial.setPseudo_remainder_isSetRemainder}
     \leanok
-    \uses{def:isSetRemainder, def:setPseudo, thm:pseudo_remainder_isRemainder, lem:degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero}
-    A remainder $r$ of $g$ by a set $S$ is reduced with respect to $S$ and
+    \uses{def:isSetRemainder, def:setPseudo}
+    The remainder $r$ of $g$ by a set $S$ is reduced with respect to $S$ and
     satisfies $(\prod S_i^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:pseudo_remainder_isRemainder, lem:degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero}
+    % TODO
+\end{proof}
+
+\begin{theorem}
+    \label{thm:pseudo_remainder_eq_zero_of_dvd}
+    \lean{MvPolynomial.pseudo_remainder_eq_zero_of_dvd}
+    \leanok
+    \uses{def:pseudo}
+    The remainder of $g$ by $f$ is $0$ if $f$ is a divisor of $g$.
+\end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:degreeOf_mul, lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
+    % TODO
+\end{proof}
+
+\begin{theorem}
+    \label{thm:pseudo_remainder_eq_of_degreeOf_eq_zero}
+    \lean{MvPolynomial.pseudo_remainder_eq_of_degreeOf_eq_zero}
+    \leanok
+    \uses{def:pseudo}
+    The remainder of $g$ by $f$ is $g$ if $deg_c(g) = 0$ where $c = cls(f)$.
+\end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:pseudo_remainder_eq_zero_of_dvd}
+    % TODO
+\end{proof}
+
+\begin{theorem}
+    \label{thm:setPseudo_remainder_eq_zero_of_mem}
+    \lean{MvPolynomial.setPseudo_remainder_eq_zero_of_mem}
+    \leanok
+    \uses{def:setPseudo}
+    The remainder of $p$ by a set $S$ is $0$ if $p$ is in $S$.
+\end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:pseudo_remainder_eq_zero_of_dvd, thm:pseudo_remainder_eq_of_degreeOf_eq_zero}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:initial_reducedToSet_of_cls_ne_bot}
@@ -383,65 +617,112 @@
     If $p$ is in $S$ and $cls(p) \neq \bot$, then $init(p)$ is in $S$.
 \end{theorem}
 
+\begin{proof}
+    \leanok
+    \uses{lem:initial_reducedTo, lem:initial_reducedTo_self}
+    % TODO
+\end{proof}
+
 \begin{theorem}
     \label{inst:StandardAscendingSet.instHasBasicSet}
     \lean{StandardAscendingSet.instHasBasicSet}
     \leanok
-    \uses{def:isStandardAscendingSet, def:isMinimal, def:HasBasicSet, def:StandardAscendingSet.basicSet, lem:cls_lt_of_reducedTo_of_le, thm:takeConcat_lt_of_reducedToSet}
+    \uses{def:isStandardAscendingSet, def:HasBasicSet, def:StandardAscendingSet.basicSet}
     The algorithm computes a minimal standard ascending set contained in the input list.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{lem:cls_lt_of_reducedTo_of_le, thm:takeConcat_lt_of_reducedToSet}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{inst:WeakAscendingSet.instHasBasicSet}
     \lean{WeakAscendingSet.instHasBasicSet}
     \leanok
-    \uses{def:isWeakAscendingSet, def:isMinimal, def:HasBasicSet, def:WeakAscendingSet.basicSet, thm:takeConcat_lt_of_reducedToSet}
+    \uses{def:isWeakAscendingSet, def:HasBasicSet, def:WeakAscendingSet.basicSet}
     The algorithm computes a minimal weak ascending set contained in the input list.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:takeConcat_lt_of_reducedToSet}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:basicSet_append_lt_of_exists_reducedToSet}
     \lean{MvPolynomial.List.basicSet_append_lt_of_exists_reducedToSet}
     \leanok
-    \uses{def:HasBasicSet, thm:takeConcat_lt_of_reducedToSet}
+    \uses{def:HasBasicSet}
     Appending an element which is reduced w.r.t. the basic set of list strictly decreases the rank.
     Crucial for proving termination of characteristic set and zero decomposition algorithms.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:takeConcat_lt_of_reducedToSet}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:vanishingSet_diff_initialProd_subset}
     \lean{CharacteristicSet.vanishingSet_diff_initialProd_subset}
     \leanok
-    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initialProd}
+    \uses{def:TriangulatedSet, def:isSetRemainder, def:initialProd}
     Well-ordering principle (1):
     $Zero(CS/IP) \subseteq Zero(PS)$, where $IP$ is the initial-product of $CS$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:vanishingSet_diff_initialProd_eq}
     \lean{CharacteristicSet.vanishingSet_diff_initialProd_eq}
     \leanok
-    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initialProd, thm:vanishingSet_diff_initialProd_subset}
+    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initialProd}
     Well-ordering principle (2):
     $Zero(CS/IP) = Zero(PS/IP)$, where $IP$ is the initial-product of $CS$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:vanishingSet_diff_initialProd_subset}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:vanishingSet_decomposition}
     \lean{CharacteristicSet.vanishingSet_decomposition}
     \leanok
-    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initial, thm:vanishingSet_diff_initialProd_eq}
+    \uses{def:TriangulatedSet, def:isCharacteristicSet, def:initialProd}
     Well-ordering principle (3):
     $$ Zero(PS) = Zero(CS/IP) \cup \left(\bigcup_{p \in CS} Zero(PS \cup {init(p)})\right) $$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:vanishingSet_diff_initialProd_eq}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:characteristicSet_isCharacteristicSet}
     \lean{MvPolynomial.List.characteristicSet_isCharacteristicSet}
     \leanok
-    \uses{def:characteristicSet, def:isCharacteristicSet, thm:setPseudo_remainder_isSetRemainder}
+    \uses{def:characteristicSet, def:isCharacteristicSet}
     The algorithm computes a valid characteristic set for the input list.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:setPseudo_remainder_isSetRemainder, thm:setPseudo_remainder_eq_zero_of_mem}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:characteristicSet_isAscendingSet}
@@ -451,6 +732,11 @@
     The computed characteristic set is an ascending set.
 \end{theorem}
 
+\begin{proof}
+    \leanok
+    % TODO
+\end{proof}
+
 \begin{theorem}
     \label{thm:characteristicSet_le_basicSet}
     \lean{MvPolynomial.List.characteristicSet_le_basicSet}
@@ -459,20 +745,37 @@
     The rank of computed characteristic set $\le$ the rank of the input list.
 \end{theorem}
 
-\begin{theorem}
-    \label{thm:remainder_eq_zero_of_mem_zeroDecomposition}
-    \lean{MvPolynomial.List.remainder_eq_zero_of_mem_zeroDecomposition}
+\begin{proof}
     \leanok
-    \uses{def:zeroDecomposition, thm:characteristicSet_isCharacteristicSet}
-    $\forall CS \in \mathcal{ZD}(l), g \in l$, $0$ is the remainder of $g$ by $CS$.
+    % TODO
+\end{proof}
+
+\begin{theorem}
+    \label{thm:zero_isSetRemainder_of_mem_zeroDecomposition}
+    \lean{MvPolynomial.List.zero_isSetRemainder_of_mem_zeroDecomposition}
+    \leanok
+    \uses{def:zeroDecomposition}
+    $\forall CS \in \mathcal{ZD}(PS), g \in PS$, $0$ is the remainder of $g$ by $CS$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:characteristicSet_isCharacteristicSet}
+    % TODO
+\end{proof}
 
 \begin{theorem}
     \label{thm:vanishingSet_eq_zeroDecomposition_union}
     \lean{MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union}
     \leanok
-    \uses{def:isCharacteristicSet, def:zeroDecomposition, thm:characteristicSet_isCharacteristicSet, thm:vanishingSet_decomposition, inst:TriangulatedSet.wellFoundedLT}
+    \uses{def:isCharacteristicSet, def:zeroDecomposition}
     \textbf{Zero Decomposition Theorem}:
     The zero set of a polynomial system $PS$ is the union of the zero sets of the triangular systems computed by the algorithm:
-    $$ Zero(PS) = \bigcup_{CS \in \mathcal{ZD}(l)} Zero(CS/IP(CS)) $$.
+    $$ Zero(PS) = \bigcup_{CS \in \mathcal{ZD}(PS)} Zero(CS/IP(CS)) $$.
 \end{theorem}
+
+\begin{proof}
+    \leanok
+    \uses{thm:characteristicSet_isCharacteristicSet, thm:vanishingSet_decomposition, inst:TriangulatedSet.instWellFoundedLT}
+    % TODO
+\end{proof}

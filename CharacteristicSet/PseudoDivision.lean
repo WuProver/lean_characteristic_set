@@ -212,19 +212,13 @@ theorem pseudoOf_remainder_eq_zero_of_dvd {i : σ} {g f : R[σ]} (h1 : f ∣ g)
 
 variable [DecidableEq R] [LinearOrder σ]
 
-lemma pseudoOfGo_remainder_reducedTo {c : σ} {f I : R[σ]} {n fuel : ℕ} (hc : f.cls = c)
-    (hI : I = f.initialOf c) (hn : n = f.degreeOf c) : ∀ (s : ℕ) (q r : R [σ]),
-    fuel ≥ r.degreeOf c + 1 - n → (pseudoOf.go c f I n fuel s q r).remainder.reducedTo f := by
-  intro s q r h
-  have n_ne : n ≠ 0 := hn ▸ degreeOf_cls_ne_zero hc
-  by_cases r_zero : (pseudoOf.go c f I n fuel s q r).remainder = 0
+theorem pseudoOf_remainder_reducedTo {c : σ} (g : R[σ]) {f : R[σ]} (hc : f.cls = c) :
+    (g.pseudoOf c f).remainder.reducedTo f := by
+  have : f.degreeOf c ≠ 0 := degreeOf_cls_ne_zero hc
+  by_cases r_zero : (g.pseudoOf c f).remainder = 0
   · simp only [r_zero, reducedTo, ↓reduceIte]
   apply (reducedTo_iff hc r_zero).mpr
-  exact degreeOf_pseudoOfGo_remainder_lt_of_degreeOf_ne_zero hI n_ne hn _ _ _ _ h
-
-theorem pseudoOf_remainder_reducedTo {c : σ} (g : R[σ]) {f : R[σ]} (hc : f.cls = c) :
-    (g.pseudoOf c f).remainder.reducedTo f :=
-  pseudoOfGo_remainder_reducedTo hc rfl rfl _ _ _ (le_refl _)
+  exact degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero g this
 
 /-- A remainder `r` of `g` by `f` is a polynomial which is reduced with respect to `f` and
 suffices `f.initial ^ s * g = q * f + r` for some `s : ℕ` and `q : R[σ]`. -/
