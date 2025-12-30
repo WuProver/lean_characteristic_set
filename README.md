@@ -61,4 +61,4 @@ lake build
 
 Wen-Tsun, W. Mathematics Mechanization: Mechanical Geometry Theorem-Proving, Mechanical Geometry Problem-Solving and Polynomial Equations-Solving. Springer, 2001. https://link.springer.com/book/9780792358350
 
-Wen-Tsun, W. Basic principles of mechanical theorem proving in elementary geometries. J Autom Reasoning 2, 221–252 (1986). https://doi.org/10.1007/BF02328447
+Wen-Tsun, W. Basic principles of mechanical theorem proving in elementary geometries. Journal of Automated  Reasoning 2, 221–252 (1986). https://doi.org/10.1007/BF02328447
