@@ -16,7 +16,7 @@ This project is still work in process. Any fix and suggestions will be welcomed.
 - [`MvPolynomial.pseudo`](./CharacteristicSet/PseudoDivision.lean): **Pseudo-division** of a polynomial $g$ by a polynomial $f$ (or a triangulated set).
 - [`TriangulatedSet`](./CharacteristicSet/TriangulatedSet.lean): A finite ordered sequence of polynomials with strictly increasing classes.
 - [`AscendingSet`](./CharacteristicSet/AscendingSet.lean): An abstract **Ascending Set**. This is a `TriangulatedSet` where every element is reduced with respect to its predecessors.
-- [`StandardAscendingSet`](./CharacteristicSet/StandardAscendingSet.lean) and [`WeakAscendingSet`](./WeakAscendingSet.lean): Concrete instances of ascending sets using **strong reduction** (Ritt) and **initial reduction** (Wu), respectively.
+- [`StandardAscendingSet`](./CharacteristicSet/StandardAscendingSet.lean) and [`WeakAscendingSet`](./CharacteristicSet/WeakAscendingSet.lean): Concrete instances of ascending sets using **strong reduction** (Ritt) and **initial reduction** (Wu), respectively.
 - [`MvPolynomial.List.basicSet`](./CharacteristicSet/AscendingSet.lean): The **Basic Set** of a polynomial set, defined as the minimal ascending set contained within the set.
 - [`MvPolynomial.List.characteristicSet`](./CharacteristicSet/CharacteristicSet.lean): The **Characteristic Set** of a polynomial set.
 - [`MvPolynomial.List.zeroDecomposition`](./CharacteristicSet/CharacteristicSet.lean): A list of characteristic sets that decompose the zero set of a polynomial set.
@@ -58,3 +58,7 @@ lake build
 ```
 
 ## Reference
+
+Wen-Tsun, W. Mathematics Mechanization: Mechanical Geometry Theorem-Proving, Mechanical Geometry Problem-Solving and Polynomial Equations-Solving. Springer, 2001. https://link.springer.com/book/9780792358350
+
+Wen-Tsun, W. Basic principles of mechanical theorem proving in elementary geometries. J Autom Reasoning 2, 221–252 (1986). https://doi.org/10.1007/BF02328447
