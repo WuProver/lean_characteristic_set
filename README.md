@@ -57,7 +57,7 @@ lake exe cache get
 lake build
 ```
 
-## Reference
+## References
 
 Wen-Tsun, W. Mathematics Mechanization: Mechanical Geometry Theorem-Proving, Mechanical Geometry Problem-Solving and Polynomial Equations-Solving. Springer, 2001. https://link.springer.com/book/9780792358350
 
