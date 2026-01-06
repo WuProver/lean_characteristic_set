@@ -5,3 +5,4 @@ backup/
 /blueprint/web
 /blueprint/lean_decls
 /blueprint/src/web.paux
+.DS_Store
