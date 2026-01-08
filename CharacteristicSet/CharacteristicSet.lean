@@ -64,6 +64,10 @@ variable [Field R] (K : Type*) [Field K] [Algebra R K] (PS : Set R[σ])
 theorem vanishingSet_eq_zeroLocus_span : vanishingSet K PS = zeroLocus K (Ideal.span PS) :=
   (zeroLocus_span PS).symm
 
+theorem vanishingSet_eq_zeroLocus_span' {α : Type*} [Membership R[σ] α] (a : α) :
+    vanishingSet K a = zeroLocus K (Ideal.span {p | p ∈ a}) :=
+  vanishingSet_eq_zeroLocus_span K {p | p ∈ a}
+
 end MvPolynomial
 
 variable [Field R] [DecidableEq R] [LinearOrder σ] {α : Type*} [Membership R[σ] α] (K : Type*)
