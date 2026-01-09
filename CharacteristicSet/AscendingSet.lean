@@ -8,7 +8,7 @@ This file defines the abstract theory of **Ascending Set** and **Basic Set**.
 An Ascending Set is a Triangulated Set with additional reduction properties.
 A Basic Set is, informally, the "smallest" Ascending Set contained in a given set of polynomials.
 
-We introduce two type classes:
+We introduce two type main variables:
 1. `AscendingSetTheory`:
   Abstracting the definition of an ascending set (e.g., strong vs. weak reduction).
 2. `HasBasicSet`: Abstracting the algorithm to compute a basic set from a list of polynomials.
@@ -52,9 +52,9 @@ class AscendingSetTheory (σ R : Type*) [CommSemiring R] [DecidableEq R] [Linear
   /-- A key property linking the ascending set structure to the initial.
   If `S` is an ascending set, the initial of any non-constant element in `S`
   must be reduced with respect to `S`. -/
-  protected initial_reducedToSet_of_cls_ne_bot : ∀ ⦃S : TriangulatedSet σ R⦄ ⦃i : ℕ⦄,
+  protected initial_reducedToSet_of_mainVariable_ne_bot : ∀ ⦃S : TriangulatedSet σ R⦄ ⦃i : ℕ⦄,
     (∀ ⦃i j⦄, i < j → j < S.length → reducedTo' (S j) (S i)) →
-    (S i).cls ≠ ⊥ → (S i).initial.reducedToSet S
+    (S i).mainVariable ≠ ⊥ → (S i).initial.reducedToSet S
 
 attribute [instance 900] AscendingSetTheory.decidableReducedTo
 
@@ -157,13 +157,14 @@ namespace AscendingSet
 
 variable [AscendingSetTheory σ R] {S T : AscendingSet σ R} {p : R[σ]}
 
-theorem initial_reducedToSet_of_cls_ne_bot {S : TriangulatedSet σ R} {i : ℕ} :
-    S.isAscendingSet → (S i).cls ≠ ⊥ → (S i).initial.reducedToSet S := fun h ↦
-  AscendingSetTheory.initial_reducedToSet_of_cls_ne_bot h
+theorem initial_reducedToSet_of_mainVariable_ne_bot {S : TriangulatedSet σ R} {i : ℕ} :
+    S.isAscendingSet → (S i).mainVariable ≠ ⊥ → (S i).initial.reducedToSet S := fun h ↦
+  AscendingSetTheory.initial_reducedToSet_of_mainVariable_ne_bot h
 
-theorem initial_reducedToSet_of_cls_ne_bot' {S : TriangulatedSet σ R} (h : S.isAscendingSet) :
-    p ∈ S → p.cls ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_, _, hi2⟩ hc ↦
-  hi2 ▸ AscendingSet.initial_reducedToSet_of_cls_ne_bot h (hi2 ▸ hc)
+theorem initial_reducedToSet_of_mainVariable_ne_bot' {S : TriangulatedSet σ R}
+    (h : S.isAscendingSet) :
+    p ∈ S → p.mainVariable ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_, _, hi2⟩ hc ↦
+  hi2 ▸ AscendingSet.initial_reducedToSet_of_mainVariable_ne_bot h (hi2 ▸ hc)
 
 def mk {S : TriangulatedSet σ R} (h : S.isAscendingSet) : AscendingSet σ R := ⟨S, h⟩
 
@@ -285,7 +286,7 @@ noncomputable section
 
 variable [AscendingSetTheory σ R] [Finite σ] {α : Type*} [Membership R[σ] α]
 
-/-- The classical existence of a Basic Set for any set of polynomials `a`.
+/-- The main variableical existence of a Basic Set for any set of polynomials `a`.
 This is guaranteed by the well-foundedness of the rank. -/
 protected theorem hasBasicSet (a : α) : ∃ S : AscendingSet σ R, isMinimal S a :=
   AscendingSet.Set.has_min _ ⟨∅, fun n hn ↦ absurd hn <| notMem_empty n⟩

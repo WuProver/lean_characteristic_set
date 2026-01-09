@@ -10,17 +10,17 @@
 \label{chap:def}
 
 \begin{definition}
-    \label{def:class}
-    \lean{MvPolynomial.cls}
+    \label{def:mainVariable}
+    \lean{MvPolynomial.mainVariable}
     \leanok
     The class of a multivariate polynomial $p$ is the largest variable index appearing in $p$.
 \end{definition}
 
 \begin{definition}
-    \label{def:degree}
-    \lean{MvPolynomial.degree}
+    \label{def:mainDegree}
+    \lean{MvPolynomial.mainDegree}
     \leanok
-    \uses{def:class}
+    \uses{def:mainVariable}
     The degree of $p$ with respect to its class.
 \end{definition}
 
@@ -28,15 +28,15 @@
     \label{def:MvPolynomial.rank}
     \lean{MvPolynomial.rank}
     \leanok
-    \uses{def:class, def:degree}
-    The rank of a polynomial $p$ is the pair $(cls(p), deg(p))$ ordered lexicographically.
+    \uses{def:mainVariable, def:mainDegree}
+    The rank of a polynomial $p$ is the pair $(mainVariable(p), deg(p))$ ordered lexicographically.
 \end{definition}
 
 \begin{definition}
     \label{def:reducedTo}
     \lean{MvPolynomial.reducedTo}
     \leanok
-    \uses{def:class}
+    \uses{def:mainVariable}
     $q$ is reduced with respect to $p$ if the degree of $q$ in the main variable of $p$ is strictly less than the main degree of $p$.
 \end{definition}
 
@@ -60,7 +60,7 @@
     \label{def:initial}
     \lean{MvPolynomial.initial}
     \leanok
-    \uses{def:class, def:initialOf}
+    \uses{def:mainVariable, def:initialOf}
     The initial of a polynomial $p$ is the initial with respect to its class.
 \end{definition}
 
@@ -76,7 +76,7 @@
     \label{def:TriangulatedSet}
     \lean{TriangulatedSet}
     \leanok
-    \uses{def:class}
+    \uses{def:mainVariable}
     A Triangulated Set is a finite ordered sequence of non-zero polynomials with strictly increasing classes.
 \end{definition}
 
@@ -138,8 +138,8 @@
     \label{def:pseudo}
     \lean{MvPolynomial.pseudo}
     \leanok
-    \uses{def:pseudoOf, def:class}
-    Pseudo-division of $g$ by $f$ with respect to $cls(f)$.
+    \uses{def:pseudoOf, def:mainVariable}
+    Pseudo-division of $g$ by $f$ with respect to $mainVariable(f)$.
 
     Returns a triple containing the exponent, the quotient and the remainder.
 \end{definition}
@@ -218,10 +218,10 @@
     \label{def:WeakAscendingSet.basicSet}
     \lean{WeakAscendingSet.basicSet}
     \leanok
-    \uses{def:class, def:initial, def:TriangulatedSet, def:reducedToSet, def:TriangulatedSet.rank}
+    \uses{def:mainVariable, def:initial, def:TriangulatedSet, def:reducedToSet, def:TriangulatedSet.rank}
     Computes the Weak Basic Set of a list of polynomials.
 
-    Difference from Standard: The filter condition includes $cls(p) > cls(B)$.
+    Difference from Standard: The filter condition includes $mainVariable(p) > mainVariable(B)$.
 \end{definition}
 
 \begin{definition}
@@ -254,7 +254,7 @@
     \label{def:zeroDecomposition}
     \lean{MvPolynomial.List.zeroDecomposition}
     \leanok
-    \uses{def:characteristicSet, thm:initial_reducedToSet_of_cls_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
+    \uses{def:characteristicSet, thm:initial_reducedToSet_of_mainVariable_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
     Decomposes the zero set of a polynomial list into a union of zero sets of triangular sets.
     The algorithm recursively computes the characteristic set $CS$
     and adds branches for the initials of $CS$.
@@ -276,11 +276,11 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:reducedTo_of_cls_lt}
-    \lean{MvPolynomial.reducedTo_of_cls_lt}
+    \label{lem:reducedTo_of_mainVariable_lt}
+    \lean{MvPolynomial.reducedTo_of_mainVariable_lt}
     \leanok
-    \uses{def:class, def:reducedTo}
-    $q$ is reduced w.r.t. $p$ if $cls(q) < cls(p)$.
+    \uses{def:mainVariable, def:reducedTo}
+    $q$ is reduced w.r.t. $p$ if $mainVariable(q) < mainVariable(p)$.
 \end{lemma}
 
 \begin{proof}
@@ -289,11 +289,11 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:reducedTo_iff_gt_of_cls_eq}
-    \lean{MvPolynomial.reducedTo_iff_gt_of_cls_eq}
+    \label{lem:reducedTo_iff_gt_of_mainVariable_eq}
+    \lean{MvPolynomial.reducedTo_iff_gt_of_mainVariable_eq}
     \leanok
-    \uses{def:class, def:reducedTo, def:MvPolynomial.rank}
-    If $cls(p) = cls(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
+    \uses{def:mainVariable, def:reducedTo, def:MvPolynomial.rank}
+    If $mainVariable(p) = mainVariable(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
 \end{lemma}
 
 \begin{proof}
@@ -302,16 +302,16 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:cls_lt_of_reducedTo_of_le}
-    \lean{MvPolynomial.cls_lt_of_reducedTo_of_le}
+    \label{lem:mainVariable_lt_of_reducedTo_of_le}
+    \lean{MvPolynomial.mainVariable_lt_of_reducedTo_of_le}
     \leanok
-    \uses{def:class, def:reducedTo}
-    $cls(p) < cls(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
+    \uses{def:mainVariable, def:reducedTo}
+    $mainVariable(p) < mainVariable(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
 \end{lemma}
 
 \begin{proof}
     \leanok
-    \uses{lem:reducedTo_iff_gt_of_cls_eq}
+    \uses{lem:reducedTo_iff_gt_of_mainVariable_eq}
     % TODO
 \end{proof}
 
@@ -437,11 +437,11 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:cls_initial_lt}
-    \lean{MvPolynomial.cls_initial_lt}
+    \label{lem:mainVariable_initial_lt}
+    \lean{MvPolynomial.mainVariable_initial_lt}
     \leanok
-    \uses{def:class, def:initial}
-    $cls(init(p)) < cls(p)$ for non-constant $p$.
+    \uses{def:mainVariable, def:initial}
+    $mainVariable(init(p)) < mainVariable(p)$ for non-constant $p$.
 \end{lemma}
 
 \begin{proof}
@@ -473,7 +473,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:reducedTo_of_cls_lt, lem:cls_initial_lt}
+    \uses{lem:reducedTo_of_mainVariable_lt, lem:mainVariable_initial_lt}
     % TODO
 \end{proof}
 
@@ -500,7 +500,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:reducedTo_iff_gt_of_cls_eq}
+    \uses{lem:reducedTo_iff_gt_of_mainVariable_eq}
     % TODO
 \end{proof}
 
@@ -581,7 +581,7 @@
     \lean{MvPolynomial.pseudo_remainder_eq_of_degreeOf_eq_zero}
     \leanok
     \uses{def:pseudo}
-    The remainder of $g$ by $f$ is $g$ if $deg_c(g) = 0$ where $c = cls(f)$.
+    The remainder of $g$ by $f$ is $g$ if $deg_c(g) = 0$ where $c = mainVariable(f)$.
 \end{theorem}
 
 \begin{proof}
@@ -605,11 +605,11 @@
 \end{proof}
 
 \begin{theorem}
-    \label{thm:initial_reducedToSet_of_cls_ne_bot}
-    \lean{AscendingSet.initial_reducedToSet_of_cls_ne_bot}
+    \label{thm:initial_reducedToSet_of_mainVariable_ne_bot}
+    \lean{AscendingSet.initial_reducedToSet_of_mainVariable_ne_bot}
     \leanok
-    \uses{def:initial, def:reducedToSet, def:class, def:isAscendingSet}
-    If $p$ is in $S$ and $cls(p) \neq \bot$, then $init(p)$ is in $S$.
+    \uses{def:initial, def:reducedToSet, def:mainVariable, def:isAscendingSet}
+    If $p$ is in $S$ and $mainVariable(p) \neq \bot$, then $init(p)$ is in $S$.
 \end{theorem}
 
 \begin{proof}
@@ -628,7 +628,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:cls_lt_of_reducedTo_of_le, thm:takeConcat_lt_of_reducedToSet}
+    \uses{lem:mainVariable_lt_of_reducedTo_of_le, thm:takeConcat_lt_of_reducedToSet}
     % TODO
 \end{proof}
 

@@ -38,13 +38,13 @@ theorem isAscendingSet_def' : isAscendingSet S ↔
 theorem reducedTo_of_ne {i j : ℕ} (h : isAscendingSet S) :
     i ≠ j → j < S.length → (S i).reducedTo (S j) := fun hij hj ↦
   match lt_or_gt_of_ne hij with
-  | .inl hij => reducedTo_of_cls_lt <| cls_lt_of_index_lt hij hj
+  | .inl hij => reducedTo_of_mainVariable_lt <| mainVariable_lt_of_index_lt hij hj
   | .inr hij => (isAscendingSet_def'.mp h) hij hj
 
 /-- The standard ascending set theory uses strong reduction `reducedTo`. -/
 noncomputable scoped instance : AscendingSetTheory σ R where
   reducedTo' := reducedTo
-  initial_reducedToSet_of_cls_ne_bot := fun _ i h hc _ ⟨j, hj1, hj2⟩ ↦
+  initial_reducedToSet_of_mainVariable_ne_bot := fun _ i h hc _ ⟨j, hj1, hj2⟩ ↦
     match em (i = j) with
     | .inl hij => hj2 ▸ hij ▸ initial_reducedTo_self hc
     | .inr hij => initial_reducedTo <| hj2 ▸ reducedTo_of_ne h hij hj1
@@ -199,7 +199,7 @@ lemma basicSetGo_le_ascendingSet (l : List R[σ]) (BS : TriangulatedSet σ R)
       have := hp.2 BS.length (lt_add_one _)
       simp only [concat_apply, lt_self_iff_false, ↓reduceIte, length_concat,
         add_tsub_cancel_right, gt_iff_lt] at this ⊢
-      exact cls_lt_of_reducedTo_of_le (hl1 p hp.1) (hB2 hp.1) this
+      exact mainVariable_lt_of_reducedTo_of_le (hl1 p hp.1) (hB2 hp.1) this
     refine ih (List.Pairwise.filter _ hl2) hBS1' hBS2' T hT1 ⟨heq ▸ hL, fun i hi ↦ ?_⟩ ?_
     · simp only [heq, length_concat, concat_apply] at hi ⊢
       split_ifs with hi1 hi2

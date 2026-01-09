@@ -10,10 +10,10 @@ def p₂ : ℚ[Fin 2] := X 0 * X 1 - 1
 
 def l : List ℚ[Fin 2] := [p₁, p₂]
 
-lemma hc₁ : p₁.cls = 1 := sorry
-example : p₁.degree = 1 := sorry
-example : p₂.cls = 1 := sorry
-example : p₂.degree = 1 := sorry
+lemma hc₁ : p₁.mainVariable = 1 := sorry
+example : p₁.mainDegree = 1 := sorry
+example : p₂.mainVariable = 1 := sorry
+example : p₂.mainDegree = 1 := sorry
 
 def AS₁ : AscendingSet (Fin 2) ℚ :=
   ⟨TriangulatedSet.single p₁, TriangulatedSet.isAscendingSet_single p₁⟩
@@ -26,12 +26,12 @@ def AS₂ : AscendingSet (Fin 2) ℚ :=
 --   exact List.basicSet_isMinimal l
 
 def p₃ : ℚ[Fin 2] := X 0 ^ 2 + 1
-lemma hc₃ : p₃.cls = 0 := sorry
-example : p₃.degree = 2 := sorry
+lemma hc₃ : p₃.mainVariable = 0 := sorry
+example : p₃.mainDegree = 2 := sorry
 
 def lCS : List ℚ[Fin 2] := [p₃, p₁]
 lemma lCS_non_zero : ∀ p ∈ lCS, p ≠ 0 := sorry
-lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.cls < q.cls := by
+lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.mainVariable < q.mainVariable := by
   simpa [lCS, hc₁, hc₃] using compareOfLessAndEq_eq_lt.mp rfl
 
 def CS : TriangulatedSet (Fin 2) ℚ := TriangulatedSet.list lCS lCS_non_zero lCS_pairwise

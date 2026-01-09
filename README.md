@@ -12,7 +12,7 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 
 ### Definitions
 
-- [`MvPolynomial.cls`](./CharacteristicSet/Basic.lean): The **class** of a polynomial (the largest variable index in its support).
+- [`MvPolynomial.mainVariable`](./CharacteristicSet/Basic.lean): The **Main Variable** of a polynomial (the largest variable index in its support).
 - [`MvPolynomial.pseudo`](./CharacteristicSet/PseudoDivision.lean): **Pseudo-division** of a polynomial $g$ by a polynomial $f$ (or a triangulated set).
 - [`TriangulatedSet`](./CharacteristicSet/TriangulatedSet.lean): A finite ordered sequence of polynomials with strictly increasing classes.
 - [`AscendingSet`](./CharacteristicSet/AscendingSet.lean): An abstract **Ascending Set**. This is a `TriangulatedSet` where every element is reduced with respect to its predecessors.

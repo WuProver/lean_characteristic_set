@@ -212,9 +212,9 @@ theorem pseudoOf_remainder_eq_zero_of_dvd {i : σ} {g f : R[σ]} (h1 : f ∣ g)
 
 variable [DecidableEq R] [LinearOrder σ]
 
-theorem pseudoOf_remainder_reducedTo {c : σ} (g : R[σ]) {f : R[σ]} (hc : f.cls = c) :
+theorem pseudoOf_remainder_reducedTo {c : σ} (g : R[σ]) {f : R[σ]} (hc : f.mainVariable = c) :
     (g.pseudoOf c f).remainder.reducedTo f := by
-  have : f.degreeOf c ≠ 0 := degreeOf_cls_ne_zero hc
+  have : f.degreeOf c ≠ 0 := degreeOf_mainVariable_ne_zero hc
   by_cases r_zero : (g.pseudoOf c f).remainder = 0
   · simp only [r_zero, reducedTo, ↓reduceIte]
   apply (reducedTo_iff hc r_zero).mpr
@@ -251,11 +251,11 @@ variable {R σ : Type*} [Field R] [DecidableEq R] [LinearOrder σ] (g f : R[σ])
 
 /-- General pseudo-division of `g` by `f`.
 If `f` is constant, it performs standard division.
-If `f` is non-constant, it performs pseudo-division with respect to `cls(f)`. -/
+If `f` is non-constant, it performs pseudo-division with respect to `mainVariable(f)`. -/
 noncomputable def pseudo : PseudoResult R[σ] :=
   if f = 0 then ⟨0, 0, g⟩
   else
-    match f.cls with
+    match f.mainVariable with
     | ⊥ => ⟨0, (f.coeff 0)⁻¹ • g, 0⟩
     | some c => g.pseudoOf c f
 
@@ -263,16 +263,16 @@ noncomputable def pseudo : PseudoResult R[σ] :=
 
 @[simp] theorem pseudo_C {g : R[σ]} {r : R} (hr : r ≠ 0) : g.pseudo (C r) = ⟨0, r⁻¹ • g, 0⟩ := by
   have : (C r : R[σ]) ≠ 0 := C_ne_zero.mpr hr
-  simp only [pseudo, this, reduceIte, cls_C, coeff_C]
+  simp only [pseudo, this, reduceIte, mainVariable_C, coeff_C]
 
 @[simp] theorem zero_pseudo : (0 : R[σ]).pseudo f = ⟨0, 0, 0⟩ := by
   simp only [pseudo, smul_zero, zero_pseudoOf, ite_eq_left_iff]
   intro _
-  match hc : f.cls with
+  match hc : f.mainVariable with
   | ⊥ => simp only
   | some c =>
     simp only [PseudoResult.mk.injEq, and_self, and_true]
-    rw [Nat.sub_eq_zero_of_le (Nat.pos_of_ne_zero <| degreeOf_cls_ne_zero hc)]
+    rw [Nat.sub_eq_zero_of_le (Nat.pos_of_ne_zero <| degreeOf_mainVariable_ne_zero hc)]
 
 @[simp] theorem pseudo_remainder_self : (f.pseudo f).remainder = 0 := by
   simp only [pseudo, pseudoOf_self]
@@ -280,37 +280,38 @@ noncomputable def pseudo : PseudoResult R[σ] :=
   · rw [h]
   split <;> simp only
 
-theorem pseudo_of_cls_isSome {c : σ} {f : R[σ]} : f.cls = c → g.pseudo f = g.pseudoOf c f :=
-  fun h ↦ by simp only [pseudo, ne_zero_of_cls_ne_bot (h ▸ WithBot.coe_ne_bot), h, reduceIte]
+theorem pseudo_of_mainVariable_isSome {c : σ} {f : R[σ]} :
+    f.mainVariable = c → g.pseudo f = g.pseudoOf c f := fun h ↦ by
+  simp only [pseudo, ne_zero_of_mainVariable_ne_bot (h ▸ WithBot.coe_ne_bot), h, reduceIte]
 
 theorem pseudo_equation :
     f.initial ^ (g.pseudo f).exponent * g = (g.pseudo f).quotient * f + (g.pseudo f).remainder := by
   unfold pseudo
   split_ifs with f_zero
   · rw [pow_zero, one_mul, zero_mul, zero_add]
-  match hc : f.cls with
+  match hc : f.mainVariable with
   | ⊥ =>
-    have ⟨r, hr⟩ : ∃ r, f = C r := cls_eq_bot_iff.mp hc
+    have ⟨r, hr⟩ : ∃ r, f = C r := mainVariable_eq_bot_iff.mp hc
     simp only [pow_zero, one_mul, Algebra.smul_mul_assoc, add_zero]
     simp only [hr, coeff_C, reduceIte] at f_zero ⊢
     have : r ≠ 0 := C_ne_zero.mp f_zero
     rw [mul_comm, ← smul_eq_C_mul, ← mul_smul, inv_mul_cancel₀ this, one_smul]
-  | some c => simp only [initial_of_cls_isSome' hc]; exact g.pseudoOf_equation c f
+  | some c => simp only [initial_of_mainVariable_isSome' hc]; exact g.pseudoOf_equation c f
 
 theorem degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero {i : σ} (g : R[σ]) {f : R[σ]}
     (h : f.degreeOf i = 0) : (g.pseudo f).remainder.degreeOf i ≤ g.degreeOf i := by
   unfold pseudo
   split_ifs with f_zero
   · exact Nat.le_refl _
-  match hc : f.cls with
+  match hc : f.mainVariable with
   | ⊥ => simp only [degreeOf_zero, zero_le]
   | some c =>
-    have : c ≠ i := by contrapose! h; exact degreeOf_cls_ne_zero <| h ▸ hc
+    have : c ≠ i := by contrapose! h; exact degreeOf_mainVariable_ne_zero <| h ▸ hc
     exact degreeOf_pseudoOf_remainder_le_of_degreeOf_eq_zero g this h
 
 theorem pseudo_remainder_reducedTo (h : f ≠ 0) : (g.pseudo f).remainder.reducedTo f := by
   rewrite [pseudo, if_neg h]
-  match h : f.cls with
+  match h : f.mainVariable with
   | ⊥ => simp only; trivial
   | some c => exact g.pseudoOf_remainder_reducedTo h
 
@@ -325,17 +326,17 @@ theorem pseudo_remainder_eq_zero_of_dvd {g f : R[σ]} (h : f ∣ g) : (g.pseudo 
   unfold pseudo
   split <;> expose_names
   · simpa [h_1] using h
-  match hc : f.cls with
+  match hc : f.mainVariable with
   | ⊥ => simp only
-  | some c => exact pseudoOf_remainder_eq_zero_of_dvd h <| degreeOf_cls_ne_zero hc
+  | some c => exact pseudoOf_remainder_eq_zero_of_dvd h <| degreeOf_mainVariable_ne_zero hc
 
-theorem pseudo_remainder_eq_of_degreeOf_eq_zero {g f : R[σ]} {c : σ} (h1 : f.cls  = some c)
+theorem pseudo_remainder_eq_of_degreeOf_eq_zero {g f : R[σ]} {c : σ} (h1 : f.mainVariable  = some c)
     (h2 : g.degreeOf c = 0) : (g.pseudo f).remainder = g := by
   unfold pseudo
   split <;> expose_names
   · simp only
   simp only [h1]
-  exact pseudoOf_remainder_eq_of_degreeOf_eq_zero h2 <| degreeOf_cls_ne_zero h1
+  exact pseudoOf_remainder_eq_of_degreeOf_eq_zero h2 <| degreeOf_mainVariable_ne_zero h1
 
 open TriangulatedSet List
 
@@ -471,7 +472,7 @@ theorem setPseudo_remainder_eq_setPseudoRem : (g.setPseudo S).remainder = g.setP
     rw [← cons_head_tail h, foldr_cons, cons_head_tail, head_eq_getElem_zero, toList_getElem]
 
 lemma setPseudoRem_reducedTo (l : List R[σ]) (hl1 : ∀ ⦃p⦄, p ∈ l → p ≠ 0)
-    (hl2 : l.Pairwise fun p q ↦ p.cls < q.cls) : ∀ g p : R[σ], p ∈ l →
+    (hl2 : l.Pairwise fun p q ↦ p.mainVariable < q.mainVariable) : ∀ g p : R[σ], p ∈ l →
     (l.foldr (fun p r ↦ (r.pseudo p).remainder) g).reducedTo p := by
   induction l with
   | nil => simp only [not_mem_nil, foldr_nil, IsEmpty.forall_iff, implies_true]
@@ -490,7 +491,7 @@ lemma setPseudoRem_reducedTo (l : List R[σ]) (hl1 : ∀ ⦃p⦄, p ∈ l → p 
     · exact ih
     suffices (r'.pseudo a).remainder.degreeOf c ≤ r'.degreeOf c by exact lt_of_le_of_lt this ih
     apply degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero
-    apply degreeOf_eq_zero_of_cls_lt
+    apply degreeOf_eq_zero_of_mainVariable_lt
     apply heq ▸ (pairwise_cons.mp hl2).1 p hp
 
 theorem setPseudo_remainder_reducedToSet : (g.setPseudo S).remainder.reducedToSet S := by
@@ -507,9 +508,10 @@ theorem isSetRemainder_of_eq_setPseudo_remainder {r g : R[σ]} {S : Triangulated
     (g.setPseudo S).remainder = r → r.isSetRemainder g S := fun h ↦
   h ▸ g.setPseudo_remainder_isSetRemainder S
 
-lemma setPseudoRem_eq_self_of_cls_lt (l : List R[σ]) (hl1 : ∀ ⦃p⦄, p ∈ l → p ≠ 0)
-    (hl2 : l.Pairwise fun p q ↦ p.cls < q.cls) : ∀ ⦃g : R[σ]⦄,
-    (∀ p ∈ l, g.cls < p.cls) → l.foldr (fun p r ↦ (r.pseudo p).remainder) g = g := by
+lemma setPseudoRem_eq_self_of_mainVariable_lt (l : List R[σ]) (hl1 : ∀ ⦃p⦄, p ∈ l → p ≠ 0)
+    (hl2 : l.Pairwise fun p q ↦ p.mainVariable < q.mainVariable) : ∀ ⦃g : R[σ]⦄,
+    (∀ p ∈ l, g.mainVariable < p.mainVariable) →
+    l.foldr (fun p r ↦ (r.pseudo p).remainder) g = g := by
   induction l with
   | nil => simp only [foldr_nil, implies_true]
   | cons a l ih =>
@@ -518,7 +520,7 @@ lemma setPseudoRem_eq_self_of_cls_lt (l : List R[σ]) (hl1 : ∀ ⦃p⦄, p ∈ 
     rcases WithBot.ne_bot_iff_exists.mp <| LT.lt.ne_bot hg.1 with ⟨c, hc⟩
     have ih := ih (fun p hp ↦ hl1 <| mem_cons_of_mem _ hp) (pairwise_cons.mp hl2).2 hg.2
     rw [foldr_cons, ih, pseudo_remainder_eq_of_degreeOf_eq_zero hc.symm]
-    exact degreeOf_eq_zero_of_cls_lt (hc ▸ hg.1)
+    exact degreeOf_eq_zero_of_mainVariable_lt (hc ▸ hg.1)
 
 theorem setPseudo_remainder_eq_zero_of_mem {p : R[σ]} (hp : p ∈ S) :
     (p.setPseudo S).remainder = 0 := by
@@ -538,10 +540,10 @@ theorem setPseudo_remainder_eq_zero_of_mem {p : R[σ]} (hp : p ∈ S) :
     rw [this, zero_setPseudoRem]
   simp only [← toList_drop_comm, l1]
   refine pseudo_remainder_eq_zero_of_dvd (dvd_of_eq <| Eq.symm ?_)
-  refine setPseudoRem_eq_self_of_cls_lt _ toList_non_zero toList_pairwise (fun q hq ↦ ?_)
+  refine setPseudoRem_eq_self_of_mainVariable_lt _ toList_non_zero toList_pairwise (fun q hq ↦ ?_)
   rcases mem_toList_iff.mp hq with ⟨i, hi1, hi2⟩
   rewrite [← hn2, ← hi2, drop_apply]
-  refine cls_lt_of_index_lt (Nat.lt_add_left i (lt_add_one n)) ?_
+  refine mainVariable_lt_of_index_lt (Nat.lt_add_left i (lt_add_one n)) ?_
   exact Nat.add_lt_of_lt_sub hi1
 
 end Field

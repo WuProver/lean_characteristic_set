@@ -309,11 +309,11 @@ section Initial
 
 variable [DecidableEq R] [LinearOrder σ] {p : R[σ]}
 
-/-- The "Initial" of a polynomial `p` is `p.initialOf p.cls` if `p` is not a constant,
+/-- The "Initial" of a polynomial `p` is `p.initialOf p.mainVariable` if `p` is not a constant,
 and 1 if `p` is a non-zero constant. -/
 noncomputable def initial (p : R[σ]) : R[σ] :=
   if p = 0 then 0 else
-    match p.cls with
+    match p.mainVariable with
     | ⊥ => 1
     | some c => p.initialOf c
 
@@ -321,30 +321,31 @@ noncomputable def initial (p : R[σ]) : R[σ] :=
 
 theorem initial_ne_zero [Nontrivial R] {p : R[σ]} : p ≠ 0 → p.initial ≠ 0 := fun h ↦ by
   simp only [initial, h, ↓reduceIte, ne_eq]
-  match p.cls with
+  match p.mainVariable with
   | none => simp only [one_ne_zero, not_false_eq_true]
   | some c => simp only [initialOf_ne_zero c h, not_false_eq_true]
 
-theorem initial_of_bot_cls (hp : p ≠ 0) : p.cls = ⊥ → initial p = 1 :=
+theorem initial_of_bot_mainVariable (hp : p ≠ 0) : p.mainVariable = ⊥ → initial p = 1 :=
   fun h ↦ by simp only [initial, hp, reduceIte, h]
 
-theorem initial_of_cls_isSome' {c : σ} : p.cls = c → initial p = p.initialOf c := fun h ↦ by
-  have : p.cls ≠ ⊥ := WithBot.ne_bot_iff_exists.mpr <| Exists.intro c h.symm
-  simp only [initial, ne_zero_of_cls_ne_bot this, ↓reduceIte, h]
+theorem initial_of_mainVariable_isSome' {c : σ} :
+    p.mainVariable = c → initial p = p.initialOf c := fun h ↦ by
+  have : p.mainVariable ≠ ⊥ := WithBot.ne_bot_iff_exists.mpr <| Exists.intro c h.symm
+  simp only [initial, ne_zero_of_mainVariable_ne_bot this, ↓reduceIte, h]
 
-theorem initial_of_cls_isSome {c : σ} : p.cls = c →
+theorem initial_of_mainVariable_isSome {c : σ} : p.mainVariable = c →
     initial p = ∑ s ∈ p.support with s c = p.degreeOf c, monomial (s.erase c) (p.coeff s) :=
-  fun h ↦ by rw [initial_of_cls_isSome' h, initialOf_def]
+  fun h ↦ by rw [initial_of_mainVariable_isSome' h, initialOf_def]
 
 @[simp] theorem initial_C {r : R} (hr : r ≠ 0) : (C r : R[σ]).initial = 1 :=
-  initial_of_bot_cls (C_ne_zero.mpr hr) (cls_C r)
+  initial_of_bot_mainVariable (C_ne_zero.mpr hr) (mainVariable_C r)
 
 theorem initial_monomial {s : σ →₀ ℕ} (r : R) {c : σ} :
     s.support.max = c → (monomial s r).initial = monomial (s.erase c) r := fun hs ↦ by
   by_cases r_zero : r = 0
   · simp only [r_zero, initial, monomial_zero, reduceIte]
-  have : (monomial s r).cls = c := hs ▸ cls_monomial s r_zero
-  rw [initial_of_cls_isSome' this, initialOf_monomial]
+  have : (monomial s r).mainVariable = c := hs ▸ mainVariable_monomial s r_zero
+  rw [initial_of_mainVariable_isSome' this, initialOf_monomial]
 
 @[simp] theorem initial_X_pow (i : σ) {k : ℕ} (hk : k ≠ 0) : (X i ^ k).initial = (1 : R[σ]) := by
   have : (Finsupp.single i k).support.max = i := by
@@ -354,18 +355,19 @@ theorem initial_monomial {s : σ →₀ ℕ} (r : R) {c : σ} :
 @[simp] theorem initial_X (i : σ) : (X i : R[σ]).initial = 1 :=
   pow_one (X i : R[σ]) ▸ initial_X_pow i one_ne_zero
 
-theorem cls_initial_lt (hp : p.cls ≠ ⊥) : (initial p).cls < p.cls := by
+theorem mainVariable_initial_lt (hp : p.mainVariable ≠ ⊥) :
+    (initial p).mainVariable < p.mainVariable := by
   have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hp
-  rewrite [initial_of_cls_isSome hc.symm, hc.symm]
-  apply lt_of_le_of_lt (cls_sum_le _ _)
+  rewrite [initial_of_mainVariable_isSome hc.symm, hc.symm]
+  apply lt_of_le_of_lt (mainVariable_sum_le _ _)
   simp only [WithBot.bot_lt_coe, Finset.sup_lt_iff, Finset.mem_filter, mem_support_iff]
   intro s hs
-  simp only [cls_monomial _ hs.1, Finsupp.support_erase, Finset.max_eq_sup_coe]
+  simp only [mainVariable_monomial _ hs.1, Finsupp.support_erase, Finset.max_eq_sup_coe]
   rewrite [Finset.sup_lt_iff (hc ▸ WithBot.bot_lt_iff_ne_bot.mpr hp)]
   simp only [Finset.mem_erase, WithBot.coe_lt_coe]
   intro i hi
   have hs : s.support.max ≤ c := by
-    rewrite [hc, cls]
+    rewrite [hc, mainVariable]
     apply Finset.le_sup <| mem_support_iff.mpr hs.1
   have := le_trans (Finset.le_max hi.2) hs
   exact lt_of_le_of_ne (WithBot.coe_le_coe.mp this) hi.1
@@ -373,12 +375,12 @@ theorem cls_initial_lt (hp : p.cls ≠ ⊥) : (initial p).cls < p.cls := by
 theorem degreeOf_initial_le (p : R[σ]) (i : σ) : p.initial.degreeOf i ≤ p.degreeOf i := by
   by_cases hp : p = 0
   · simp only [hp, initial_zero, degreeOf_zero, le_refl]
-  by_cases hc : p.cls = ⊥
-  · simp only [initial_of_bot_cls hp hc]
-    have : (1 : R[σ]).cls = ⊥ := cls_eq_bot_iff.mpr (Exists.intro 1 rfl)
-    rw [degreeOf_of_bot_cls i hc, degreeOf_of_bot_cls i this]
+  by_cases hc : p.mainVariable = ⊥
+  · simp only [initial_of_bot_mainVariable hp hc]
+    have : (1 : R[σ]).mainVariable = ⊥ := mainVariable_eq_bot_iff.mpr (Exists.intro 1 rfl)
+    rw [degreeOf_of_bot_mainVariable i hc, degreeOf_of_bot_mainVariable i this]
   have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hc
-  exact initial_of_cls_isSome' hc.symm ▸ p.degreeOf_initialOf_le c i
+  exact initial_of_mainVariable_isSome' hc.symm ▸ p.degreeOf_initialOf_le c i
 
 /-- The product of initials of a set of polynomials. -/
 noncomputable def initialProd (PS : Finset R[σ]) : R[σ] := ∏ p ∈ PS, p.initial
@@ -395,8 +397,8 @@ theorem initial_reducedTo : q.reducedTo p → q.initial.reducedTo p := fun h ↦
   by_cases hq : q = 0
   · rewrite [hq, initial_zero]
     exact zero_reducedTo p
-  by_cases hp : p.cls = ⊥
-  · exact absurd h <| not_reducedTo_of_bot_cls hq hp
+  by_cases hp : p.mainVariable = ⊥
+  · exact absurd h <| not_reducedTo_of_bot_mainVariable hq hp
   by_cases hqi : q.initial = 0
   · exact hqi ▸ zero_reducedTo p
   have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hp
@@ -404,8 +406,8 @@ theorem initial_reducedTo : q.reducedTo p → q.initial.reducedTo p := fun h ↦
   have h := (reducedTo_iff hc.symm hq).mp h
   exact lt_of_le_of_lt (degreeOf_initial_le q c) h
 
-theorem initial_reducedTo_self (hp : p.cls ≠ ⊥) : p.initial.reducedTo p :=
-  reducedTo_of_cls_lt <| cls_initial_lt hp
+theorem initial_reducedTo_self (hp : p.mainVariable ≠ ⊥) : p.initial.reducedTo p :=
+  reducedTo_of_mainVariable_lt <| mainVariable_initial_lt hp
 
 theorem initial_reducedToSet {α : Type*} [Membership R[σ] α] {p : R[σ]} {a : α} :
     p.reducedToSet a → p.initial.reducedToSet a :=

@@ -10,7 +10,8 @@ of every element is reduced with respect to preceding elements.
 This is a weaker condition than the standard reduction.
 
 Consequently, the algorithm for computing a Weak Basic Set must ensure the triangular structure
-(strict ascending classes) explicitly, by filtering candidates with `B.cls < p.cls`.
+(strict ascending main variables) explicitly,
+by filtering candidates with `B.mainVariable < p.mainVariable`.
 
 ## Main Instances
 
@@ -42,13 +43,14 @@ theorem isAscendingSet_def' : isAscendingSet S ↔
 theorem initial_reducedTo_of_ne {i j : ℕ} (h : isAscendingSet S) :
     i ≠ j → j < S.length → (S i).initial.reducedTo (S j) := fun hij hj ↦
   match lt_or_gt_of_ne hij with
-  | .inl hij => initial_reducedTo <| reducedTo_of_cls_lt <| cls_lt_of_index_lt hij hj
+  | .inl hij =>
+    initial_reducedTo <| reducedTo_of_mainVariable_lt <| mainVariable_lt_of_index_lt hij hj
   | .inr hij => (isAscendingSet_def'.mp h) hij hj
 
 /-- The weak ascending set theory uses weak reduction `p.initial.reducedTo`. -/
 noncomputable scoped instance : AscendingSetTheory σ R where
   reducedTo' := fun p ↦ p.initial.reducedTo
-  initial_reducedToSet_of_cls_ne_bot := fun _ i h hc _ ⟨j, hj1, hj2⟩ ↦
+  initial_reducedToSet_of_mainVariable_ne_bot := fun _ i h hc _ ⟨j, hj1, hj2⟩ ↦
     match em (i = j) with
     | .inl hij => hj2 ▸ hij ▸ initial_reducedTo_self hc
     | .inr hij => hj2 ▸ initial_reducedTo_of_ne h hij hj1
@@ -68,8 +70,9 @@ variable (l : List R[σ])
 /--
 Computes the Weak Basic Set of a list of polynomials.
 Difference from Standard:
-The filter condition includes `B.cls < p.cls`.
-This is because `p.initial.reducedTo B` does NOT imply `B.cls < p.cls` (unlike strong reduction).
+The filter condition includes `B.mainVariable < p.mainVariable`.
+This is because `p.initial.reducedTo B` does NOT imply `B.mainVariable < p.mainVariable`
+(unlike strong reduction).
 We must enforce the triangular structure explicitly.
 -/
 noncomputable def basicSet : TriangulatedSet σ R :=
@@ -80,8 +83,8 @@ noncomputable def basicSet : TriangulatedSet σ R :=
       let B : R[σ] := l.head h
       have hB : BS.canConcat B := hl2 B (List.head_mem h)
       let BS' := BS.concat B
-      -- Explicitly check class ordering here:
-      let l' := l.filter fun p ↦ B.cls < p.cls ∧ p.initial.reducedToSet BS'
+      -- Explicitly check main variable ordering here:
+      let l' := l.filter fun p ↦ B.mainVariable < p.mainVariable ∧ p.initial.reducedToSet BS'
       have hl1' : ∀ p ∈ l', p ≠ 0 := fun p hp ↦ hl1 p (List.mem_of_mem_filter hp)
       have hl2' : ∀ p ∈ l', BS'.canConcat p := fun p hp ↦
         have := List.mem_filter.mp hp
@@ -220,7 +223,7 @@ lemma basicSetGo_le_ascendingSet (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l,
     refine ⟨hT4 p hp1 hp2.2, ?_, reducedToSet_iff.mpr fun i (hi : i < BS.length + 1) ↦ ?_⟩
     <;> rcases hp1 with ⟨k, hk1, hk2⟩
     · simp only [(so_iff.mp Bsoq).1, ← hk2] at hp2 ⊢
-      refine cls_lt_of_index_lt ?_ hk1
+      refine mainVariable_lt_of_index_lt ?_ hk1
       contrapose! hp2
       intro hk3
       rcases lt_or_eq_of_le hp2 with hk2 | hk2

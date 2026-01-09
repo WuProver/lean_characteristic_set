@@ -11,21 +11,21 @@ including the Class, Degree, Rank, and Reduction of multivariate polynomials.
 
 ## Main Definitions
 
-* `MvPolynomial.cls`:
-  The "class" of a polynomial, defined as the maximum variable index in its support.
-* `MvPolynomial.degree`: The degree of the polynomial with respect to its class variable.
+* `MvPolynomial.mainVariable`:
+  The "main variable" of a polynomial, defined as the maximum variable index in its support.
+* `MvPolynomial.mainDegree`: The degree of the polynomial with respect to its main variable.
 * `MvPolynomial.rank`:
-  A lexicographic combination of class and degree, defining a well-ordering on polynomials.
+  A lexicographic combination of main variable and degree, defining a well-ordering on polynomials.
 * `MvPolynomial.reducedTo`:
   The predicate indicating that a polynomial `q` is reduced with respect to `p`
-  (meaning `q` has lower degree in `p`'s class variable).
+  (meaning `q` has lower degree in `p`'s main variable).
 * `MvPolynomial.reducedToSet`: `q` is reduced with respect to every polynomial in a set.
 
 ## Implementation Notes
 
 We assume a linear order on the variable type `σ`.
-The class `cls p` is of type `WithBot σ` to handle the zero polynomial
-conveniently (where `cls 0 = ⊥`).
+The main variable `mainVariable p` is of type `WithBot σ` to handle the zero polynomial
+conveniently (where `mainVariable 0 = ⊥`).
 
 -/
 
@@ -39,36 +39,38 @@ section Class
 
 variable [LinearOrder σ]
 
-/-- The class of a multivariate polynomial `p` is the largest variable index appearing in `p`.
-If `p = 0`, its class is `⊥`. -/
-def cls (p : R[σ]) : WithBot σ := p.support.sup (fun s ↦ s.support.max)
+/-- The main variable of a multivariate polynomial `p` is the largest variable index
+appearing in `p`. If `p = 0`, its main variable is `⊥`. -/
+def mainVariable (p : R[σ]) : WithBot σ := p.support.sup (fun s ↦ s.support.max)
 
-theorem cls_def (p : R[σ]) : p.cls = p.support.sup (fun s ↦ s.support.max) := rfl
+theorem mainVariable_def (p : R[σ]) : p.mainVariable = p.support.sup (fun s ↦ s.support.max) := rfl
 
-@[simp] theorem cls_zero : (0 : R[σ]).cls = ⊥ := rfl
+@[simp] theorem mainVariable_zero : (0 : R[σ]).mainVariable = ⊥ := rfl
 
-theorem ne_zero_of_cls_ne_bot : p.cls ≠ ⊥ → p ≠ 0 := mt fun h ↦ h ▸ cls_zero
+theorem ne_zero_of_mainVariable_ne_bot : p.mainVariable ≠ ⊥ → p ≠ 0 :=
+  mt fun h ↦ h ▸ mainVariable_zero
 
-@[simp] theorem cls_monomial {r : R} (s : σ →₀ ℕ) (hr : r ≠ 0) :
-    (monomial s r : R[σ]).cls = s.support.max := by
-  rw [← single_eq_monomial, cls, support, Finsupp.support_single_ne_zero s hr, Finset.sup_singleton]
+@[simp] theorem mainVariable_monomial {r : R} (s : σ →₀ ℕ) (hr : r ≠ 0) :
+    (monomial s r : R[σ]).mainVariable = s.support.max := by
+  rw [← single_eq_monomial, mainVariable, support, Finsupp.support_single_ne_zero s hr,
+    Finset.sup_singleton]
 
-@[simp] theorem cls_C (r : R) : (C r : R[σ]).cls = ⊥ := by
+@[simp] theorem mainVariable_C (r : R) : (C r : R[σ]).mainVariable = ⊥ := by
   by_cases h : r = 0
-  · simp only [cls, h, C_0, support_zero, Finset.sup_empty]
-  rw [C_apply, cls_monomial _ h, Finsupp.support_zero, Finset.max_empty]
+  · simp only [mainVariable, h, C_0, support_zero, Finset.sup_empty]
+  rw [C_apply, mainVariable_monomial _ h, Finsupp.support_zero, Finset.max_empty]
 
-@[simp] theorem cls_X_pow [Nontrivial R] (i : σ) {k : ℕ} (hk : k ≠ 0) :
-    ((X i : R[σ]) ^ k).cls = i := by
-  rewrite [X_pow_eq_monomial, cls_monomial _ one_ne_zero, Finsupp.single]
+@[simp] theorem mainVariable_X_pow [Nontrivial R] (i : σ) {k : ℕ} (hk : k ≠ 0) :
+    ((X i : R[σ]) ^ k).mainVariable = i := by
+  rewrite [X_pow_eq_monomial, mainVariable_monomial _ one_ne_zero, Finsupp.single]
   simp only [hk, reduceIte, Finset.max_singleton]
 
-@[simp] theorem cls_X [Nontrivial R] (i : σ) : (X i : R[σ]).cls = i :=
-  (pow_one (X i : R[σ])).symm ▸ cls_X_pow i Nat.one_ne_zero
+@[simp] theorem mainVariable_X [Nontrivial R] (i : σ) : (X i : R[σ]).mainVariable = i :=
+  (pow_one (X i : R[σ])).symm ▸ mainVariable_X_pow i Nat.one_ne_zero
 
-theorem cls_eq_bot_iff : p.cls = ⊥ ↔ (∃ r : R, p = C r) := by
-  refine Iff.intro (fun h ↦ ?_) (fun h ↦ h.choose_spec ▸ cls_C h.choose)
-  simp only [cls, Finset.sup_eq_bot_iff, mem_support_iff, ne_eq] at h
+theorem mainVariable_eq_bot_iff : p.mainVariable = ⊥ ↔ (∃ r : R, p = C r) := by
+  refine Iff.intro (fun h ↦ ?_) (fun h ↦ h.choose_spec ▸ mainVariable_C h.choose)
+  simp only [mainVariable, Finset.sup_eq_bot_iff, mem_support_iff, ne_eq] at h
   have h (m : σ →₀ ℕ) (hs : m ∈ p.support) : m = 0 :=
     have hs : ¬p.coeff m = 0 := mem_support_iff.mp hs
     Finsupp.support_eq_empty.mp <| Finset.max_eq_bot.mp (h m hs)
@@ -78,8 +80,9 @@ theorem cls_eq_bot_iff : p.cls = ⊥ ↔ (∃ r : R, p = C r) := by
   nth_rewrite 1 [map_sum, as_sum p]
   apply Or.elim h <;> (intro h; exact h ▸ rfl)
 
-theorem cls_add_le (p q : R[σ]) : (p + q).cls ≤ p.cls ⊔ q.cls := by
-  rewrite [cls, cls, cls, ← Finset.sup_union]
+theorem mainVariable_add_le (p q : R[σ]) :
+    (p + q).mainVariable ≤ p.mainVariable ⊔ q.mainVariable := by
+  rewrite [mainVariable, mainVariable, mainVariable, ← Finset.sup_union]
   apply Finset.sup_le
   intro a amem
   have : a ∈ p.support ∪ q.support := by
@@ -90,23 +93,24 @@ theorem cls_add_le (p q : R[σ]) : (p + q).cls ≤ p.cls ⊔ q.cls := by
   apply Finset.le_sup this
 
 open Classical in
-theorem cls_sum_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
-    (∑ a ∈ s, f a).cls ≤ s.sup (fun a ↦ (f a).cls) := by
+theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
+    (∑ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
   refine Finset.induction_on s (by simp) ?_
   intro a s has ih
   rw [Finset.sum_insert has, Finset.sup_insert]
-  exact (cls_add_le _ _).trans (sup_le_sup_left ih _)
+  exact (mainVariable_add_le _ _).trans (sup_le_sup_left ih _)
 
-theorem degreeOf_eq_zero_of_cls_lt {i : σ} : p.cls < i → p.degreeOf i = 0 := fun h ↦ by
+theorem degreeOf_eq_zero_of_mainVariable_lt {i : σ} :
+    p.mainVariable < i → p.degreeOf i = 0 := fun h ↦ by
   rewrite [degreeOf_eq_sup, ← Nat.bot_eq_zero, Finset.sup_eq_bot_iff, Nat.bot_eq_zero]
   intro s hs
   refine Finsupp.notMem_support_iff.mp ?_
   contrapose! h
   apply le_trans (Finset.le_max h)
-  apply cls_def p ▸ Finset.le_sup hs
+  apply mainVariable_def p ▸ Finset.le_sup hs
 
-@[simp] theorem degreeOf_of_bot_cls (i : σ) : p.cls = ⊥ → p.degreeOf i = 0 :=
-  fun h ↦ degreeOf_eq_zero_of_cls_lt (h ▸ WithBot.bot_lt_coe i)
+@[simp] theorem degreeOf_of_bot_mainVariable (i : σ) : p.mainVariable = ⊥ → p.degreeOf i = 0 :=
+  fun h ↦ degreeOf_eq_zero_of_mainVariable_lt (h ▸ WithBot.bot_lt_coe i)
 
 end Class
 
@@ -192,62 +196,65 @@ theorem degreeOf_eq_of_degreeOf_add_lt {p q : R[σ]}
 
 variable [LinearOrder σ] {c : σ}
 
-/-- The "main degree" of `p`: the degree of `p` with respect to its class variable.
-If `cls p = ⊥` (i.e., `p` is a constant or zero), the degree is 0. -/
-noncomputable def degree (p : R[σ]) : ℕ :=
-  match cls p with
+/-- The "main degree" of `p`: the degree of `p` with respect to its main variable.
+If `mainVariable p = ⊥` (i.e., `p` is a constant or zero), the degree is 0. -/
+noncomputable def mainDegree (p : R[σ]) : ℕ :=
+  match mainVariable p with
   | ⊥ => 0
   | some c => p.degreeOf c
 
-theorem degree_of_cls_isSome : p.cls = c → p.degree = p.degreeOf c :=
-  fun h ↦ by rw [degree, h]
+theorem mainDegree_of_mainVariable_isSome : p.mainVariable = c → p.mainDegree = p.degreeOf c :=
+  fun h ↦ by rw [mainDegree, h]
 
-theorem degree_of_cls_isSome' : p.cls = c → p.degree = p.support.sup (fun s ↦ s c) :=
-  fun h ↦ by rw [degree_of_cls_isSome h, degreeOf_eq_sup]
+theorem mainDegree_of_mainVariable_isSome' :
+    p.mainVariable = c → p.mainDegree = p.support.sup (fun s ↦ s c) :=
+  fun h ↦ by rw [mainDegree_of_mainVariable_isSome h, degreeOf_eq_sup]
 
-theorem degree_eq_zero_iff : p.degree = 0 ↔ p.cls = ⊥ where
+theorem mainDegree_eq_zero_iff : p.mainDegree = 0 ↔ p.mainVariable = ⊥ where
   mp h :=
-    match hc : p.cls with
+    match hc : p.mainVariable with
     | ⊥ => rfl
     | some c => by
-      simp only [degree_of_cls_isSome hc, degreeOf_eq_sup] at h
+      simp only [mainDegree_of_mainVariable_isSome hc, degreeOf_eq_sup] at h
       rewrite [← Nat.bot_eq_zero, Finset.sup_eq_bot_iff] at h
       simp only [mem_support_iff, ne_eq, Nat.bot_eq_zero] at h
-      have : ⊥ < p.cls := by rewrite [hc]; exact compareOfLessAndEq_eq_lt.mp rfl
-      rcases (Finset.le_sup_iff this).mp <| ge_of_eq p.cls_def with ⟨t, ht1, ht2⟩
-      absurd (Finset.sup_le_iff.mp <| le_of_eq <| p.cls_def.symm.trans hc) t ht1
+      have : ⊥ < p.mainVariable := by rewrite [hc]; exact compareOfLessAndEq_eq_lt.mp rfl
+      rcases (Finset.le_sup_iff this).mp <| ge_of_eq p.mainVariable_def with ⟨t, ht1, ht2⟩
+      absurd (Finset.sup_le_iff.mp <| le_of_eq <| p.mainVariable_def.symm.trans hc) t ht1
       have h := Finsupp.notMem_support_iff.mpr (h t <| mem_support_iff.mp ht1)
       have : c ≠ t.support.max := by contrapose! h; exact Finset.mem_of_max h.symm
       exact not_le_of_gt <| lt_of_le_of_ne (le_of_eq_of_le hc.symm ht2) this
-  mpr h := by rw [degree, h]
+  mpr h := by rw [mainDegree, h]
 
-theorem degree_eq_zero_iff' : p.degree = 0 ↔ (∃ r : R, p = C r) :=
-  Iff.trans degree_eq_zero_iff cls_eq_bot_iff
+theorem mainDegree_eq_zero_iff' : p.mainDegree = 0 ↔ (∃ r : R, p = C r) :=
+  Iff.trans mainDegree_eq_zero_iff mainVariable_eq_bot_iff
 
-theorem degreeOf_cls_ne_zero : p.cls = c → p.degreeOf c ≠ 0 := fun h ↦
-  have := (not_iff_not.mpr degree_eq_zero_iff).mpr (h ▸ WithBot.coe_ne_bot)
-  degree_of_cls_isSome h ▸ this
+theorem degreeOf_mainVariable_ne_zero : p.mainVariable = c → p.degreeOf c ≠ 0 := fun h ↦
+  have := (not_iff_not.mpr mainDegree_eq_zero_iff).mpr (h ▸ WithBot.coe_ne_bot)
+  mainDegree_of_mainVariable_isSome h ▸ this
 
-theorem cls_mem_degrees : p.cls = c → c ∈ p.degrees := fun h ↦
-  have := degreeOf_cls_ne_zero h; Multiset.count_ne_zero.mp (degreeOf_def c p ▸ this)
+theorem mainVariable_mem_degrees : p.mainVariable = c → c ∈ p.degrees := fun h ↦
+  have := degreeOf_mainVariable_ne_zero h; Multiset.count_ne_zero.mp (degreeOf_def c p ▸ this)
 
-@[simp] theorem degree_zero : (0 : R[σ]).degree = 0 := rfl
+@[simp] theorem mainDegree_zero : (0 : R[σ]).mainDegree = 0 := rfl
 
-@[simp] theorem degree_monomial {s : σ →₀ ℕ} {r : R} (hr : r ≠ 0)
-    (hs : s.support.max = c) : (monomial s r).degree = s c := by
-  rewrite [degree_of_cls_isSome <| (cls_monomial s hr).trans hs]
+@[simp] theorem mainDegree_monomial {s : σ →₀ ℕ} {r : R} (hr : r ≠ 0)
+    (hs : s.support.max = c) : (monomial s r).mainDegree = s c := by
+  rewrite [mainDegree_of_mainVariable_isSome <| (mainVariable_monomial s hr).trans hs]
   exact degreeOf_monomial_eq s c hr
 
-@[simp] theorem degree_C (r : R) : (C r : R[σ]).degree = 0 := degree_eq_zero_iff.mpr <| cls_C r
+@[simp] theorem mainDegree_C (r : R) : (C r : R[σ]).mainDegree = 0 :=
+  mainDegree_eq_zero_iff.mpr <| mainVariable_C r
 
-@[simp] theorem degree_X_pow [Nontrivial R] (i : σ) (k : ℕ) : ((X i : R[σ]) ^ k).degree = k := by
+@[simp] theorem mainDegree_X_pow [Nontrivial R] (i : σ) (k : ℕ) :
+    ((X i : R[σ]) ^ k).mainDegree = k := by
   by_cases hk : k = 0
-  · exact hk ▸ pow_zero (X i : R[σ]) ▸ degree_C 1
+  · exact hk ▸ pow_zero (X i : R[σ]) ▸ mainDegree_C 1
   have : (Finsupp.single i k).support.max = i := by rw [Finsupp.support_single_ne_zero i hk]; rfl
-  rw [X_pow_eq_monomial, degree_monomial one_ne_zero this, Finsupp.single_eq_same]
+  rw [X_pow_eq_monomial, mainDegree_monomial one_ne_zero this, Finsupp.single_eq_same]
 
-@[simp] theorem degree_X [Nontrivial R] (i : σ) : (X i : R[σ]).degree = 1 :=
-  pow_one (X i : R[σ]) ▸ degree_X_pow i 1
+@[simp] theorem mainDegree_X [Nontrivial R] (i : σ) : (X i : R[σ]).mainDegree = 1 :=
+  pow_one (X i : R[σ]) ▸ mainDegree_X_pow i 1
 
 end Degree
 
@@ -255,13 +262,14 @@ section Rank
 
 variable [LinearOrder σ] {p : R[σ]}
 
-/-- The rank of a polynomial `p` is the pair `(cls p, degree p)`.
+/-- The rank of a polynomial `p` is the pair `(mainVariable p, degree p)`.
 Ranks are ordered lexicographically. -/
-noncomputable def rank (p : R[σ]) : WithBot σ ×ₗ ℕ := (p.cls, p.degree)
+noncomputable def rank (p : R[σ]) : WithBot σ ×ₗ ℕ := (p.mainVariable, p.mainDegree)
 
-theorem rank_def : p.rank = (p.cls, p.degree) := rfl
+theorem rank_def : p.rank = (p.mainVariable, p.mainDegree) := rfl
 
-theorem rank_eq : p.rank = q.rank ↔ p.cls = q.cls ∧ p.degree = q.degree := Prod.mk_inj
+theorem rank_eq : p.rank = q.rank ↔ p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree :=
+  Prod.mk_inj
 
 instance instPreorder : Preorder R[σ] where
   le := InvImage (· ≤ ·) rank
@@ -278,32 +286,37 @@ noncomputable instance instDecidableLT : DecidableLT R[σ] := decidableLTOfDecid
 instance instIsTotalLe : IsTotal R[σ] (· ≤ ·) where
   total p q := le_total p.rank q.rank
 
-theorem le_def : p ≤ q ↔ p.cls < q.cls ∨ p.cls = q.cls ∧ p.degree ≤ q.degree := Prod.lex_def
+theorem le_def : p ≤ q ↔ p.mainVariable < q.mainVariable ∨
+    p.mainVariable = q.mainVariable ∧ p.mainDegree ≤ q.mainDegree := Prod.lex_def
 
-theorem le_iff : (p ≤ q) ↔ ¬(p.cls < q.cls) → (p.cls = q.cls ∧ p.degree ≤ q.degree) :=
+theorem le_iff : (p ≤ q) ↔ ¬(p.mainVariable < q.mainVariable) →
+    (p.mainVariable = q.mainVariable ∧ p.mainDegree ≤ q.mainDegree) :=
   Iff.trans le_def <| Decidable.or_iff_not_imp_left
 
-theorem cls_le_of_le : p ≤ q → p.cls ≤ q.cls :=
+theorem mainVariable_le_of_le : p ≤ q → p.mainVariable ≤ q.mainVariable :=
   fun h ↦ Or.elim (le_def.mp h) le_of_lt (fun h ↦ le_of_eq h.1)
 
 theorem lt_def' : p < q ↔ p.rank < q.rank := Iff.trans lt_iff_le_not_ge (by
   rewrite [le_def', le_def', not_le, and_iff_right_iff_imp]
   exact le_of_lt)
 
-theorem lt_def : p < q ↔ p.cls < q.cls ∨ p.cls = q.cls ∧ p.degree < q.degree :=
+theorem lt_def : p < q ↔ p.mainVariable < q.mainVariable ∨
+    p.mainVariable = q.mainVariable ∧ p.mainDegree < q.mainDegree :=
   Iff.trans lt_def' Prod.lex_def
 
-theorem lt_iff : p < q ↔ ¬(p.cls < q.cls) → p.cls = q.cls ∧ p.degree < q.degree :=
+theorem lt_iff : p < q ↔ ¬(p.mainVariable < q.mainVariable)
+    → p.mainVariable = q.mainVariable ∧ p.mainDegree < q.mainDegree :=
   Iff.trans lt_def <| Decidable.or_iff_not_imp_left
 
-theorem lt_of_cls_lt : p.cls < q.cls → p < q := fun h ↦ lt_def.mpr <| Or.inl h
+theorem lt_of_mainVariable_lt : p.mainVariable < q.mainVariable → p < q :=
+  fun h ↦ lt_def.mpr <| Or.inl h
 
 @[simp] theorem not_lt_iff_ge : ¬(p < q) ↔ q ≤ p := by rw [le_def', lt_def', not_lt]
 
 @[simp] theorem not_le_iff_gt : ¬(p ≤ q) ↔ q < p := by rw [le_def', lt_def', not_le]
 
 theorem X_lt_of_lt [Nontrivial R] {i j : σ} : i < j → (X i : R[σ]) < X j := fun h ↦ by
-  apply lt_of_cls_lt; rewrite [cls_X, cls_X, WithBot.coe_lt_coe]; exact h
+  apply lt_of_mainVariable_lt; rewrite [mainVariable_X, mainVariable_X, WithBot.coe_lt_coe]; exact h
 
 instance instSetoid : Setoid (R[σ]) := AntisymmRel.setoid R[σ] (· ≤ ·)
 
@@ -318,7 +331,8 @@ theorem so_def' : p ≈ q ↔ p.rank = q.rank := Iff.trans so_def''
 theorem so_def : p ≈ q ↔ ¬p < q ∧ ¬q < p := Iff.trans so_def''
   (by rw [not_lt_iff_ge, not_lt_iff_ge, and_comm])
 
-theorem so_iff : p ≈ q ↔ p.cls = q.cls ∧ p.degree = q.degree := Iff.trans so_def' rank_eq
+theorem so_iff : p ≈ q ↔ p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree :=
+  Iff.trans so_def' rank_eq
 
 theorem le_iff_lt_or_so : p ≤ q ↔ p < q ∨ p ≈ q := le_iff_lt_or_antisymmRel
 
@@ -330,7 +344,7 @@ theorem so_of_le_of_ge : p ≤ q → q ≤ p → p ≈ q := And.intro
 
 protected theorem zero_le : 0 ≤ p := by
   apply le_def'.mpr
-  rewrite [rank, cls_zero, degree_zero]
+  rewrite [rank, mainVariable_zero, mainDegree_zero]
   exact StrictMono.minimal_preimage_bot (fun ⦃a b⦄ a ↦ a) rfl p.rank
 
 end Rank
@@ -369,85 +383,86 @@ section Reduced
 variable [DecidableEq R] [LinearOrder σ] {p q r : R[σ]}
 
 /-- `q` is reduced with respect to `p`if `q = 0` or
-if the degree of `q` in the class variable of `p` is strictly less than the degree of `p`.
+if the degree of `q` in the main variable of `p` is strictly less than the degree of `p`.
 
-Note: if `p` is a constant (cls p = ⊥), then no non-zero `q` is reduced with respect to `p`. -/
+Note: if `p` is a constant, then no non-zero `q` is reduced with respect to `p`. -/
 def reducedTo (q p : R[σ]) : Prop :=
   if q = 0 then True
   else
-    match p.cls with
+    match p.mainVariable with
     | ⊥ => False
     | some c => q.degreeOf c < p.degreeOf c
 
 theorem zero_reducedTo (p : R[σ]) : (0 : R[σ]).reducedTo p := trivial
 
-theorem not_reducedTo_of_bot_cls (hq : q ≠ 0) : p.cls = ⊥ → ¬q.reducedTo p :=
+theorem not_reducedTo_of_bot_mainVariable (hq : q ≠ 0) : p.mainVariable = ⊥ → ¬q.reducedTo p :=
   fun hp ↦ by simp only [reducedTo, hq, reduceIte, hp, not_false_eq_true]
 
-theorem cls_ne_bot_of_reducedTo (hq : q ≠ 0) : q.reducedTo p → p.cls ≠ ⊥ :=
-  fun hp con ↦ not_reducedTo_of_bot_cls hq con hp
+theorem mainVariable_ne_bot_of_reducedTo (hq : q ≠ 0) : q.reducedTo p → p.mainVariable ≠ ⊥ :=
+  fun hp con ↦ not_reducedTo_of_bot_mainVariable hq con hp
 
-theorem reducedTo_iff {c : σ} (hp : p.cls = c) (hq : q ≠ 0) :
+theorem reducedTo_iff {c : σ} (hp : p.mainVariable = c) (hq : q ≠ 0) :
     q.reducedTo p ↔ q.degreeOf c < p.degreeOf c := by simp only [reducedTo, hq, reduceIte, hp]
 
 noncomputable instance : DecidableRel (@reducedTo R σ _ _ _) := fun q p ↦
   if hq : q = 0 then isTrue <| hq ▸ zero_reducedTo p
   else
-    match hp : p.cls with
-    | ⊥ => isFalse <| not_reducedTo_of_bot_cls hq hp
+    match hp : p.mainVariable with
+    | ⊥ => isFalse <| not_reducedTo_of_bot_mainVariable hq hp
     | some _ => decidable_of_iff _ (reducedTo_iff hp hq).symm
 
-theorem reducedTo_of_cls_lt (h : q.cls < p.cls) : q.reducedTo p := by
+theorem reducedTo_of_mainVariable_lt (h : q.mainVariable < p.mainVariable) : q.reducedTo p := by
   if hq : q = 0 then exact hq ▸ zero_reducedTo p
   else
     rcases WithBot.ne_bot_iff_exists.mp <| LT.lt.ne_bot h with ⟨c, hc⟩
     apply (reducedTo_iff hc.symm hq).mpr
-    rewrite [degreeOf_eq_zero_of_cls_lt (hc ▸ h)]
-    exact Nat.pos_of_ne_zero <| degreeOf_cls_ne_zero hc.symm
+    rewrite [degreeOf_eq_zero_of_mainVariable_lt (hc ▸ h)]
+    exact Nat.pos_of_ne_zero <| degreeOf_mainVariable_ne_zero hc.symm
 
 theorem reducedTo_congr_right : p ≈ q → (r.reducedTo p ↔ r.reducedTo q) := fun h ↦
   have (p q : R[σ]) (h : p ≈ q) : r.reducedTo p → r.reducedTo q := by
-    have : p.cls = q.cls ∧ p.degree = q.degree := so_iff.mp h
+    have : p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree := so_iff.mp h
     simp only [reducedTo, if_true_left]
     intro hr1 hr2
-    match hc : q.cls with
+    match hc : q.mainVariable with
     | none => simp [hr2, hc ▸ this.1] at hr1
     | some c =>
       have hc' := hc ▸ this.1
-      simp [hr2, hc', degree_of_cls_isSome hc' ▸ this.2] at hr1
-      simp only [degree_of_cls_isSome hc ▸ hr1]
+      simp [hr2, hc', mainDegree_of_mainVariable_isSome hc' ▸ this.2] at hr1
+      simp only [mainDegree_of_mainVariable_isSome hc ▸ hr1]
   ⟨this p q h, this q p h.symm⟩
 
-theorem reducedTo_iff_gt_of_cls_eq (hq : q ≠ 0) (h : q.cls = p.cls) :
+theorem reducedTo_iff_gt_of_mainVariable_eq (hq : q ≠ 0) (h : q.mainVariable = p.mainVariable) :
     q.reducedTo p ↔ q < p where
   mp hl :=
-    match hp : p.cls with
-    | ⊥ => absurd hl <| not_reducedTo_of_bot_cls hq hp
+    match hp : p.mainVariable with
+    | ⊥ => absurd hl <| not_reducedTo_of_bot_mainVariable hq hp
     | some c => lt_def.mpr <| Or.inr ⟨h, by
-      rewrite [degree_of_cls_isSome hp, degree_of_cls_isSome <| h.trans hp]
+      rw [mainDegree_of_mainVariable_isSome hp, mainDegree_of_mainVariable_isSome <| h.trans hp]
       exact (reducedTo_iff hp hq).mp hl⟩
   mpr hr :=
-    have : q.degree < p.degree := (lt_iff.mp hr <| Eq.not_lt h).2
-    match hp : p.cls with
+    have : q.mainDegree < p.mainDegree := (lt_iff.mp hr <| Eq.not_lt h).2
+    match hp : p.mainVariable with
     | ⊥ => by
-      rewrite [degree_eq_zero_iff.mpr hp, degree_eq_zero_iff.mpr (h ▸ hp)] at this
+      rewrite [mainDegree_eq_zero_iff.mpr hp, mainDegree_eq_zero_iff.mpr (h ▸ hp)] at this
       exact absurd this <| Nat.not_lt_zero 0
     | some c => by
-      rewrite [degree_of_cls_isSome hp, degree_of_cls_isSome (h ▸ hp)] at this
+      rw [mainDegree_of_mainVariable_isSome hp, mainDegree_of_mainVariable_isSome (h ▸ hp)] at this
       exact (reducedTo_iff hp hq).mpr this
 
 theorem not_reduceTo_self (h : p ≠ 0) : ¬p.reducedTo p :=
-  mt (reducedTo_iff_gt_of_cls_eq h rfl).mp (lt_irrefl p)
+  mt (reducedTo_iff_gt_of_mainVariable_eq h rfl).mp (lt_irrefl p)
 
-theorem cls_lt_of_reducedTo_of_le (h1 : q ≠ 0) (h2 : p ≤ q) (h3 : q.reducedTo p) :
-    p.cls < q.cls := by
+theorem mainVariable_lt_of_reducedTo_of_le (h1 : q ≠ 0) (h2 : p ≤ q) (h3 : q.reducedTo p) :
+    p.mainVariable < q.mainVariable := by
   by_contra con
-  have con : q.cls = p.cls := le_antisymm (not_lt.mp con) (cls_le_of_le h2)
-  have := (reducedTo_iff_gt_of_cls_eq h1 con).mp h3
+  have con : q.mainVariable = p.mainVariable :=
+    le_antisymm (not_lt.mp con) (mainVariable_le_of_le h2)
+  have := (reducedTo_iff_gt_of_mainVariable_eq h1 con).mp h3
   exact absurd h2 <| not_le_iff_gt.mpr this
 
 theorem lt_of_reducedTo_of_le (h1 : q ≠ 0) (h2 : p ≤ q) (h3 : q.reducedTo p) : p < q :=
-  lt_of_cls_lt <| cls_lt_of_reducedTo_of_le h1 h2 h3
+  lt_of_mainVariable_lt <| mainVariable_lt_of_reducedTo_of_le h1 h2 h3
 
 variable {α : Type*} [Membership R[σ] α] {p q : R[σ]} {a : α}
 
