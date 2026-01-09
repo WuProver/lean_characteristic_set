@@ -1,5 +1,31 @@
 import CharacteristicSet.Basic
 
+/-!
+# Initial of a Polynomial
+
+This file defines the **initial** of a multivariate polynomial.
+
+For a polynomial `p` with main variable `xᵢ`, the initial is the coefficient (a polynomial)
+of the highest power of `xᵢ` appearing in `p`.
+
+## Main Definitions
+
+* `MvPolynomial.initialOf i p`:
+  The initial of `p` with respect to a specific variable `i`.
+  This is the coefficient of `X i ^ degᵢ(p)`.
+* `MvPolynomial.initial`:
+  The initial of `p` with respect to its main variable.
+  For constants, this is defined as `1`.
+
+## Main Theorems
+
+* `initialOf_decomposition`: `p = initᵢ(p) * Xᵢ^degᵢ(p) + remainder`
+  where `degᵢ(remainder) < degᵢ(p)`
+* `initial_reducedTo`: The initial is always reduced w.r.t. the original polynomial
+* `initialOf_mul`: `initialOf(p * q) = initialOf(p) * initialOf(q)` (for integral domains)
+
+-/
+
 namespace MvPolynomial
 
 variable {R σ : Type*} [CommSemiring R]
@@ -264,6 +290,8 @@ theorem initialOf_add_of_degreeOf_eq_of_ne {p q : R[σ]}
       lt_of_le_of_lt (degreeOf_add_le ..) <| max_lt hp1 hq1
   exact initialOf_eq_of_initialOf_decomposition hi d_zero hlt decomp
 
+/-- Decomposition lemma for proving `initialOf_mul`:
+`p * q = initᵢ(p) * initᵢ(q) * Xᵢ^(degᵢ(p) + degᵢ(q)) + r` where `degᵢ(r) < degᵢ(p) + degᵢ(q)`. -/
 theorem initialOf_mul_decomposition (q : R[σ]) : ∃ r, r.degreeOf i ≤ p.degreeOf i + q.degreeOf i - 1
     ∧ p * q = p.initialOf i * q.initialOf i * X i ^ (p.degreeOf i + q.degreeOf i) + r := by
   obtain ⟨p', hp1, hp2⟩ := p.initialOf_decomposition i

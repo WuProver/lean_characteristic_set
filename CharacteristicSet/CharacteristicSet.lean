@@ -23,6 +23,11 @@ This file implements the core algorithms of Wu's Method for solving systems of a
 
 ## Main Theorems
 
+* Well-Ordering Principles:
+  - `vanishingSet_diff_initialProd_subset`: `Zero(CS/IP) ⊆ Zero(PS)`
+  - `vanishingSet_diff_initialProd_eq`: `Zero(CS/IP) = Zero(PS/IP)`
+  - `vanishingSet_decomposition`: `Zero(PS) = Zero(CS/IP) ∪ ⋃_{CS} Zero(PS ∪ {init(p)})`
+* `characteristicSet_isCharacteristicSet`: The algorithm computes a valid characteristic set
 * `vanishingSet_eq_zeroDecomposition_union`: Zero Decomposition Theorem.
   The variety of the input system is exactly the union of the "quasi-varieties"
   defined by the computed triangular sets.
@@ -114,7 +119,7 @@ theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
   refine Set.subset_diff.mpr ⟨?_ ,Set.disjoint_sdiff_left⟩
   exact vanishingSet_diff_initialProd_subset K h.1
 
-/-- Well-Ordering Principle (3): `Zero(PS) = Zero(CS/IP) ∪ (⋃ Zero(PS ∪ {Iᵢ}))` -/
+/-- Well-Ordering Principle (3): `Zero(PS) = Zero(CS/IP) ∪ ⋃_{CS} Zero(PS ∪ {init(p)})` -/
 theorem vanishingSet_decomposition (h : CS.isCharacteristicSet K PS) : vanishingSet K PS =
       vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) ∪
       ⋃ p ∈ CS, vanishingSet K PS ∩ singleVanishingSet K p.initial := by

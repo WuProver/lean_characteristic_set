@@ -2,6 +2,39 @@ import CharacteristicSet.TriangulatedSet
 import CharacteristicSet.Initial
 import Mathlib.Algebra.BigOperators.Fin
 
+/-!
+# Pseudo-Division
+
+This file defines **pseudo-division** of multivariate polynomials,
+a fundamental operation in the Characteristic Set Method.
+
+## Main Definitions
+
+* `MvPolynomial.pseudoOf`:
+  Pseudo-division of `g` by `f` with respect to a variable `i` (over commutative rings).
+* `MvPolynomial.pseudo`:
+  General pseudo-division that handles constants and zero (over fields).
+* `MvPolynomial.setPseudo`:
+  Successive pseudo-division by all polynomials in a triangular set.
+* `MvPolynomial.setPseudoRem`:
+  Computes only the remainder (more efficient when quotients are not needed).
+* `MvPolynomial.isRemainder`:
+  A predicate stating that `r` is a valid remainder of `g` by `f`,
+  meaning `r` is reduced w.r.t. `f` and `init(f)^s * g = q * f + r` for some `s, q`.
+* `MvPolynomial.isSetRemainder`:
+  A predicate stating that `r` is a valid remainder of `g` by a triangular set `S`,
+  meaning `r` is reduced w.r.t. `S` and satisfies the extended division equation.
+
+## Main Theorems
+
+* `pseudoOf_equation`: `init(f) ^ s * g = q * f + r` where `deg(r) < deg(f)`
+* `pseudoOf_remainder_reducedTo`: The remainder is reduced w.r.t. the divisor
+* `pseudo_remainder_isRemainder`: The remainder satisfies the `isRemainder` predicate
+* `setPseudo_remainder_isSetRemainder`: The remainder satisfies the `isSetRemainder` predicate
+* `setPseudo_remainder_eq_zero_of_mem`: Elements of `S` have zero remainder when divided by `S`
+
+-/
+
 namespace MvPolynomial
 
 /-- The result of a pseudo-division of `g` by `f`.

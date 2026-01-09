@@ -23,9 +23,11 @@ such that their main variables (main variables) are strictly increasing:
 
 ## Main Results
 
-* `TriangulatedSet.instWellFoundedLT`: Proof that the set of triangulated sets is well-founded
-  under the defined rank ordering (assuming finite variables).
-  This is crucial for the termination of characteristic set algorithms.
+* `TriangulatedSet.instWellFoundedLT`: Proof that triangulated sets are well-founded
+  under the rank ordering (assuming finite variables).
+  This guarantees termination of characteristic set algorithms.
+* `TriangulatedSet.takeConcat_lt_of_reducedToSet`: Appending a reduced element
+  strictly decreases the rank, used to prove termination of basic set algorithms.
 
 -/
 
@@ -608,6 +610,8 @@ private theorem _rank_lt_iff [Fintype σ] : S._rank < T._rank ↔ S.rank < T.ran
 
 variable [Finite σ] (S' : Set (TriangulatedSet σ R))
 
+/-- The set of Triangulated Sets is well-founded under the lexicographic rank ordering.
+This is a crucial result that guarantees the termination of the Characteristic Set Algorithm. -/
 instance instIsWellFoundedRankLT : IsWellFounded (TriangulatedSet σ R) (InvImage (· < ·) rank) :=
   haveI : Fintype σ := Fintype.ofFinite σ
   Subrelation.isWellFounded (InvImage (· < ·) _rank) _rank_lt_iff.mpr
