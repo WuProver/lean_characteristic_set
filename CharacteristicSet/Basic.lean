@@ -35,7 +35,7 @@ scoped[MvPolynomial] notation:9000 R "[" σ "]" => MvPolynomial σ R
 
 variable {R σ : Type*} [CommSemiring R] {p q : R[σ]}
 
-section Class
+section MainVariable
 
 variable [LinearOrder σ]
 
@@ -68,7 +68,7 @@ theorem ne_zero_of_mainVariable_ne_bot : p.mainVariable ≠ ⊥ → p ≠ 0 :=
 @[simp] theorem mainVariable_X [Nontrivial R] (i : σ) : (X i : R[σ]).mainVariable = i :=
   (pow_one (X i : R[σ])).symm ▸ mainVariable_X_pow i Nat.one_ne_zero
 
-theorem mainVariable_eq_bot_iff : p.mainVariable = ⊥ ↔ (∃ r : R, p = C r) := by
+theorem mainVariable_eq_bot_iff_eq_C : p.mainVariable = ⊥ ↔ (∃ r : R, p = C r) := by
   refine Iff.intro (fun h ↦ ?_) (fun h ↦ h.choose_spec ▸ mainVariable_C h.choose)
   simp only [mainVariable, Finset.sup_eq_bot_iff, mem_support_iff, ne_eq] at h
   have h (m : σ →₀ ℕ) (hs : m ∈ p.support) : m = 0 :=
@@ -84,21 +84,44 @@ theorem mainVariable_add_le (p q : R[σ]) :
     (p + q).mainVariable ≤ p.mainVariable ⊔ q.mainVariable := by
   rewrite [mainVariable, mainVariable, mainVariable, ← Finset.sup_union]
   apply Finset.sup_le
-  intro a amem
-  have : a ∈ p.support ∪ q.support := by
-    rewrite [mem_support_iff, coeff_add, ne_eq] at amem
-    contrapose! amem
-    simp only [Finset.mem_union, mem_support_iff, ne_eq, not_or, not_not] at amem
-    rw [amem.1, amem.2, add_zero]
-  apply Finset.le_sup this
+  intro _ smem
+  apply Finset.le_sup (support_add smem)
+
+theorem mainVariable_mul_le (p q : R[σ]) :
+    (p * q).mainVariable ≤ p.mainVariable ⊔ q.mainVariable := by
+  unfold mainVariable
+  apply Finset.sup_le
+  intro s smem
+  by_contra hs
+  have ⟨hs1, hs2⟩ : (∀ x, ¬p.coeff x = 0 → x.support.max < s.support.max) ∧
+      (∀ x, ¬q.coeff x = 0 → x.support.max < s.support.max):= by
+    simp only [not_le, max_lt_iff] at hs
+    have : ⊥ < s.support.max := bot_lt_of_lt hs.1
+    simpa [Finset.sup_lt_iff this, mem_support_iff, ne_eq] using hs
+  simp only [mem_support_iff, coeff_mul, ne_eq] at smem
+  rcases Finset.exists_ne_zero_of_sum_ne_zero smem with ⟨⟨t1, t2⟩, ht1, ht2⟩
+  simp only [Finset.mem_antidiagonal, ne_eq] at ht1 ht2
+  rcases ne_zero_and_ne_zero_of_mul ht2 with ⟨ht2, ht3⟩
+  absurd max_lt (hs1 t1 ht2) (hs2 t2 ht3)
+  rewrite [not_lt, ← ht1, ← Finset.max_union]
+  exact Finset.max_mono Finsupp.support_add
 
 open Classical in
-theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
+theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → MvPolynomial σ R) :
     (∑ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
   refine Finset.induction_on s (by simp) ?_
   intro a s has ih
-  rw [Finset.sum_insert has, Finset.sup_insert]
+  rewrite [Finset.sum_insert has, Finset.sup_insert]
   exact (mainVariable_add_le _ _).trans (sup_le_sup_left ih _)
+
+open Classical in
+theorem mainVariable_prod_le {α : Type*} (s : Finset α) (f : α → MvPolynomial σ R) :
+    (∏ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
+  induction s using Finset.induction_on with
+  | empty => simp only [Finset.prod_empty, Finset.sup_empty, le_bot_iff]; exact mainVariable_C 1
+  | insert a s has ih =>
+    rewrite [Finset.prod_insert has, Finset.sup_insert]
+    exact (mainVariable_mul_le _ _).trans (sup_le_sup_left ih _)
 
 theorem degreeOf_eq_zero_of_mainVariable_lt {i : σ} :
     p.mainVariable < i → p.degreeOf i = 0 := fun h ↦ by
@@ -112,9 +135,9 @@ theorem degreeOf_eq_zero_of_mainVariable_lt {i : σ} :
 @[simp] theorem degreeOf_of_bot_mainVariable (i : σ) : p.mainVariable = ⊥ → p.degreeOf i = 0 :=
   fun h ↦ degreeOf_eq_zero_of_mainVariable_lt (h ▸ WithBot.bot_lt_coe i)
 
-end Class
+end MainVariable
 
-section Degree
+section MainDegree
 
 variable {i j : σ}
 
@@ -227,7 +250,7 @@ theorem mainDegree_eq_zero_iff : p.mainDegree = 0 ↔ p.mainVariable = ⊥ where
   mpr h := by rw [mainDegree, h]
 
 theorem mainDegree_eq_zero_iff' : p.mainDegree = 0 ↔ (∃ r : R, p = C r) :=
-  Iff.trans mainDegree_eq_zero_iff mainVariable_eq_bot_iff
+  Iff.trans mainDegree_eq_zero_iff mainVariable_eq_bot_iff_eq_C
 
 theorem degreeOf_mainVariable_ne_zero : p.mainVariable = c → p.degreeOf c ≠ 0 := fun h ↦
   have := (not_iff_not.mpr mainDegree_eq_zero_iff).mpr (h ▸ WithBot.coe_ne_bot)
@@ -256,7 +279,7 @@ theorem mainVariable_mem_degrees : p.mainVariable = c → c ∈ p.degrees := fun
 @[simp] theorem mainDegree_X [Nontrivial R] (i : σ) : (X i : R[σ]).mainDegree = 1 :=
   pow_one (X i : R[σ]) ▸ mainDegree_X_pow i 1
 
-end Degree
+end MainDegree
 
 section Rank
 

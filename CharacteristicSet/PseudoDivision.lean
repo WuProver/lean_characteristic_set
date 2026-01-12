@@ -324,7 +324,7 @@ theorem pseudo_equation :
   · rw [pow_zero, one_mul, zero_mul, zero_add]
   match hc : f.mainVariable with
   | ⊥ =>
-    have ⟨r, hr⟩ : ∃ r, f = C r := mainVariable_eq_bot_iff.mp hc
+    have ⟨r, hr⟩ : ∃ r, f = C r := mainVariable_eq_bot_iff_eq_C.mp hc
     simp only [pow_zero, one_mul, Algebra.smul_mul_assoc, add_zero]
     simp only [hr, coeff_C, reduceIte] at f_zero ⊢
     have : r ≠ 0 := C_ne_zero.mp f_zero

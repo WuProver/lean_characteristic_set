@@ -405,7 +405,7 @@ theorem degreeOf_initial_le (p : R[σ]) (i : σ) : p.initial.degreeOf i ≤ p.de
   · simp only [hp, initial_zero, degreeOf_zero, le_refl]
   by_cases hc : p.mainVariable = ⊥
   · simp only [initial_of_bot_mainVariable hp hc]
-    have : (1 : R[σ]).mainVariable = ⊥ := mainVariable_eq_bot_iff.mpr (Exists.intro 1 rfl)
+    have : (1 : R[σ]).mainVariable = ⊥ := mainVariable_eq_bot_iff_eq_C.mpr (Exists.intro 1 rfl)
     rw [degreeOf_of_bot_mainVariable i hc, degreeOf_of_bot_mainVariable i this]
   have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hc
   exact initial_of_mainVariable_isSome' hc.symm ▸ p.degreeOf_initialOf_le c i
