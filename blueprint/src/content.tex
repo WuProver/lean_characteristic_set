@@ -410,21 +410,8 @@
 \end{proof}
 
 \begin{theorem}
-    \label{thm:degreeOf_mul}
-    \lean{MvPolynomial.initialOf_mul}
-    \leanok
-    $deg_i(p \cdot q) = deg_i(p) + deg_i(q)$ if there is no zero divisors in the coefficient ring.
-\end{theorem}
-
-\begin{proof}
-    \leanok
-    \uses{lem:degreeOf_initialOf_self, lem:initialOf_add_eq_of_degreeOf_lt, lem:initialOf_eq_of_degreeOf_eq_zero, thm:initialOf_decomposition}
-    % TODO
-\end{proof}
-
-\begin{theorem}
-    \label{thm:initialOf_mul}
-    \lean{MvPolynomial.initialOf_mul}
+    \label{thm:initialOf_mul_eq}
+    \lean{MvPolynomial.initialOf_mul_eq}
     \leanok
     \uses{def:initialOf}
     $init_i(p \cdot q) = init_i(p) \cdot init_i(q)$ if there is no zero divisors in the coefficient ring.
@@ -514,7 +501,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:degreeOf_initialOf_self, lem:initialOf_initialOf_self, lem:degreeOf_add_lt_of_initialOf_cancel, thm:degreeOf_mul, thm:initialOf_mul}
+    \uses{lem:degreeOf_initialOf_self, lem:initialOf_initialOf_self, lem:degreeOf_add_lt_of_initialOf_cancel, thm:initialOf_mul_eq}
     % TODO
 \end{proof}
 
@@ -572,7 +559,7 @@
 
 \begin{proof}
     \leanok
-    \uses{thm:degreeOf_mul, lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
+    \uses{lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
     % TODO
 \end{proof}
 

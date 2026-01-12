@@ -1,4 +1,5 @@
 import CharacteristicSet.Basic
+import Mathlib.Algebra.MvPolynomial.NoZeroDivisors
 
 /-!
 # Initial of a Polynomial
@@ -460,28 +461,12 @@ theorem initialOf_mul_C {r : R} : (p * C r).initialOf i = p.initialOf i * C r :=
 theorem initialOf_smul {r : R} : (r • p).initialOf i = r • p.initialOf i := by
   rw [smul_eq_C_mul, smul_eq_C_mul, p.initialOf_C_mul i]
 
-theorem degreeOf_mul {p q : R[σ]} (hp : p ≠ 0) (hq : q ≠ 0) :
-    (p * q).degreeOf i = p.degreeOf i + q.degreeOf i := by
-  by_cases d_zero : p.degreeOf i = 0 ∧ q.degreeOf i = 0
-  · apply le_antisymm (degreeOf_mul_le ..)
-    simp only [d_zero.1, d_zero.2, add_zero, zero_le]
-  have ⟨r, hr1, hr2⟩ := initialOf_mul_decomposition i p q
-  have : 0 < p.degreeOf i + q.degreeOf i := Nat.add_pos_iff_pos_or_pos.mpr <|
-      Or.elim (Decidable.not_and_iff_or_not.mp d_zero)
-      (Or.inl ∘ Nat.zero_lt_of_ne_zero) (Or.inr ∘ Nat.zero_lt_of_ne_zero)
-  have hr1 : r.degreeOf i < p.degreeOf i + q.degreeOf i := Nat.lt_of_le_pred this hr1
-  refine degreeOf_eq_of_initialOf_decomposition ?_ ?_ hr1 hr2
-  · exact mul_ne_zero_iff.mpr ⟨initialOf_ne_zero i hp, initialOf_ne_zero i hq⟩
-  apply Nat.eq_zero_of_le_zero
-  apply le_trans (degreeOf_mul_le ..)
-  rw [degreeOf_initialOf_self, degreeOf_initialOf_self]
-
-theorem initialOf_mul (q : R[σ]) : (p * q).initialOf i = p.initialOf i * q.initialOf i := by
+theorem initialOf_mul_eq (q : R[σ]) : (p * q).initialOf i = p.initialOf i * q.initialOf i := by
   by_cases has_zero : p = 0 ∨ q = 0
   · rcases has_zero with h | h
     repeat simp only [h, zero_mul, initialOf_zero, mul_zero]
   have ⟨hp, hq⟩ := not_or.mp has_zero
-  have d_eq := degreeOf_mul i hp hq
+  have d_eq : (p * q).degreeOf i = p.degreeOf i + q.degreeOf i := degreeOf_mul_eq hp hq
   by_cases d_zero : p.degreeOf i = 0 ∧ q.degreeOf i = 0
   · rewrite [d_zero.1, d_zero.2, add_zero] at d_eq
     simp only [d_eq, initialOf_eq_of_degreeOf_eq_zero, d_zero]
@@ -499,7 +484,7 @@ theorem initialOf_mul (q : R[σ]) : (p * q).initialOf i = p.initialOf i * q.init
 theorem initialOf_pow (n : ℕ) : (p ^ n).initialOf i = p.initialOf i ^ n := by
   induction n with
   | zero => simp only [pow_zero, initialOf_one]
-  | succ n ih => rw [pow_add, pow_add, pow_one, pow_one, initialOf_mul, ih]
+  | succ n ih => rw [pow_add, pow_add, pow_one, pow_one, initialOf_mul_eq, ih]
 
 end NoZeroDivisors
 

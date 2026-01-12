@@ -198,7 +198,7 @@ lemma degreeOf_pseudoOfGo_remainder_lt_of_degreeOf_ne_zero {i : σ} {f I : R[σ]
       refine le_trans ?_ this
       apply degreeOf_sub_lt_of_initialOf_eq
       repeat1' rewrite [mul_assoc, mul_comm _ f, ← mul_assoc]
-      · rewrite [initialOf_mul_X_self_pow, initialOf_mul, initialOf_mul, hI]
+      · rewrite [initialOf_mul_X_self_pow, initialOf_mul_eq, initialOf_mul_eq, hI]
         rw [initialOf_initialOf_self, initialOf_initialOf_self, mul_comm]
       have f_ne : f ≠ 0 := ne_zero_of_degreeOf_ne_zero (hnd ▸ hn)
       have I_ne : I ≠ 0 := hI ▸ initialOf_ne_zero i f_ne
@@ -208,7 +208,7 @@ lemma degreeOf_pseudoOfGo_remainder_lt_of_degreeOf_ne_zero {i : σ} {f I : R[σ]
         exact Nat.zero_lt_of_ne_zero (hnd ▸ hn)
       have Ir_ne : Ic_r ≠ 0 := initialOf_ne_zero i r_ne
       rewrite [degreeOf_mul_X_self_pow_eq_add_of_ne_zero _ _ (mul_ne_zero_iff.mpr ⟨Ir_ne ,f_ne⟩)]
-      rewrite [degreeOf_mul i I_ne r_ne, degreeOf_mul i Ir_ne f_ne, hI, ← hnd]
+      rewrite [degreeOf_mul_eq I_ne r_ne, degreeOf_mul_eq Ir_ne f_ne, hI, ← hnd]
       simpa [Ic_r] using (Nat.add_sub_of_le <| Nat.le_of_not_lt dlt).symm
     simp only [ge_iff_le, tsub_le_iff_right] at h ⊢
     by_cases hr : r.degreeOf i = 0
@@ -239,7 +239,7 @@ theorem pseudoOf_remainder_eq_zero_of_dvd {i : σ} {g f : R[σ]} (h1 : f ∣ g)
   by_contra con
   absurd degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero g h2
   have : r.degreeOf i = f.degreeOf i + c.degreeOf i :=
-    hc ▸ degreeOf_mul i (left_ne_zero_of_mul (hc ▸ con)) (right_ne_zero_of_mul (hc ▸ con))
+    hc ▸ degreeOf_mul_eq (left_ne_zero_of_mul (hc ▸ con)) (right_ne_zero_of_mul (hc ▸ con))
   rewrite [not_lt, this]
   exact Nat.le_add_right _ _
 

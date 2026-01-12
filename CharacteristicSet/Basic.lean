@@ -107,7 +107,7 @@ theorem mainVariable_mul_le (p q : R[σ]) :
   exact Finset.max_mono Finsupp.support_add
 
 open Classical in
-theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → MvPolynomial σ R) :
+theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
     (∑ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
   refine Finset.induction_on s (by simp) ?_
   intro a s has ih
@@ -115,7 +115,7 @@ theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → MvPolynomia
   exact (mainVariable_add_le _ _).trans (sup_le_sup_left ih _)
 
 open Classical in
-theorem mainVariable_prod_le {α : Type*} (s : Finset α) (f : α → MvPolynomial σ R) :
+theorem mainVariable_prod_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
     (∏ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
   induction s using Finset.induction_on with
   | empty => simp only [Finset.prod_empty, Finset.sup_empty, le_bot_iff]; exact mainVariable_C 1
