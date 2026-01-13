@@ -95,6 +95,92 @@ theorem initialOf_X_pow_of_ne {i j : σ} (k : ℕ) (h : i ≠ j) :
     (X j ^ k).initialOf i = (X j : R[σ]) ^ k := by
   rw [← one_mul (X j ^ k), initialOf_mul_X_pow_of_ne _ _ h, initialOf_one]
 
+open Classical in
+theorem coeff_initialOf_eq_of_apply_ne_zero {s : σ →₀ ℕ} (h : s i ≠ 0) :
+    (p.initialOf i).coeff s = 0 := by
+  rewrite [initialOf, coeff_sum, Finset.sum_congr rfl fun _ _ ↦ coeff_monomial s _ _]
+  have (x : σ →₀ ℕ) : x.erase i = s ↔ False := by
+    refine iff_false_intro <| Finsupp.ne_iff.mpr ⟨i, ?_⟩
+    rewrite [Finsupp.erase_apply, if_pos rfl]
+    exact h.symm
+  simp only [this, ↓reduceIte, Finset.sum_const_zero]
+
+open Classical in
+theorem coeff_initialOf_eq_of_apply_eq_zero {s : σ →₀ ℕ} (h : s i = 0) :
+    (p.initialOf i).coeff s = p.coeff (s.update i (p.degreeOf i)) := by
+  rewrite [initialOf, coeff_sum, Finset.sum_congr rfl fun _ _ ↦ coeff_monomial s _ _]
+  have (x : σ →₀ ℕ) : x i = p.degreeOf i ∧ x.erase i = s ↔ x = s.update i (p.degreeOf i) := by
+    refine ⟨fun hx ↦ Finsupp.ext fun j ↦ ?_, fun hx ↦ ?_⟩
+    · rewrite [Finsupp.update_apply]
+      split_ifs with hj
+      · rw [hj, hx.1]
+      rw [← hx.2, Finsupp.erase_apply, if_neg hj]
+    simp only [hx, Finsupp.update_apply, ↓reduceIte, Finsupp.erase_update_eq_erase, true_and]
+    refine Finsupp.erase_of_notMem_support ?_
+    exact Finsupp.notMem_support_iff.mpr h
+  simpa [Finset.sum_filter, ← ite_and, this] using Eq.symm
+
+open Classical in
+@[simp] theorem degreeOf_initialOf_self : (p.initialOf i).degreeOf i = 0 := by
+  rewrite [initialOf_def, degreeOf_def]
+  apply Multiset.count_eq_zero.mpr
+  apply (not_iff_not.mpr mem_degrees).mpr
+  simp only [ne_eq, Finsupp.mem_support_iff, not_exists, not_and, Decidable.not_not, coeff_sum]
+  intro s hs
+  have hs := mt Finset.sum_eq_zero hs
+  simp only [Finset.mem_filter, coeff_monomial, ite_eq_right_iff, and_imp, not_forall] at hs
+  rcases hs with ⟨_, _, _, ht, _⟩
+  exact ht ▸ Finsupp.erase_same
+
+open Classical in
+theorem initialOf_eq_leadingCoeff {p : R[σ]} {i : σ} : p.initialOf i = rename Subtype.val
+    (optionEquivLeft R {b // b ≠ i} (rename (Equiv.optionSubtypeNe i).symm p)).leadingCoeff := by
+  ext s
+  set f := (Equiv.optionSubtypeNe i).symm
+  have hsv : Subtype.val = f.symm ∘ (@some { b // b ≠ i }) := rfl
+  by_cases hs : s i ≠ 0
+  · suffices (rename Subtype.val
+        ((optionEquivLeft R { b // b ≠ i }) ((rename ⇑f) p)).leadingCoeff).degreeOf i = 0 by
+      have hsc : (p.initialOf i).coeff s = 0 := by
+        apply notMem_support_iff.mp
+        apply p.degreeOf_initialOf_self i ▸ notMem_support_of_degreeOf_lt i
+        exact Nat.zero_lt_of_ne_zero hs
+      rewrite [hsc]
+      apply Eq.symm <| notMem_support_iff.mp ?_
+      apply this ▸ notMem_support_of_degreeOf_lt i
+      exact Nat.zero_lt_of_ne_zero hs
+    simp [degreeOf, degrees_rename_of_injective Subtype.val_injective]
+  rewrite [not_ne_iff] at hs
+  rewrite [Polynomial.leadingCoeff, ← degreeOf_eq_natDegree]
+  set s' : { b // b ≠ i } →₀ ℕ := (s.mapDomain f).some
+  have : s'.mapDomain Subtype.val = s := by
+    unfold s'
+    rewrite [Finsupp.some, hsv, Finsupp.mapDomain_comp,
+      Finsupp.mapDomain_comapDomain _ (Option.some_injective _)]
+    · ext j
+      simp [Finsupp.mapDomain_equiv_apply]
+    refine Finsupp.support_subset_iff.mpr ?_
+    simp only [Set.mem_range, Subtype.exists, not_exists, Finsupp.mapDomain_equiv_apply]
+    intro j hj
+    contrapose! hj
+    refine ⟨f.symm j, by contrapose! hj; rw [hj, hs], ?_⟩
+    have : f ∘ Subtype.val = @some { b // b ≠ i } := (Equiv.symm_comp_eq _ _ _).mpr hsv
+    simp only [ne_eq, ← this, Function.comp_apply, Equiv.apply_symm_apply]
+  rewrite [← this, coeff_rename_mapDomain _ Subtype.val_injective, this,
+    optionEquivLeft_coeff_coeff, ← coeff_rename_mapDomain _ f.symm.injective]
+  simp only [rename_rename, ne_eq, Equiv.symm_comp_self, rename_id, AlgHom.coe_id, id_eq]
+  have (n : ℕ) : (s'.optionElim n).mapDomain (⇑f.symm) = s.update i n := by
+    ext j
+    simp only [ne_eq, Finsupp.some, Finsupp.mapDomain_equiv_apply, Equiv.symm_symm,
+      Finsupp.optionElim_apply_eq_elim, Finsupp.update_apply, s', Option.elim]
+    have : f i = none := Equiv.optionSubtypeNe_symm_self i
+    split <;> expose_names
+    · have : j ≠ i := fun hj ↦ by absurd heq; rewrite [hj, this]; exact not_eq_of_beq_eq_false rfl
+      rw [if_neg this, Finsupp.comapDomain_apply, ← heq, Finsupp.mapDomain_apply f.injective]
+    have : j = i := by apply f.injective; rw [this, heq]
+    rw [if_pos this]
+  exact this _ ▸ coeff_initialOf_eq_of_apply_eq_zero i p hs
+
 /-- If `p` has degree 0 in `i` (i.e. `i` does not appear in `p`), then `p.initialOf i = p`. -/
 theorem initialOf_eq_of_degreeOf_eq_zero {p : R[σ]} {i : σ} :
     p.degreeOf i = 0 → p.initialOf i = p := fun h ↦ Eq.symm (by
@@ -144,18 +230,6 @@ theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ
     d_eq ▸ (lt_of_lt_of_le hr <| Nat.le_add_left d _)
   rewrite [decomp, degreeOf_add_eq_of_degreeOf_lt this, d_eq]
   exact Nat.le_add_left d _
-
-open Classical in
-@[simp] theorem degreeOf_initialOf_self : (p.initialOf i).degreeOf i = 0 := by
-  rewrite [initialOf_def, degreeOf_def]
-  apply Multiset.count_eq_zero.mpr
-  apply (not_iff_not.mpr mem_degrees).mpr
-  simp only [ne_eq, Finsupp.mem_support_iff, not_exists, not_and, Decidable.not_not, coeff_sum]
-  intro s hs
-  have hs := mt Finset.sum_eq_zero hs
-  simp only [Finset.mem_filter, coeff_monomial, ite_eq_right_iff, and_imp, not_forall] at hs
-  rcases hs with ⟨_, _, _, ht, _⟩
-  exact ht ▸ Finsupp.erase_same
 
 @[simp] theorem initialOf_initialOf_self : (p.initialOf i).initialOf i = p.initialOf i :=
   initialOf_eq_of_degreeOf_eq_zero <| degreeOf_initialOf_self ..
