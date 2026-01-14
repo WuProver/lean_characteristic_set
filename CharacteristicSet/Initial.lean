@@ -20,10 +20,12 @@ of the highest power of `xᵢ` appearing in `p`.
 
 ## Main Theorems
 
-* `initialOf_decomposition`: `p = initᵢ(p) * Xᵢ^degᵢ(p) + remainder`
-  where `degᵢ(remainder) < degᵢ(p)`
+* `initialOf_eq_leadingCoeff`:
+  `initᵢ(p)` is the leading coefficient when viewing `p` as a univariate polynomial in `X i`.
+* `initialOf_decomposition`:
+  `p = initᵢ(p) * Xᵢ^degᵢ(p) + remainder` where `degᵢ(remainder) < degᵢ(p)`
 * `initial_reducedTo`: The initial is always reduced w.r.t. the original polynomial
-* `initialOf_mul`: `initialOf(p * q) = initialOf(p) * initialOf(q)` (for integral domains)
+* `initialOf_mul`: `initᵢ(p * q) = initᵢ(p) * initᵢ(q)` (for integral domains)
 
 -/
 
@@ -47,7 +49,7 @@ theorem initialOf_def {p : R[σ]} {i : σ} :
 
 @[simp] theorem initialOf_zero : (0 : R[σ]).initialOf i = 0 := rfl
 
-theorem initialOf_monomial (s : σ →₀ ℕ) (r : R) :
+@[simp] theorem initialOf_monomial (s : σ →₀ ℕ) (r : R) :
     (monomial s r).initialOf i = monomial (s.erase i) r := by
   by_cases r_zero : r = 0
   · simp only [r_zero, monomial_zero, initialOf_zero]
@@ -95,9 +97,9 @@ theorem initialOf_X_pow_of_ne {i j : σ} (k : ℕ) (h : i ≠ j) :
     (X j ^ k).initialOf i = (X j : R[σ]) ^ k := by
   rw [← one_mul (X j ^ k), initialOf_mul_X_pow_of_ne _ _ h, initialOf_one]
 
-open Classical in
 theorem coeff_initialOf_eq_of_apply_ne_zero {s : σ →₀ ℕ} (h : s i ≠ 0) :
     (p.initialOf i).coeff s = 0 := by
+  classical
   rewrite [initialOf, coeff_sum, Finset.sum_congr rfl fun _ _ ↦ coeff_monomial s _ _]
   have (x : σ →₀ ℕ) : x.erase i = s ↔ False := by
     refine iff_false_intro <| Finsupp.ne_iff.mpr ⟨i, ?_⟩
@@ -105,9 +107,9 @@ theorem coeff_initialOf_eq_of_apply_ne_zero {s : σ →₀ ℕ} (h : s i ≠ 0) 
     exact h.symm
   simp only [this, ↓reduceIte, Finset.sum_const_zero]
 
-open Classical in
 theorem coeff_initialOf_eq_of_apply_eq_zero {s : σ →₀ ℕ} (h : s i = 0) :
     (p.initialOf i).coeff s = p.coeff (s.update i (p.degreeOf i)) := by
+  classical
   rewrite [initialOf, coeff_sum, Finset.sum_congr rfl fun _ _ ↦ coeff_monomial s _ _]
   have (x : σ →₀ ℕ) : x i = p.degreeOf i ∧ x.erase i = s ↔ x = s.update i (p.degreeOf i) := by
     refine ⟨fun hx ↦ Finsupp.ext fun j ↦ ?_, fun hx ↦ ?_⟩
@@ -120,21 +122,30 @@ theorem coeff_initialOf_eq_of_apply_eq_zero {s : σ →₀ ℕ} (h : s i = 0) :
     exact Finsupp.notMem_support_iff.mpr h
   simpa [Finset.sum_filter, ← ite_and, this] using Eq.symm
 
-open Classical in
+theorem coeff_initialOf_eq (s : σ →₀ ℕ) :
+    (p.initialOf i).coeff s = if s i = 0 then p.coeff (s.update i (p.degreeOf i)) else 0 :=
+  if hs : s i = 0 then if_pos hs ▸ coeff_initialOf_eq_of_apply_eq_zero i p hs
+  else if_neg hs ▸ coeff_initialOf_eq_of_apply_ne_zero i p hs
+
+lemma coeff_initialOf_eq_of_ne_zero {i : σ} {p : R[σ]} {s : σ →₀ ℕ} :
+    (p.initialOf i).coeff s ≠ 0 → (p.initialOf i).coeff s = p.coeff (s.update i (p.degreeOf i)) :=
+  fun h ↦ coeff_initialOf_eq_of_apply_eq_zero i p
+    (Mathlib.Tactic.Contrapose.contrapose₂ (coeff_initialOf_eq_of_apply_ne_zero i p) h)
+
 @[simp] theorem degreeOf_initialOf_self : (p.initialOf i).degreeOf i = 0 := by
-  rewrite [initialOf_def, degreeOf_def]
+  classical
   apply Multiset.count_eq_zero.mpr
   apply (not_iff_not.mpr mem_degrees).mpr
-  simp only [ne_eq, Finsupp.mem_support_iff, not_exists, not_and, Decidable.not_not, coeff_sum]
+  simp only [ne_eq, Finsupp.mem_support_iff, not_exists, not_and, Decidable.not_not]
   intro s hs
-  have hs := mt Finset.sum_eq_zero hs
-  simp only [Finset.mem_filter, coeff_monomial, ite_eq_right_iff, and_imp, not_forall] at hs
-  rcases hs with ⟨_, _, _, ht, _⟩
-  exact ht ▸ Finsupp.erase_same
+  contrapose! hs
+  exact coeff_initialOf_eq_of_apply_ne_zero i p hs
 
-open Classical in
-theorem initialOf_eq_leadingCoeff {p : R[σ]} {i : σ} : p.initialOf i = rename Subtype.val
-    (optionEquivLeft R {b // b ≠ i} (rename (Equiv.optionSubtypeNe i).symm p)).leadingCoeff := by
+/-- The initial of `p` with respect to `i` is the leading coefficient
+when viewing `p` as a univariate polynomial in `X i`. -/
+theorem initialOf_eq_leadingCoeff [DecidableEq σ] {p : R[σ]} {i : σ} :
+    p.initialOf i = rename Subtype.val
+      (optionEquivLeft R {b // b ≠ i} (rename (Equiv.optionSubtypeNe i).symm p)).leadingCoeff := by
   ext s
   set f := (Equiv.optionSubtypeNe i).symm
   have hsv : Subtype.val = f.symm ∘ (@some { b // b ≠ i }) := rfl
@@ -152,10 +163,9 @@ theorem initialOf_eq_leadingCoeff {p : R[σ]} {i : σ} : p.initialOf i = rename 
     simp [degreeOf, degrees_rename_of_injective Subtype.val_injective]
   rewrite [not_ne_iff] at hs
   rewrite [Polynomial.leadingCoeff, ← degreeOf_eq_natDegree]
-  set s' : { b // b ≠ i } →₀ ℕ := (s.mapDomain f).some
+  set s' : { b // b ≠ i } →₀ ℕ := (s.mapDomain f).some with hs'
   have : s'.mapDomain Subtype.val = s := by
-    unfold s'
-    rewrite [Finsupp.some, hsv, Finsupp.mapDomain_comp,
+    rewrite [hs', Finsupp.some, hsv, Finsupp.mapDomain_comp,
       Finsupp.mapDomain_comapDomain _ (Option.some_injective _)]
     · ext j
       simp [Finsupp.mapDomain_equiv_apply]
@@ -169,7 +179,7 @@ theorem initialOf_eq_leadingCoeff {p : R[σ]} {i : σ} : p.initialOf i = rename 
   rewrite [← this, coeff_rename_mapDomain _ Subtype.val_injective, this,
     optionEquivLeft_coeff_coeff, ← coeff_rename_mapDomain _ f.symm.injective]
   simp only [rename_rename, ne_eq, Equiv.symm_comp_self, rename_id, AlgHom.coe_id, id_eq]
-  have (n : ℕ) : (s'.optionElim n).mapDomain (⇑f.symm) = s.update i n := by
+  have (n : ℕ) : (s'.optionElim n).mapDomain f.symm = s.update i n := by
     ext j
     simp only [ne_eq, Finsupp.some, Finsupp.mapDomain_equiv_apply, Equiv.symm_symm,
       Finsupp.optionElim_apply_eq_elim, Finsupp.update_apply, s', Option.elim]
@@ -181,7 +191,6 @@ theorem initialOf_eq_leadingCoeff {p : R[σ]} {i : σ} : p.initialOf i = rename 
     rw [if_pos this]
   exact this _ ▸ coeff_initialOf_eq_of_apply_eq_zero i p hs
 
-/-- If `p` has degree 0 in `i` (i.e. `i` does not appear in `p`), then `p.initialOf i = p`. -/
 theorem initialOf_eq_of_degreeOf_eq_zero {p : R[σ]} {i : σ} :
     p.degreeOf i = 0 → p.initialOf i = p := fun h ↦ Eq.symm (by
   nth_rewrite 1 [p.as_sum, initialOf_def, Finset.sum_filter]
@@ -201,20 +210,13 @@ theorem degreeOf_initialOf_le : (p.initialOf i).degreeOf j ≤ p.degreeOf j := b
 
 theorem initialOf_add_eq_of_degreeOf_lt {i : σ} {p q : R[σ]} (h : q.degreeOf i < p.degreeOf i) :
     (p + q).initialOf i = p.initialOf i := by
-  simp only [initialOf_def, coeff_add, map_add]
-  have qs_zero (s : σ →₀ ℕ) (hs : s i = p.degreeOf i) : q.coeff s = 0 := by
-    contrapose! h
-    exact hs ▸ le_degreeOf_of_mem_support i (mem_support_iff.mpr h)
-  have set_eq : (p + q).support.filter (fun s ↦ s i = (p + q).degreeOf i)
-      = p.support.filter (fun s ↦ s i = p.degreeOf i) := Finset.ext fun s ↦ by
-    have : (p + q).degreeOf i = p.degreeOf i := degreeOf_add_eq_of_degreeOf_lt h
-    simp only [Finset.mem_filter, mem_support_iff, coeff_add, ne_eq, this, and_congr_left_iff]
-    intro hs
-    suffices q.coeff s = 0 by rw [this, add_zero]
-    exact qs_zero s hs
-  refine Finset.sum_congr set_eq (fun s hs ↦ ?_)
-  simp only [Finset.mem_filter, mem_support_iff, ne_eq] at hs
-  rw [qs_zero s hs.2, monomial_zero, add_zero]
+  ext s
+  rewrite [coeff_initialOf_eq, coeff_initialOf_eq, degreeOf_add_eq_of_degreeOf_lt h, coeff_add]
+  split_ifs with hs
+  · suffices q.coeff (s.update i (degreeOf i p)) = 0 by rw [this, add_zero]
+    refine notMem_support_iff.mp <| notMem_support_of_degreeOf_lt i ?_
+    classical simpa only [Finsupp.update_apply, reduceIte]
+  rfl
 
 theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ}
     (q_ne : q ≠ 0) (hq : q.degreeOf i = 0) (hr : r.degreeOf i < d)
@@ -237,11 +239,11 @@ theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ
 theorem initialOf_eq_iff_degreeOf_eq_zero {i : σ} {p : R[σ]} : p.degreeOf i = 0 ↔ p.initialOf i = p
     := ⟨initialOf_eq_of_degreeOf_eq_zero, fun h ↦ by rw [h.symm, degreeOf_initialOf_self]⟩
 
-open Classical in
 /-- Auxiliary decomposition lemma: `p` can be written as `initᵢ(p) * Xᵢ ^ degᵢ(p) + tail`. -/
 protected lemma _initialOf_decomposition :
     let q := ∑ s ∈ p.support with s i ≠ p.degreeOf i, (monomial s) (p.coeff s)
     q.degreeOf i ≤ p.degreeOf i - 1 ∧ p = p.initialOf i * X i ^ p.degreeOf i + q := by
+  classical
   set q := ∑ s ∈ p.support with s i ≠ p.degreeOf i, (monomial s) (p.coeff s) with hq
   simp only
   constructor
@@ -296,51 +298,35 @@ theorem degreeOf_add_lt_of_initialOf_cancel {i : σ} {p q : R[σ]}
 
 theorem initialOf_cancel_of_degreeOf_add_lt {i : σ} {p q : R[σ]}
     (h : (p + q).degreeOf i < p.degreeOf i) : p.initialOf i + q.initialOf i = 0 := by
-  obtain ⟨p', hp1, hp2⟩ := p.initialOf_decomposition i
-  obtain ⟨q', hq1, hq2⟩ := q.initialOf_decomposition i
-  have deq := degreeOf_eq_of_degreeOf_add_lt h
-  set d := p.degreeOf i with hd
-  have hpq : p + q = (p.initialOf i + q.initialOf i) * X i ^ d + (p' + q') :=
-    by nth_rewrite 1 [hp2, hq2, ← deq]; ring
-  have zero_lt_d := Nat.zero_lt_of_lt h
-  have hp1 : p'.degreeOf i < d := Nat.lt_of_le_pred zero_lt_d hp1
-  have hq1 : q'.degreeOf i < d := Nat.lt_of_le_pred zero_lt_d (deq ▸ hq1)
-  by_contra con
-  rcases ne_zero_iff.mp con with ⟨s, hs⟩
-  absurd (degreeOf_lt_iff <| zero_lt_d).mp h
-  let sd := s + Finsupp.single i d
-  refine not_forall.mpr <| Exists.intro sd ?_
-  simp only [mem_support_iff, ne_eq, Classical.not_imp, not_lt]
-  refine ⟨?_, by simp [sd]⟩
-  rewrite [hpq, coeff_add]
-  have : (p' + q').coeff sd = 0 := by
-    apply notMem_support_iff.mp
-    apply notMem_support_of_degreeOf_lt i
-    simp only [sd, Finsupp.coe_add, Pi.add_apply, Finsupp.single_eq_same]
-    refine lt_of_lt_of_le ?_ <| Nat.le_add_left ..
-    exact lt_of_le_of_lt (degreeOf_add_le ..) <| max_lt hp1 hq1
-  simp only [this, add_zero, sd]
-  rewrite [X_pow_eq_monomial, coeff_mul_monomial, mul_one]
-  exact hs
+  ext s
+  simp only [coeff_add, coeff_initialOf_eq, coeff_zero]
+  split_ifs with hs
+  · have : p.degreeOf i = q.degreeOf i := by
+      contrapose! h
+      rcases lt_or_gt_of_ne h with h | h
+      · rewrite [add_comm, degreeOf_add_eq_of_degreeOf_lt h]
+        exact Nat.le_of_succ_le h
+      rewrite [degreeOf_add_eq_of_degreeOf_lt h]
+      rfl
+    rewrite [← this, ← coeff_add]
+    refine notMem_support_iff.mp <| notMem_support_of_degreeOf_lt i ?_
+    classical simpa only [Finsupp.update_apply]
+  rw [add_zero]
 
 theorem initialOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ}
     (q_ne : q ≠ 0) (hq : q.degreeOf i = 0) (hr : r.degreeOf i < d)
     (decomp : p = q * X i ^ d + r) : p.initialOf i = q := by
+  ext s
   have d_eq : p.degreeOf i = d := degreeOf_eq_of_initialOf_decomposition q_ne hq hr decomp
-  obtain ⟨p', hp1, hp2⟩ := p.initialOf_decomposition i
-  have hp1 : p'.degreeOf i < d := Nat.lt_of_le_pred (Nat.zero_lt_of_lt hr) (d_eq ▸ hp1)
-  nth_rewrite 1 [d_eq, decomp] at hp2
-  have hp2 := congrArg (initialOf i) hp2
-  have := degreeOf_mul_X_self_pow_eq_add_of_ne_zero i d q_ne
-  have i1 : (q * X i ^ d + r).initialOf i = (q * X i ^ d).initialOf i :=
-    initialOf_add_eq_of_degreeOf_lt (this ▸ (lt_of_lt_of_le hr <| Nat.le_add_left d _))
-  have : p.initialOf i ≠ 0 := initialOf_ne_zero i fun h ↦ by absurd hr; simp [← d_eq, h]
-  have := degreeOf_mul_X_self_pow_eq_add_of_ne_zero i d this
-  have i2 : (p.initialOf i * X i ^ d + p').initialOf i = (p.initialOf i * X i ^ d).initialOf i :=
-    initialOf_add_eq_of_degreeOf_lt (this ▸ (lt_of_lt_of_le hp1 <| Nat.le_add_left d _))
-  rewrite [i1, i2, initialOf_mul_X_self_pow, initialOf_mul_X_self_pow,
-    initialOf_eq_of_degreeOf_eq_zero hq] at hp2
-  rw [hp2, initialOf_eq_of_degreeOf_eq_zero <| degreeOf_initialOf_self i p]
+  simp only [coeff_initialOf_eq, d_eq]
+  split_ifs with hs
+  · suffices r.coeff (s + Finsupp.single i d) = 0 by
+      classical simp [decomp, X_pow_eq_monomial, coeff_mul_monomial',
+        Finsupp.update_eq_add_single hs, this]
+    refine notMem_support_iff.mp <| notMem_support_of_degreeOf_lt i ?_
+    simpa using Nat.lt_add_left (s i) hr
+  refine Eq.symm <| notMem_support_iff.mp <| notMem_support_of_degreeOf_lt i ?_
+  exact hq ▸ Nat.zero_lt_of_ne_zero hs
 
 theorem initialOf_add_of_degreeOf_eq_of_ne {p q : R[σ]}
     (hi : p.initialOf i + q.initialOf i ≠ 0) (h : q.degreeOf i = p.degreeOf i) :
@@ -522,40 +508,23 @@ section NoZeroDivisors
 
 variable [NoZeroDivisors R] (i : σ) (p : R[σ])
 
-theorem initialOf_C_mul {r : R} : (C r * p).initialOf i = C r * p.initialOf i := by
+@[simp] theorem initialOf_C_mul {r : R} : (C r * p).initialOf i = C r * p.initialOf i := by
   by_cases r_zero : r = 0
   · rw [r_zero, C_0, zero_mul, zero_mul, initialOf_zero]
   have supp_eq : (C r * p).support = p.support := Finset.ext fun s ↦ by
     simp only [mem_support_iff, ne_eq, coeff_C_mul, mul_eq_zero_iff_left r_zero]
   simp only [initialOf_def, supp_eq, coeff_C_mul, Finset.mul_sum, C_mul_monomial, degreeOf_eq_sup]
 
-theorem initialOf_mul_C {r : R} : (p * C r).initialOf i = p.initialOf i * C r := by
+@[simp] theorem initialOf_mul_C {r : R} : (p * C r).initialOf i = p.initialOf i * C r := by
   rw [mul_comm _ (C r), mul_comm _ (C r), p.initialOf_C_mul i]
 
-theorem initialOf_smul {r : R} : (r • p).initialOf i = r • p.initialOf i := by
+@[simp] theorem initialOf_smul {r : R} : (r • p).initialOf i = r • p.initialOf i := by
   rw [smul_eq_C_mul, smul_eq_C_mul, p.initialOf_C_mul i]
 
-theorem initialOf_mul_eq (q : R[σ]) : (p * q).initialOf i = p.initialOf i * q.initialOf i := by
-  by_cases has_zero : p = 0 ∨ q = 0
-  · rcases has_zero with h | h
-    repeat simp only [h, zero_mul, initialOf_zero, mul_zero]
-  have ⟨hp, hq⟩ := not_or.mp has_zero
-  have d_eq : (p * q).degreeOf i = p.degreeOf i + q.degreeOf i := degreeOf_mul_eq hp hq
-  by_cases d_zero : p.degreeOf i = 0 ∧ q.degreeOf i = 0
-  · rewrite [d_zero.1, d_zero.2, add_zero] at d_eq
-    simp only [d_eq, initialOf_eq_of_degreeOf_eq_zero, d_zero]
-  have ⟨r, hr1, hr2⟩ := initialOf_mul_decomposition i p q
-  have : 0 < p.degreeOf i + q.degreeOf i :=  Nat.add_pos_iff_pos_or_pos.mpr <|
-      Or.elim (Decidable.not_and_iff_or_not.mp d_zero)
-      (Or.inl ∘ Nat.zero_lt_of_ne_zero) (Or.inr ∘ Nat.zero_lt_of_ne_zero)
-  have hr1 : r.degreeOf i < p.degreeOf i + q.degreeOf i := Nat.lt_of_le_pred this hr1
-  refine initialOf_eq_of_initialOf_decomposition ?_ ?_ hr1 hr2
-  · exact mul_ne_zero_iff.mpr ⟨initialOf_ne_zero i hp, initialOf_ne_zero i hq⟩
-  apply Nat.eq_zero_of_le_zero
-  apply le_trans (degreeOf_mul_le ..)
-  rw [degreeOf_initialOf_self, degreeOf_initialOf_self]
+@[simp] theorem initialOf_mul_eq (q : R[σ]) : (p * q).initialOf i = p.initialOf i * q.initialOf i :=
+  by classical simp [initialOf_eq_leadingCoeff]
 
-theorem initialOf_pow (n : ℕ) : (p ^ n).initialOf i = p.initialOf i ^ n := by
+@[simp] theorem initialOf_pow_eq (n : ℕ) : (p ^ n).initialOf i = p.initialOf i ^ n := by
   induction n with
   | zero => simp only [pow_zero, initialOf_one]
   | succ n ih => rw [pow_add, pow_add, pow_one, pow_one, initialOf_mul_eq, ih]

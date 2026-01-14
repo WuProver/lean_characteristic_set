@@ -29,7 +29,7 @@
     \lean{MvPolynomial.rank}
     \leanok
     \uses{def:mainVariable, def:mainDegree}
-    The rank of a polynomial $p$ is the pair $(mainVariable(p), deg(p))$ ordered lexicographically.
+    The rank of a polynomial $p$ is the pair $(mainVar(p), deg(p))$ ordered lexicographically.
 \end{definition}
 
 \begin{definition}
@@ -139,7 +139,7 @@
     \lean{MvPolynomial.pseudo}
     \leanok
     \uses{def:pseudoOf, def:mainVariable}
-    Pseudo-division of $g$ by $f$ with respect to $mainVariable(f)$.
+    Pseudo-division of $g$ by $f$ with respect to $mainVar(f)$.
 
     Returns a triple containing the exponent, the quotient and the remainder.
 \end{definition}
@@ -221,7 +221,7 @@
     \uses{def:mainVariable, def:initial, def:TriangulatedSet, def:reducedToSet, def:TriangulatedSet.rank}
     Computes the Weak Basic Set of a list of polynomials.
 
-    Difference from Standard: The filter condition includes $mainVariable(p) > mainVariable(B)$.
+    Difference from Standard: The filter condition includes $mainVar(p) > mainVar(B)$.
 \end{definition}
 
 \begin{definition}
@@ -264,23 +264,11 @@
 \label{chap:thm}
 
 \begin{lemma}
-    \label{lem:degreeOf_add_eq_of_degreeOf_lt}
-    \lean{MvPolynomial.degreeOf_add_eq_of_degreeOf_lt}
-    \leanok
-    $deg_i(p + q) = deg_i(p)$ if $deg_i(q) < deg_i(p)$.
-\end{lemma}
-
-\begin{proof}
-    \leanok
-    % TODO
-\end{proof}
-
-\begin{lemma}
     \label{lem:reducedTo_of_mainVariable_lt}
     \lean{MvPolynomial.reducedTo_of_mainVariable_lt}
     \leanok
     \uses{def:mainVariable, def:reducedTo}
-    $q$ is reduced w.r.t. $p$ if $mainVariable(q) < mainVariable(p)$.
+    $q$ is reduced w.r.t. $p$ if $mainVar(q) < mainVar(p)$.
 \end{lemma}
 
 \begin{proof}
@@ -293,7 +281,7 @@
     \lean{MvPolynomial.reducedTo_iff_gt_of_mainVariable_eq}
     \leanok
     \uses{def:mainVariable, def:reducedTo, def:MvPolynomial.rank}
-    If $mainVariable(p) = mainVariable(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
+    If $mainVar(p) = mainVar(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
 \end{lemma}
 
 \begin{proof}
@@ -306,7 +294,7 @@
     \lean{MvPolynomial.mainVariable_lt_of_reducedTo_of_le}
     \leanok
     \uses{def:mainVariable, def:reducedTo}
-    $mainVariable(p) < mainVariable(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
+    $mainVar(p) < mainVar(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
 \end{lemma}
 
 \begin{proof}
@@ -368,17 +356,16 @@
     % TODO
 \end{proof}
 
-\begin{lemma}
-    \label{lem:initialOf_add_eq_of_degreeOf_lt}
-    \lean{MvPolynomial.initialOf_add_eq_of_degreeOf_lt}
+\begin{theorem}
+    \label{thm:initialOf_eq_leadingCoeff}
+    \lean{MvPolynomial.initialOf_eq_leadingCoeff}
     \leanok
     \uses{def:initialOf}
-    $init_i(p + q) = init_i(p)$ if $deg_i(q) < deg_i(p)$.
-\end{lemma}
+    $init_i(p)$ is the leading coefficient when viewing $p$ as a univariate polynomial in $x_i$.
+\end{theorem}
 
 \begin{proof}
     \leanok
-    \uses{lem:degreeOf_add_eq_of_degreeOf_lt}
     % TODO
 \end{proof}
 
@@ -419,7 +406,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:degreeOf_initialOf_self, lem:initialOf_add_eq_of_degreeOf_lt, lem:initialOf_eq_of_degreeOf_eq_zero, thm:initialOf_decomposition}
+    \uses{thm:initialOf_eq_leadingCoeff}
     % TODO
 \end{proof}
 
@@ -428,7 +415,7 @@
     \lean{MvPolynomial.mainVariable_initial_lt}
     \leanok
     \uses{def:mainVariable, def:initial}
-    $mainVariable(init(p)) < mainVariable(p)$ for non-constant $p$.
+    $mainVar(init(p)) < mainVar(p)$ for non-constant $p$.
 \end{lemma}
 
 \begin{proof}
@@ -568,7 +555,7 @@
     \lean{MvPolynomial.pseudo_remainder_eq_of_degreeOf_eq_zero}
     \leanok
     \uses{def:pseudo}
-    The remainder of $g$ by $f$ is $g$ if $deg_c(g) = 0$ where $c = mainVariable(f)$.
+    The remainder of $g$ by $f$ is $g$ if $deg_c(g) = 0$ where $c = mainVar(f)$.
 \end{theorem}
 
 \begin{proof}
@@ -596,7 +583,7 @@
     \lean{AscendingSet.initial_reducedToSet_of_mainVariable_ne_bot}
     \leanok
     \uses{def:initial, def:reducedToSet, def:mainVariable, def:isAscendingSet}
-    If $p$ is in $S$ and $mainVariable(p) \neq \bot$, then $init(p)$ is in $S$.
+    If $p$ is in $S$ and $mainVar(p) \neq \bot$, then $init(p)$ is in $S$.
 \end{theorem}
 
 \begin{proof}

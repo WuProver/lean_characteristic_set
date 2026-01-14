@@ -106,17 +106,17 @@ theorem mainVariable_mul_le (p q : R[σ]) :
   rewrite [not_lt, ← ht1, ← Finset.max_union]
   exact Finset.max_mono Finsupp.support_add
 
-open Classical in
 theorem mainVariable_sum_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
     (∑ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
+  classical
   refine Finset.induction_on s (by simp) ?_
   intro a s has ih
   rewrite [Finset.sum_insert has, Finset.sup_insert]
   exact (mainVariable_add_le _ _).trans (sup_le_sup_left ih _)
 
-open Classical in
 theorem mainVariable_prod_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
     (∏ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
+  classical
   induction s using Finset.induction_on with
   | empty => simp only [Finset.prod_empty, Finset.sup_empty, le_bot_iff]; exact mainVariable_C 1
   | insert a s has ih =>
