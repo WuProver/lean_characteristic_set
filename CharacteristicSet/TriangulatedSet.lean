@@ -351,13 +351,13 @@ theorem rank_lt_iff : S.rank < T.rank ↔ (∃ k < S.length, S k < T k ∧ ∀ i
       refine Or.inl ⟨k, klts, hk2, fun i hi ↦ ?_⟩
       have := hk1 i hi
       rewrite [if_pos <| lt_trans hi klts, if_pos <| lt_trans hi kltt, WithTop.coe_eq_coe] at this
-      exact MvPolynomial.so_def'.mpr this
+      exact MvPolynomial.equiv_def'.mpr this
     have tlek : T.length ≤ k := Nat.le_of_not_lt kltt
     have tlts : T.length < S.length := lt_of_le_of_lt tlek klts
     refine Or.inr ⟨tlts, fun i hi ↦ ?_⟩
     have := hk1 i <| lt_of_lt_of_le hi tlek
     rewrite [if_pos (lt_trans hi tlts), if_pos hi, WithTop.coe_eq_coe] at this
-    exact MvPolynomial.so_def'.mpr this
+    exact MvPolynomial.equiv_def'.mpr this
   mpr h := by
     simp only [Pi.instLTLexForall, Pi.Lex, rank]
     rcases h with (⟨k, hk, hk1, hk2⟩ | ⟨hlen, heq⟩)
@@ -366,14 +366,14 @@ theorem rank_lt_iff : S.rank < T.rank ↔ (∃ k < S.length, S k < T k ∧ ∀ i
       · intro i hi
         have hi := lt_min_iff.mp hi
         simp only [if_pos <| lt_trans hi.1 hk]
-        rewrite [if_pos hi.2, WithTop.coe_eq_coe, ← MvPolynomial.so_def']
+        rewrite [if_pos hi.2, WithTop.coe_eq_coe, ← MvPolynomial.equiv_def']
         exact hk2 i hi.1
       by_cases klt' : k < T.length
       · simpa [min_eq_left_of_lt klt', hk, klt'] using MvPolynomial.lt_def'.mp hk1
       have : T.length ≤ k := Nat.le_of_not_lt klt'
       simp [min_eq_right_iff.mpr this, lt_of_le_of_lt this hk]
     refine ⟨T.length, fun i hi ↦ ?_, ?_⟩
-    · simpa [lt_trans hi hlen, hi] using MvPolynomial.so_def'.mp (heq i hi)
+    · simpa [lt_trans hi hlen, hi] using MvPolynomial.equiv_def'.mp (heq i hi)
     simp only [hlen, reduceIte, lt_self_iff_false, WithTop.coe_lt_top]
 
 theorem rank_eq_iff : S.rank = T.rank ↔ S.length = T.length ∧ ∀ k, S k ≈ T k where
@@ -388,7 +388,7 @@ theorem rank_eq_iff : S.rank = T.rank ↔ S.length = T.length ∧ ∀ k, S k ≈
     by_cases ilt : i < T.length
     · have := h i
       simp only [ltheq, ilt, reduceIte, WithTop.coe_eq_coe] at this
-      exact MvPolynomial.so_def'.mpr this
+      exact MvPolynomial.equiv_def'.mpr this
     have t0 : T i = 0 := elements_eq_zero_iff.mp <| Nat.le_of_not_lt ilt
     have s0 : S i = 0 := elements_eq_zero_iff.mp <| Nat.le_of_not_lt <| ltheq ▸ ilt
     rw [t0, s0]
@@ -397,7 +397,7 @@ theorem rank_eq_iff : S.rank = T.rank ↔ S.length = T.length ∧ ∀ k, S k ≈
     funext i
     split_ifs with ilt
     · rewrite [WithTop.coe_eq_coe]
-      exact MvPolynomial.so_def'.mp <| h.2 i
+      exact MvPolynomial.equiv_def'.mp <| h.2 i
     rfl
 
 open scoped Classical in
@@ -405,15 +405,15 @@ theorem rank_le_iff : S.rank ≤ T.rank ↔ (∃ k < S.length, S k < T k ∧ ∀
     (T.length ≤ S.length ∧ ∀ k < T.length, S k ≤ T k) := by
   rewrite [le_iff_lt_or_eq, rank_lt_iff, rank_eq_iff, or_assoc]
   refine ⟨fun h ↦ Or.elim h Or.inl (fun h ↦ Or.inr <| Or.elim h
-      (fun h ↦ ⟨le_of_lt h.1, fun k hk ↦ (MvPolynomial.so_def''.mp <| h.2 k hk).1⟩)
-      (fun h ↦ ⟨ge_of_eq h.1, fun k hk ↦ (MvPolynomial.so_def''.mp <| h.2 k).1⟩)),
+      (fun h ↦ ⟨le_of_lt h.1, fun k hk ↦ (MvPolynomial.equiv_def''.mp <| h.2 k hk).1⟩)
+      (fun h ↦ ⟨ge_of_eq h.1, fun k hk ↦ (MvPolynomial.equiv_def''.mp <| h.2 k).1⟩)),
     fun h ↦ Or.elim h Or.inl (fun ⟨h1, h2⟩ ↦ ?_)⟩
   by_cases h : ∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i
   · exact Or.inl h
   have h2 : ∀ k < T.length, S k ≈ T k := by
     contrapose! h
     let ⟨k, ⟨hk1, hk2⟩, hk3⟩ := Nat.findX h
-    rewrite [MvPolynomial.so_def, not_and', MvPolynomial.not_lt_iff_ge, not_not] at hk2
+    rewrite [MvPolynomial.equiv_def, not_and', MvPolynomial.not_lt_iff_ge, not_not] at hk2
     exact ⟨k, lt_of_lt_of_le hk1 h1, hk2 <| h2 k hk1,
       fun i hi ↦ not_not.mp <| not_and.mp (hk3 _ hi) <| lt_trans hi hk1⟩
   refine Or.inr <| Or.elim (lt_or_eq_of_le h1)
@@ -460,7 +460,7 @@ theorem le_empty (S : TriangulatedSet σ R) : S ≤ ∅ :=
 
 @[simp] theorem not_le_iff_gt : ¬(S ≤ T) ↔ T < S := by rw [le_def', lt_def', not_le]
 
-theorem ge_of_forall_so : (∀ n < S.length, ∃ i < T.length, T i ≈ S n) → T ≤ S := fun h ↦ by
+theorem ge_of_forall_equiv : (∀ n < S.length, ∃ i < T.length, T i ≈ S n) → T ≤ S := fun h ↦ by
   contrapose! h
   match lt_def.mp <| not_le_iff_gt.mp h with
   | .inl ⟨k, hk1, hk2, hk3⟩ =>
@@ -480,7 +480,7 @@ theorem ge_of_forall_so : (∀ n < S.length, ∃ i < T.length, T i ≈ S n) → 
     exact apply_lt_of_index_lt hi1 h1
 
 theorem ge_of_subset : S ⊆ T → T ≤ S := fun h ↦
-  ge_of_forall_so fun n hn ↦
+  ge_of_forall_equiv fun n hn ↦
     have ⟨i, hi1, hi2⟩ : S n ∈ T := h <| apply_mem hn
     ⟨i, hi1, by rw [hi2]⟩
 
@@ -489,37 +489,40 @@ instance instSetoid : Setoid (TriangulatedSet σ R) := AntisymmRel.setoid _ (· 
 noncomputable instance instDecidableRelEquiv : @DecidableRel (TriangulatedSet σ R) _ (· ≈ ·) :=
   fun _ _ ↦ instDecidableAnd
 
-theorem so_def'' : S ≈ T ↔ S ≤ T ∧ T ≤ S := Iff.rfl
+theorem equiv_def'' : S ≈ T ↔ S ≤ T ∧ T ≤ S := Iff.rfl
 
-theorem so_def' : S ≈ T ↔ S.rank = T.rank := Iff.trans so_def''
+theorem equiv_def' : S ≈ T ↔ S.rank = T.rank := Iff.trans equiv_def''
   (by rewrite [le_def', le_def']; exact Std.le_antisymm_iff)
 
-theorem so_def : S ≈ T ↔ ¬S < T ∧ ¬T < S := Iff.trans so_def''
+theorem equiv_def : S ≈ T ↔ ¬S < T ∧ ¬T < S := Iff.trans equiv_def''
   (by rw [not_lt_iff_ge, not_lt_iff_ge, and_comm])
 
-theorem so_iff : S ≈ T ↔ S.length = T.length ∧ (∀ k, S k ≈ T k) := Iff.trans so_def' rank_eq_iff
+theorem equiv_iff : S ≈ T ↔ S.length = T.length ∧ (∀ k, S k ≈ T k) :=
+  Iff.trans equiv_def' rank_eq_iff
 
-theorem so_iff' : S ≈ T ↔ S.length = T.length ∧ (∀ k < S.length, S k ≈ T k) := by
-  simp only [so_iff, and_congr_right_iff]
+theorem equiv_iff' : S ≈ T ↔ S.length = T.length ∧ (∀ k < S.length, S k ≈ T k) := by
+  simp only [equiv_iff, and_congr_right_iff]
   refine fun h1 ↦ ⟨fun h2 k _ ↦ h2 k, fun h2 k ↦ ?_⟩
   if hk : k < S.length then exact h2 k hk
   else
     have : S.length ≤ k := Nat.le_of_not_lt hk
     rw [elements_eq_zero_iff.mp this, elements_eq_zero_iff.mp (h1 ▸ this)]
 
-theorem le_iff_lt_or_so : S ≤ T ↔ S < T ∨ S ≈ T := le_iff_lt_or_antisymmRel
+theorem le_iff_lt_or_equiv : S ≤ T ↔ S < T ∨ S ≈ T := le_iff_lt_or_antisymmRel
 
-theorem lt_of_so_of_lt {U : TriangulatedSet σ R} : S ≈ T → T < U → S < U := lt_of_antisymmRel_of_lt
+theorem lt_of_equiv_of_lt {U : TriangulatedSet σ R} : S ≈ T → T < U → S < U :=
+  lt_of_antisymmRel_of_lt
 
-theorem lt_of_lt_of_so {U : TriangulatedSet σ R} : S < T → T ≈ U → S < U := lt_of_lt_of_antisymmRel
+theorem lt_of_lt_of_equiv {U : TriangulatedSet σ R} : S < T → T ≈ U → S < U :=
+  lt_of_lt_of_antisymmRel
 
-theorem so_of_le_of_ge : S ≤ T → T ≤ S → S ≈ T := And.intro
+theorem equiv_of_le_of_ge : S ≤ T → T ≤ S → S ≈ T := And.intro
 
 theorem gt_of_ssubset : S ⊂ T → T < S := fun h ↦ by
   have := Set.ssubset_iff_subset_ne.mp h
-  apply or_iff_not_imp_right.mp <| le_iff_lt_or_so.mp <| ge_of_subset this.1
+  apply or_iff_not_imp_right.mp <|  le_iff_lt_or_equiv.mp <| ge_of_subset this.1
   refine Not.intro fun con ↦ absurd (length_lt_of_ssubset h) ?_
-  exact not_lt_of_ge <| le_of_eq (so_iff.mp con).1
+  exact not_lt_of_ge <| le_of_eq (equiv_iff.mp con).1
 
 end Rank
 
@@ -1001,7 +1004,7 @@ noncomputable instance instDecidableRelReducedToSet :
   fun _ S ↦ @decidable_of_iff _ _ reducedToSet_iff.symm (S.length.decidableBallLT _)
 
 theorem reducedToSet_congr_right : S ≈ T → (q.reducedToSet S ↔ q.reducedToSet T) := fun h ↦ by
-  have := so_iff.mp h
+  have := equiv_iff.mp h
   rw [reducedToSet_iff, reducedToSet_iff, ← this.1, forall_congr']
   refine fun i ↦ imp_congr_right fun _ ↦ reducedTo_congr_right <| this.2 i
 

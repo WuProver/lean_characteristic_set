@@ -172,7 +172,7 @@ lemma basicSetGo_le_ascendingSet (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l,
   | case1 BS hl1 hl2 =>
     intro _ _ T _ _ hT4
     rewrite [basicSet.go, dif_pos rfl]
-    refine ge_of_forall_so fun n hn ↦ ?_
+    refine ge_of_forall_equiv fun n hn ↦ ?_
     simpa using hT4 _ (apply_mem hn)
   | case2 l BS hl1 hl2 h B hB BS' l' hl1' hl2' ih =>
     intro hl3 hBS T hT1 ⟨hT2, hT3⟩ hT4
@@ -180,8 +180,8 @@ lemma basicSetGo_le_ascendingSet (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l,
     have hB2 : ∀ ⦃q⦄, q ∈ l → B ≤ q := fun _ ↦ List.Pairwise.rel_head hl3
     rewrite [List.head?_eq_some_head h, Option.all_some, decide_eq_true_eq] at hBS
     by_cases hL : T.length = BS.length
-    · have : BS ≈ T := so_iff'.mpr ⟨hL.symm, hT3⟩
-      refine le_of_lt <| TriangulatedSet.lt_of_lt_of_so ?_ this
+    · have : BS ≈ T := equiv_iff'.mpr ⟨hL.symm, hT3⟩
+      refine le_of_lt <| TriangulatedSet.lt_of_lt_of_equiv ?_ this
       exact basicSetGo_lt l BS hl1 hl2 h hBS
     have hL : BS.length < T.length := Nat.lt_of_le_of_ne hT2 (Ne.symm hL)
     rewrite [basicSet.go, dif_neg h]
@@ -197,7 +197,7 @@ lemma basicSetGo_le_ascendingSet (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l,
       intro r hr
       have : r ∈ l' := List.mem_of_mem_head? hr
       exact And.right <| of_decide_eq_true (List.mem_filter.mp this).2
-    rcases le_iff_lt_or_so.mp Bleq with Bltq | Bsoq
+    rcases  le_iff_lt_or_equiv.mp Bleq with Bltq | hBq
     · have : BS' < T := by
         refine TriangulatedSet.lt_def.mpr <| Or.inl ⟨BS.length, lt_add_one _, ?_, fun i hi ↦ ?_⟩
         · simpa [BS', concat_apply] using Bltq
@@ -209,7 +209,7 @@ lemma basicSetGo_le_ascendingSet (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l,
     · simp only [BS', length_concat, concat_apply] at hi ⊢
       split_ifs with hi1 hi2
       · exact hT3 i hi1
-      · exact hi2 ▸ Bsoq
+      · exact hi2 ▸ hBq
       absurd hi1
       exact lt_of_le_of_ne (Nat.le_of_lt_succ hi) hi2
     intro p hp1 hp2
@@ -222,23 +222,23 @@ lemma basicSetGo_le_ascendingSet (BS : TriangulatedSet σ R) (hl1 : ∀ p ∈ l,
       simpa [hi] using hp2 i (Nat.lt_add_right 1 hi)
     refine ⟨hT4 p hp1 hp2.2, ?_, reducedToSet_iff.mpr fun i (hi : i < BS.length + 1) ↦ ?_⟩
     <;> rcases hp1 with ⟨k, hk1, hk2⟩
-    · simp only [(so_iff.mp Bsoq).1, ← hk2] at hp2 ⊢
+    · simp only [(equiv_iff.mp hBq).1, ← hk2] at hp2 ⊢
       refine mainVariable_lt_of_index_lt ?_ hk1
       contrapose! hp2
       intro hk3
       rcases lt_or_eq_of_le hp2 with hk2 | hk2
       · exact ⟨k, hk2, hT3 k hk2⟩
-      exact absurd hk3 <| not_not.mpr <| hk2 ▸ Bsoq
+      exact absurd hk3 <| not_not.mpr <| hk2 ▸ hBq
     have hk3 : BS.length < k := by
       contrapose! hp2
       refine fun hp3 ↦ ⟨k, ?_⟩
-      have : k ≠ BS.length := fun this ↦ absurd hp3 (by rw [not_not, ← hk2, this]; exact Bsoq)
+      have : k ≠ BS.length := fun this ↦ absurd hp3 (by rw [not_not, ← hk2, this]; exact hBq)
       have : k < BS.length := lt_of_le_of_ne hp2 this
       exact ⟨this, hk2 ▸ hT3 k this⟩
     rewrite [← hk2, concat_apply]
     split_ifs with hi1 hi2
     · exact (reducedTo_congr_right <| hT3 i hi1).mpr <| hT1 (lt_trans hi1 hk3) hk1
-    · exact (reducedTo_congr_right Bsoq).mpr <| hT1 hk3 hk1
+    · exact (reducedTo_congr_right hBq).mpr <| hT1 hk3 hk1
     absurd hi1
     exact lt_of_le_of_ne (Nat.le_of_lt_succ hi) hi2
 

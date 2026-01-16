@@ -245,7 +245,7 @@ instance : Setoid (AscendingSet σ R) := Setoid.comap ((↑) : _ → Triangulate
 noncomputable instance instDecidableRelEquiv : @DecidableRel (AscendingSet σ R) _ (· ≈ ·) :=
   fun _ _ ↦ instDecidableAnd
 
-theorem so_def : S ≈ T ↔ S.val ≈ T.val := Iff.rfl
+theorem equiv_def : S ≈ T ↔ S.val ≈ T.val := Iff.rfl
 
 section WellFounded
 
@@ -314,7 +314,7 @@ theorem basicSet_subset : ↑l.basicSet ⊆ {p | p ∈ l} := l.basicSet_isMinima
 
 theorem basicSet_minimal : ∀ ⦃S⦄, ↑S ⊆ {p | p ∈ l} → l.basicSet ≤ S := l.basicSet_isMinimal.2
 
-theorem so_basicSet_of_isMinimal {l : List R[σ]} (h : isMinimal S l) : S ≈ l.basicSet := by
+theorem equiv_basicSet_of_isMinimal {l : List R[σ]} (h : isMinimal S l) : S ≈ l.basicSet := by
   apply antisymmRel_of_isMinimal h (basicSet_isMinimal l)
 
 noncomputable instance instDecidableRelIsMinimal :
@@ -323,10 +323,10 @@ noncomputable instance instDecidableRelIsMinimal :
     if h₂ : AntisymmRel (· ≤ ·) S l.basicSet then
       isTrue ⟨S.val.forall_mem_iff_forall_index.mpr h₁,
         minimal_of_isMinimal_of_antisymmRel h₂ l.basicSet_isMinimal⟩
-    else isFalse fun h₃ ↦ absurd h₂ <| not_not.mpr <| so_basicSet_of_isMinimal h₃
+    else isFalse fun h₃ ↦ absurd h₂ <| not_not.mpr <| equiv_basicSet_of_isMinimal h₃
   else isFalse (not_and_of_not_left _ <| (not_iff_not.mpr S.val.forall_mem_iff_forall_index).mpr h₁)
 
-theorem basicSet_toList_so : l.basicSet.toList.basicSet ≈ l.basicSet := by
+theorem basicSet_toList_equiv : l.basicSet.toList.basicSet ≈ l.basicSet := by
   refine And.intro ?_ ?_
   <;> refine basicSet_minimal _ fun p hp ↦ ?_
   · exact mem_toList_iff.mpr hp

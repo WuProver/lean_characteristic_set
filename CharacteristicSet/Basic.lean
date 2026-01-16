@@ -89,7 +89,6 @@ theorem mainVariable_add_le (p q : R[σ]) :
 
 theorem mainVariable_mul_le (p q : R[σ]) :
     (p * q).mainVariable ≤ p.mainVariable ⊔ q.mainVariable := by
-  unfold mainVariable
   apply Finset.sup_le
   intro s smem
   by_contra hs
@@ -97,7 +96,7 @@ theorem mainVariable_mul_le (p q : R[σ]) :
       (∀ x, ¬q.coeff x = 0 → x.support.max < s.support.max):= by
     simp only [not_le, max_lt_iff] at hs
     have : ⊥ < s.support.max := bot_lt_of_lt hs.1
-    simpa [Finset.sup_lt_iff this, mem_support_iff, ne_eq] using hs
+    simpa [mainVariable, Finset.sup_lt_iff this, mem_support_iff, ne_eq] using hs
   simp only [mem_support_iff, coeff_mul, ne_eq] at smem
   rcases Finset.exists_ne_zero_of_sum_ne_zero smem with ⟨⟨t1, t2⟩, ht1, ht2⟩
   simp only [Finset.mem_antidiagonal, ne_eq] at ht1 ht2
@@ -118,7 +117,7 @@ theorem mainVariable_prod_le {α : Type*} (s : Finset α) (f : α → R[σ]) :
     (∏ a ∈ s, f a).mainVariable ≤ s.sup (fun a ↦ (f a).mainVariable) := by
   classical
   induction s using Finset.induction_on with
-  | empty => simp only [Finset.prod_empty, Finset.sup_empty, le_bot_iff]; exact mainVariable_C 1
+  | empty => simp only [Finset.prod_empty, Finset.sup_empty, le_bot_iff]; apply mainVariable_C
   | insert a s has ih =>
     rewrite [Finset.prod_insert has, Finset.sup_insert]
     exact (mainVariable_mul_le _ _).trans (sup_le_sup_left ih _)
@@ -132,7 +131,7 @@ theorem degreeOf_eq_zero_of_mainVariable_lt {i : σ} :
   apply le_trans (Finset.le_max h)
   apply mainVariable_def p ▸ Finset.le_sup hs
 
-@[simp] theorem degreeOf_of_bot_mainVariable (i : σ) : p.mainVariable = ⊥ → p.degreeOf i = 0 :=
+theorem degreeOf_of_mainVariable_eq_bot (i : σ) : p.mainVariable = ⊥ → p.degreeOf i = 0 :=
   fun h ↦ degreeOf_eq_zero_of_mainVariable_lt (h ▸ WithBot.bot_lt_coe i)
 
 end MainVariable
@@ -175,16 +174,13 @@ theorem degreeOf_mul_X_self_pow_eq_add_of_ne_zero (i : σ) (k : ℕ) (h : p ≠ 
   induction k with
   | zero => rw [pow_zero, mul_one, add_zero]
   | succ k hk =>
-    have (k : ℕ) : p * X i ^ k ≠ 0 := by
-      induction k with
-      | zero => rewrite [pow_zero, mul_one]; exact h
-      | succ k hk =>
-        have ⟨s ,hs⟩ := ne_zero_iff.mp hk
-        refine ne_zero_iff.mpr ⟨s + Finsupp.single i 1, ?_⟩
-        rewrite [pow_add, pow_one, ← mul_assoc, coeff_mul_X]
-        exact hs
+    have : p * X i ^ k ≠ 0 := by
+      rcases ne_zero_iff.mp h with ⟨s, hs⟩
+      refine ne_zero_iff.mpr ⟨s + Finsupp.single i k, ?_⟩
+      rewrite [X_pow_eq_monomial, coeff_mul_monomial, mul_one]
+      exact hs
     rewrite [pow_add, pow_one, ← mul_assoc]
-    rw [(degreeOf_mul_X_eq_degreeOf_add_one_iff i _).mpr (this k), hk, add_assoc]
+    rw [(degreeOf_mul_X_eq_degreeOf_add_one_iff i _).mpr this, hk, add_assoc]
 
 theorem degreeOf_mul_X_pow_of_ne (k : ℕ) (h : i ≠ j) :
     (p * X j ^ k).degreeOf i = p.degreeOf i := by
@@ -197,10 +193,7 @@ theorem degreeOf_add_eq_of_degreeOf_lt (h : q.degreeOf i < p.degreeOf i) :
   apply le_antisymm ((max_eq_left_of_lt h) ▸ degreeOf_add_le i p q)
   nth_rewrite 2 [degreeOf_eq_sup]
   apply (Finset.le_sup_iff <| Nat.zero_lt_of_lt h).mpr
-  have : p.support.Nonempty := by
-    apply support_nonempty.mpr
-    contrapose! h
-    simp only [h, degreeOf_zero, zero_le]
+  have : p.support.Nonempty := by apply support_nonempty.mpr; contrapose! h; simp [h]
   have ⟨s, hs1, hs2⟩ := Finset.exists_mem_eq_sup _ this (fun s ↦ s i)
   rewrite [← degreeOf_eq_sup i p] at hs2
   refine ⟨s, ?_, by rw [hs2]⟩
@@ -346,24 +339,24 @@ instance instSetoid : Setoid (R[σ]) := AntisymmRel.setoid R[σ] (· ≤ ·)
 noncomputable instance instDecidableRelEquiv : @DecidableRel R[σ] R[σ] (· ≈ ·) :=
   fun _ _ ↦ instDecidableAnd
 
-theorem so_def'' : p ≈ q ↔ p ≤ q ∧ q ≤ p := Iff.rfl
+theorem equiv_def'' : p ≈ q ↔ p ≤ q ∧ q ≤ p := Iff.rfl
 
-theorem so_def' : p ≈ q ↔ p.rank = q.rank := Iff.trans so_def''
+theorem equiv_def' : p ≈ q ↔ p.rank = q.rank := Iff.trans equiv_def''
   (by rewrite [le_def', le_def']; exact Std.le_antisymm_iff)
 
-theorem so_def : p ≈ q ↔ ¬p < q ∧ ¬q < p := Iff.trans so_def''
+theorem equiv_def : p ≈ q ↔ ¬p < q ∧ ¬q < p := Iff.trans equiv_def''
   (by rw [not_lt_iff_ge, not_lt_iff_ge, and_comm])
 
-theorem so_iff : p ≈ q ↔ p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree :=
-  Iff.trans so_def' rank_eq
+theorem equiv_iff : p ≈ q ↔ p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree :=
+  Iff.trans equiv_def' rank_eq
 
-theorem le_iff_lt_or_so : p ≤ q ↔ p < q ∨ p ≈ q := le_iff_lt_or_antisymmRel
+theorem le_iff_lt_or_equiv : p ≤ q ↔ p < q ∨ p ≈ q := le_iff_lt_or_antisymmRel
 
-theorem lt_of_so_of_lt {r : R[σ]} : p ≈ q → q < r → p < r := lt_of_antisymmRel_of_lt
+theorem lt_of_equiv_of_lt {r : R[σ]} : p ≈ q → q < r → p < r := lt_of_antisymmRel_of_lt
 
-theorem lt_of_lt_of_so {r : R[σ]} : p < q → q ≈ r → p < r := lt_of_lt_of_antisymmRel
+theorem lt_of_lt_of_equiv {r : R[σ]} : p < q → q ≈ r → p < r := lt_of_lt_of_antisymmRel
 
-theorem so_of_le_of_ge : p ≤ q → q ≤ p → p ≈ q := And.intro
+theorem equiv_of_le_of_ge : p ≤ q → q ≤ p → p ≈ q := And.intro
 
 protected theorem zero_le : 0 ≤ p := by
   apply le_def'.mpr
@@ -444,7 +437,7 @@ theorem reducedTo_of_mainVariable_lt (h : q.mainVariable < p.mainVariable) : q.r
 
 theorem reducedTo_congr_right : p ≈ q → (r.reducedTo p ↔ r.reducedTo q) := fun h ↦
   have (p q : R[σ]) (h : p ≈ q) : r.reducedTo p → r.reducedTo q := by
-    have : p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree := so_iff.mp h
+    have : p.mainVariable = q.mainVariable ∧ p.mainDegree = q.mainDegree := equiv_iff.mp h
     simp only [reducedTo, if_true_left]
     intro hr1 hr2
     match hc : q.mainVariable with

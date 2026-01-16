@@ -155,7 +155,7 @@ lemma basicSetGo_le_ascendingSet (l : List R[σ]) (BS : TriangulatedSet σ R)
   | case1 BS hl1 =>
     intro _ _ _ T _ _ hT4
     rewrite [basicSet.go, dif_pos rfl]
-    refine ge_of_forall_so fun n hn ↦ ?_
+    refine ge_of_forall_equiv fun n hn ↦ ?_
     simpa using hT4 _ (apply_mem hn)
   | case2 l BS hl1 h B BS' l' ih =>
     intro hl2 hBS1 hBS2 T hT1 ⟨hT2, hT3⟩ hT4
@@ -164,8 +164,8 @@ lemma basicSetGo_le_ascendingSet (l : List R[σ]) (BS : TriangulatedSet σ R)
     rewrite [List.head?_eq_some_head h, Option.all_some, decide_eq_true_eq] at hBS2
     have heq : BS' = BS.concat B := takeConcat_eq_concat_of_canConcat hB1
     by_cases hL : T.length = BS.length
-    · have : BS ≈ T := so_iff'.mpr ⟨hL.symm, hT3⟩
-      refine le_of_lt <| TriangulatedSet.lt_of_lt_of_so ?_ this
+    · have : BS ≈ T := equiv_iff'.mpr ⟨hL.symm, hT3⟩
+      refine le_of_lt <| TriangulatedSet.lt_of_lt_of_equiv ?_ this
       exact basicSetGo_lt l BS hl1 h hBS2
     have hL : BS.length < T.length := Nat.lt_of_le_of_ne hT2 (Ne.symm hL)
     rewrite [basicSet.go, dif_neg h]
@@ -182,7 +182,7 @@ lemma basicSetGo_le_ascendingSet (l : List R[σ]) (BS : TriangulatedSet σ R)
       have : r ∈ l' := List.mem_of_mem_head? hr
       exact of_decide_eq_true (List.mem_filter.mp this).2
     -- Main Logic: Compare B (from algo) and q (from T)
-    rcases le_iff_lt_or_so.mp Bleq with Bltq | Bsoq
+    rcases  le_iff_lt_or_equiv.mp Bleq with Bltq | hBq
     · -- Case 1: B < q. The algorithm picked a smaller element, so BS' < T.
       have : BS' < T := by
         rewrite [heq]
@@ -204,7 +204,7 @@ lemma basicSetGo_le_ascendingSet (l : List R[σ]) (BS : TriangulatedSet σ R)
     · simp only [heq, length_concat, concat_apply] at hi ⊢
       split_ifs with hi1 hi2
       · exact hT3 i hi1
-      · exact hi2 ▸ Bsoq
+      · exact hi2 ▸ hBq
       absurd hi1
       exact lt_of_le_of_ne (Nat.le_of_lt_succ hi) hi2
     intro p hp1 hp2
@@ -220,13 +220,13 @@ lemma basicSetGo_le_ascendingSet (l : List R[σ]) (BS : TriangulatedSet σ R)
     have hk3 : BS.length < k := by
       contrapose! hp2
       refine fun hp3 ↦ ⟨k, ?_⟩
-      have : k ≠ BS.length := fun this ↦ absurd hp3 (by rw [not_not, ← hk2, this]; exact Bsoq)
+      have : k ≠ BS.length := fun this ↦ absurd hp3 (by rw [not_not, ← hk2, this]; exact hBq)
       have : k < BS.length := lt_of_le_of_ne hp2 this
       exact ⟨this, hk2 ▸ hT3 k this⟩
     rewrite [← hk2, concat_apply]
     split_ifs with hi1 hi2
     · exact (reducedTo_congr_right <| hT3 i hi1).mpr <| hT1 (lt_trans hi1 hk3) hk1
-    · exact (reducedTo_congr_right Bsoq).mpr <| hT1 hk3 hk1
+    · exact (reducedTo_congr_right hBq).mpr <| hT1 hk3 hk1
     absurd hi1
     exact lt_of_le_of_ne (Nat.le_of_lt_succ hi) hi2
 

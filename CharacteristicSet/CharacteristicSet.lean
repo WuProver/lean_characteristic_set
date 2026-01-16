@@ -145,7 +145,7 @@ lemma characteristicSetGo_decreasing (BS : TriangulatedSet σ R) (lBS RS : List 
     (hRS1 : RS = ((l \ lBS).map fun p ↦ (p.setPseudo BS).remainder).filter (· ≠ 0)) :
     (l₀ ++ RS ++ lBS).basicSet < l.basicSet := by
   rewrite [hRS1, hlBS, hBS] at hRS ⊢
-  apply TriangulatedSet.lt_of_lt_of_so ?_ l.basicSet_toList_so
+  apply TriangulatedSet.lt_of_lt_of_equiv ?_ l.basicSet_toList_equiv
   apply basicSet_append_lt_of_exists_reducedToSet
   have ⟨p, hp⟩ := List.exists_mem_of_ne_nil _ hRS
   refine ⟨p, List.mem_append_right _ hp, of_decide_eq_true (List.mem_filter.mp hp).2, ?_⟩
@@ -153,7 +153,7 @@ lemma characteristicSetGo_decreasing (BS : TriangulatedSet σ R) (lBS RS : List 
   suffices l.basicSet ≈ l.basicSet.toList.basicSet by
     apply (reducedToSet_congr_right this).mp
     exact hq2 ▸ q.setPseudo_remainder_reducedToSet _
-  exact Setoid.symm l.basicSet_toList_so
+  exact Setoid.symm l.basicSet_toList_equiv
 
 /--
 Computes the Characteristic Set of a polynomial list `l`.
@@ -355,7 +355,7 @@ theorem vanishingSet_eq_zeroDecomposition_union :
     fun ⟨p, ⟨hp1, _⟩, hx1, hx2⟩ ↦ ⟨fun q hq ↦ hx2 q (Or.inr hq), p, hp1, hx1⟩⟩
   · -- Forward: if p is constant, Zero(p) is empty or total, but here p != 0 (from CS)
     contrapose! hp2
-    simp [initial_of_bot_mainVariable (ne_zero_of_mem hp1) hp2]
+    simp [initial_of_mainVariable_eq_bot (ne_zero_of_mem hp1) hp2]
   · -- Forward: x is zero of everything in CS++l
     rcases hq with hq | hq
     · -- x ∈ Zero(CS) because x ∈ Zero(l) and CS is characteristic
