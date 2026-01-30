@@ -495,15 +495,4 @@ theorem zero_reducedToSet : (0 : R[σ]).reducedToSet a := fun _ _ ↦ zero_reduc
 
 end Reduced
 
-section CommRing
-
-variable {R σ : Type*} [CommRing R] {p q : R[σ]}
-
-theorem degreeOf_eq_of_degreeOf_sub_lt {i : σ} {p q : R[σ]}
-    (h : (p - q).degreeOf i < p.degreeOf i) : p.degreeOf i = q.degreeOf i :=
-  have : (p + (-q)).degreeOf i < p.degreeOf i := by rw [← sub_eq_add_neg]; exact h
-  (degreeOf_neg i q) ▸ degreeOf_eq_of_degreeOf_add_lt this
-
-end CommRing
-
 end MvPolynomial

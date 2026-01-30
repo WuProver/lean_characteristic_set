@@ -15,29 +15,6 @@ We introduce two type main variables:
 
 -/
 
-section isMinimal
-
-variable {α β γ : Type*} [Membership γ α] [Membership γ β]
-
-/-- `a` is minimal in `b` if `a ⊆ b` and `a ≤ a'` for any `a' ⊆ b`.
-This captures the definition of a Basic Set. -/
-def isMinimal [LE α] (a : α) (b : β) : Prop :=
-  (∀ ⦃c⦄, c ∈ a → c ∈ b) ∧ ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a ≤ a'
-
-theorem isMinimal_def [LE α] (a : α) (b : β) : isMinimal a b ↔
-    (∀ ⦃c⦄, c ∈ a → c ∈ b) ∧ ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a ≤ a' := Iff.rfl
-
-theorem antisymmRel_of_isMinimal [LE α] {a₁ a₂ : α} {b : β} (h₁ : isMinimal a₁ b)
-    (h₂ : isMinimal a₂ b) : AntisymmRel (· ≤ ·) a₁ a₂ := And.intro (h₁.2 h₂.1) (h₂.2 h₁.1)
-
-variable [Preorder α] {a a₁ a₂ : α} {b b₁ b₂ : β}
-
-theorem minimal_of_isMinimal_of_antisymmRel (h₁ : AntisymmRel (· ≤ ·) a₁ a₂)
-    (h₂ : isMinimal a₂ b) : ∀ ⦃a'⦄, (∀ ⦃c⦄, c ∈ a' → c ∈ b) → a₁ ≤ a' :=
-  fun _ h ↦ le_of_antisymmRel_of_le h₁ (h₂.2 h)
-
-end isMinimal
-
 open MvPolynomial
 
 /--
@@ -262,6 +239,10 @@ theorem Set.has_min (h : S'.Nonempty) : ∃ S ∈ S', ∀ T ∈ S', S ≤ T :=
   have ⟨S, hS1, hS2⟩ := WellFounded.has_min this S' h
   ⟨S, hS1, fun T hT ↦ not_lt_iff_ge.mp (hS2 T hT)⟩
 
+theorem Set.has_min' (h : S'.Nonempty) : ∃ S, Minimal (· ∈ S') S :=
+  have ⟨S, hS1, hS2⟩ := has_min S' h
+  ⟨S, minimal_iff_forall_lt.mpr ⟨hS1, fun T hT1 hT2 ↦ absurd (hS2 T hT2) <| not_le_of_gt hT1⟩⟩
+
 noncomputable def Set.min (h : S'.Nonempty) : AscendingSet σ R := Exists.choose (has_min S' h)
 
 theorem Set.min_mem (h : S'.Nonempty) : min S' h ∈ S' :=
@@ -288,13 +269,15 @@ variable [AscendingSetTheory σ R] [Finite σ] {α : Type*} [Membership R[σ] α
 
 /-- The main variableical existence of a Basic Set for any set of polynomials `a`.
 This is guaranteed by the well-foundedness of the rank. -/
-protected theorem hasBasicSet (a : α) : ∃ S : AscendingSet σ R, isMinimal S a :=
-  AscendingSet.Set.has_min _ ⟨∅, fun n hn ↦ absurd hn <| notMem_empty n⟩
+protected theorem hasBasicSet (a : α) :
+    ∃ S : AscendingSet σ R, Minimal (fun a' ↦ ∀ ⦃p⦄, p ∈ a' → p ∈ a) S :=
+  AscendingSet.Set.has_min' _ ⟨∅, fun n hn ↦ absurd hn <| notMem_empty n⟩
 
 /-- Non-computable choice of a Basic Set for `a`. -/
 protected def basicSet (a : α) : AscendingSet σ R := (Classical.hasBasicSet a).choose
 
-protected theorem basicSet_isMinimal (a : α) : isMinimal (Classical.basicSet a) a :=
+protected theorem basicSet_minimal' (a : α) :
+    Minimal (fun a' ↦ ∀ ⦃p⦄, p ∈ a' → p ∈ a) (Classical.basicSet a) :=
   (Classical.hasBasicSet a).choose_spec
 
 end
@@ -307,24 +290,10 @@ variable [HasBasicSet σ R] (l : List R[σ]) {l1 l2 : List R[σ]} {S T : Ascendi
 /-- The Basic Set of a list `l`, as computed by the `HasBasicSet` instance. -/
 def basicSet : AscendingSet σ R := ⟨HasBasicSet.basicSet l, HasBasicSet.basicSet_isAscendingSet l⟩
 
-theorem basicSet_isMinimal (l : List R[σ]) : isMinimal l.basicSet l :=
-  ⟨HasBasicSet.basicSet_subset l, fun ⟨_, hS⟩ ↦ HasBasicSet.basicSet_minimal l hS⟩
+theorem basicSet_subset : ↑l.basicSet ⊆ {p | p ∈ l} := HasBasicSet.basicSet_subset l
 
-theorem basicSet_subset : ↑l.basicSet ⊆ {p | p ∈ l} := l.basicSet_isMinimal.1
-
-theorem basicSet_minimal : ∀ ⦃S⦄, ↑S ⊆ {p | p ∈ l} → l.basicSet ≤ S := l.basicSet_isMinimal.2
-
-theorem equiv_basicSet_of_isMinimal {l : List R[σ]} (h : isMinimal S l) : S ≈ l.basicSet := by
-  apply antisymmRel_of_isMinimal h (basicSet_isMinimal l)
-
-noncomputable instance instDecidableRelIsMinimal :
-    @DecidableRel (AscendingSet σ R) (List R[σ]) isMinimal := fun S l ↦
-  if h₁ : ∀ i < S.length, S i ∈ l then
-    if h₂ : AntisymmRel (· ≤ ·) S l.basicSet then
-      isTrue ⟨S.val.forall_mem_iff_forall_index.mpr h₁,
-        minimal_of_isMinimal_of_antisymmRel h₂ l.basicSet_isMinimal⟩
-    else isFalse fun h₃ ↦ absurd h₂ <| not_not.mpr <| equiv_basicSet_of_isMinimal h₃
-  else isFalse (not_and_of_not_left _ <| (not_iff_not.mpr S.val.forall_mem_iff_forall_index).mpr h₁)
+theorem basicSet_minimal : ∀ ⦃S⦄, ↑S ⊆ {p | p ∈ l} → l.basicSet ≤ S :=
+  fun ⟨_, hS⟩ ↦ HasBasicSet.basicSet_minimal l hS
 
 theorem basicSet_toList_equiv : l.basicSet.toList.basicSet ≈ l.basicSet := by
   refine And.intro ?_ ?_

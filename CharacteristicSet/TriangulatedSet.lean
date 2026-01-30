@@ -562,7 +562,7 @@ theorem wellFoundedLT_variables_of_wellFoundedLT [Nontrivial R] :
   MvPolynomial.wellFoundedLT_variables_of_wellFoundedLT ∘
     wellFoundedLT_mvPolynomial_of_wellFoundedLT
 
-theorem wellFoundeGT_variables_of_wellFoundedLT [Nontrivial R] :
+theorem wellFoundedGT_variables_of_wellFoundedLT [Nontrivial R] :
     WellFoundedLT (TriangulatedSet σ R) → WellFoundedGT σ := fun h ↦ by
   rewrite [WellFoundedGT, isWellFounded_iff, wellFounded_iff_isEmpty_descending_chain]
   rewrite [WellFoundedLT, isWellFounded_iff, wellFounded_iff_isEmpty_descending_chain] at h
