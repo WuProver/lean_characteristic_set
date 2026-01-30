@@ -181,18 +181,10 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:isMinimal}
-    \lean{isMinimal}
-    \leanok
-    An ascending set $AS$ is minimal in a polynomial set $PS$ if $AS \subseteq PS$ and $AS \le AS'$ for any other ascending set $AS' \subseteq PS$.
-    It is also called a "Basic Set" of $PS$.
-\end{definition}
-
-\begin{definition}
     \label{def:HasBasicSet}
     \lean{HasBasicSet}
     \leanok
-    \uses{def:TriangulatedSet, def:isAscendingSet, def:isMinimal, def:reducedToSet, def:TriangulatedSet.rank}
+    \uses{def:TriangulatedSet, def:isAscendingSet, def:reducedToSet, def:TriangulatedSet.rank}
     The interface for algorithms computing Basic Sets.
     Any instance of this class provides a "basicSet" function that computes a minimal ascending set
     contained in a given list of polynomials.
