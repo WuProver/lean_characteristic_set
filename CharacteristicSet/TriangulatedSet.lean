@@ -436,7 +436,7 @@ noncomputable instance : DecidableLE (TriangulatedSet σ R) :=
 
 noncomputable instance : DecidableLT (TriangulatedSet σ R) := decidableLTOfDecidableLE
 
-instance : IsTotal (TriangulatedSet σ R) (· ≤ ·) where
+instance : Std.Total (@LE.le (TriangulatedSet σ R) _) where
   total S T := le_total S.rank T.rank
 
 theorem le_def : S ≤ T ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨

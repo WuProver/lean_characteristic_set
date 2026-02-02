@@ -299,7 +299,7 @@ noncomputable instance instDecidableLE : DecidableLE R[σ] := fun _ _ ↦
 
 noncomputable instance instDecidableLT : DecidableLT R[σ] := decidableLTOfDecidableLE
 
-instance instIsTotalLe : IsTotal R[σ] (· ≤ ·) where
+instance instIsTotalLe : Std.Total (@LE.le R[σ] _) where
   total p q := le_total p.rank q.rank
 
 theorem le_def : p ≤ q ↔ p.mainVariable < q.mainVariable ∨
