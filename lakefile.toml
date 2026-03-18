@@ -12,6 +12,7 @@ relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
 
+
 [[require]]
 name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"
@@ -24,4 +25,3 @@ rev = "main"
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-
