@@ -2,6 +2,8 @@ name = "CharacteristicSet"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["CharacteristicSet"]
+[[lean_lib]]
+name = "CharacteristicSet"
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -11,11 +13,6 @@ weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
 
 [[require]]
-name = "mathlib"
-scope = "leanprover-community"
-
-
-[[require]]
 name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"
 
@@ -23,5 +20,8 @@ git = "https://github.com/PatrickMassot/checkdecls.git"
 name = "«doc-gen4»"
 git = "https://github.com/leanprover/doc-gen4"
 rev = "main"
-[[lean_lib]]
-name = "CharacteristicSet"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+

@@ -3,6 +3,8 @@ import CharacteristicSet.WeakAscendingSet
 
 open MvPolynomial WeakAscendingSet
 
+scoped[MvPolynomial] notation:9000 R "[" σ "]" => MvPolynomial σ R
+
 noncomputable section
 
 def p₁ : ℚ[Fin 8] := X 1 - X 0 - (X 3 - X 2)
@@ -33,7 +35,7 @@ example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) 
     have : (I * p₅).eval x = 0 := by
       simp only [heq, add_zero, Fin.getElem_fin, map_sum, map_mul]
       have (i : Fin qs.length) : (CS i).eval x = 0 := by
-        exact hx _ <| TriangulatedSet.apply_mem <| hlq ▸ i.2
+        exact hx _ <| TriangularSet.apply_mem <| hlq ▸ i.2
       simp only [this, mul_zero, Finset.sum_const_zero]
     rewrite [map_mul] at this
     exact (mul_eq_zero_iff_left h).mp this

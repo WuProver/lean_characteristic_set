@@ -1,15 +1,15 @@
-import CharacteristicSet.Basic
+import CharacteristicSet.Lemmas
 import Mathlib.Algebra.MvPolynomial.NoZeroDivisors
 
 /-!
-# Initial of a Polynomial
+# Initial of a polynomial
 
 This file defines the **initial** of a multivariate polynomial.
 
 For a polynomial `p` with main variable `xᵢ`, the initial is the coefficient (a polynomial)
 of the highest power of `xᵢ` appearing in `p`.
 
-## Main Definitions
+## Main declarations
 
 * `MvPolynomial.initialOf i p`:
   The initial of `p` with respect to a specific variable `i`.
@@ -18,7 +18,7 @@ of the highest power of `xᵢ` appearing in `p`.
   The initial of `p` with respect to its main variable.
   For constants, this is defined as `1`.
 
-## Main Theorems
+## Main results
 
 * `initialOf_eq_leadingCoeff`:
   `initᵢ(p)` is the leading coefficient when viewing `p` as a univariate polynomial in `X i`.
@@ -35,19 +35,19 @@ variable {R σ : Type*} [CommSemiring R]
 
 section InitialOf
 
-variable (i j : σ) (p : R[σ])
+variable (i j : σ) (p : MvPolynomial σ R)
 
 /-- The "initial" of a polynomial `p` with respect to a variable `i`.
 It is the coefficient of the highest power of `X i` appearing in `p`.
 More formally, it is the sum of terms in `p` whose degree in `i` equals `p.degreeOf i`,
 but with the variable `i` removed (set to 1). -/
-noncomputable def initialOf : R[σ] :=
+noncomputable def initialOf : MvPolynomial σ R :=
   ∑ s ∈ p.support with s i = p.degreeOf i, monomial (s.erase i) (p.coeff s)
 
-theorem initialOf_def {p : R[σ]} {i : σ} :
+theorem initialOf_def {p : MvPolynomial σ R} {i : σ} :
     p.initialOf i = ∑ s ∈ p.support with s i = p.degreeOf i, monomial (s.erase i) (p.coeff s) := rfl
 
-@[simp] theorem initialOf_zero : (0 : R[σ]).initialOf i = 0 := rfl
+@[simp] theorem initialOf_zero : (0 : MvPolynomial σ R).initialOf i = 0 := rfl
 
 @[simp] theorem initialOf_monomial (s : σ →₀ ℕ) (r : R) :
     (monomial s r).initialOf i = monomial (s.erase i) r := by
@@ -57,10 +57,10 @@ theorem initialOf_def {p : R[σ]} {i : σ} :
   rewrite [Finsupp.support_single_ne_zero s r_zero, Finset.sum_singleton, Finset.sup_singleton]
   rw [if_pos rfl, coeff, Finsupp.single_eq_same]
 
-@[simp] theorem initialOf_C (r : R) : (C r : R[σ]).initialOf i = C r :=
+@[simp] theorem initialOf_C (r : R) : (C r : MvPolynomial σ R).initialOf i = C r :=
   by rw [C_apply, initialOf_monomial, Finsupp.erase_zero]
 
-@[simp] theorem initialOf_one : (1 : R[σ]).initialOf i = 1 := by rw [← C_1, initialOf_C]
+@[simp] theorem initialOf_one : (1 : MvPolynomial σ R).initialOf i = 1 := by rw [← C_1, initialOf_C]
 
 @[simp] theorem initialOf_mul_X_self : (p * X i).initialOf i = p.initialOf i := by
   by_cases p_zero : p = 0
@@ -84,17 +84,17 @@ theorem initialOf_mul_X_pow_of_ne {i j : σ} (k : ℕ) (h : i ≠ j) :
   | zero => rw [pow_zero, mul_one, mul_one]
   | succ k hk => rw [pow_add, pow_one, ← mul_assoc, initialOf_mul_X_of_ne _ h, hk, mul_assoc]
 
-@[simp] theorem initialOf_X_self : (X i).initialOf i = (1 : R[σ]) :=
+@[simp] theorem initialOf_X_self : (X i).initialOf i = (1 : MvPolynomial σ R) :=
   by rw [← one_mul (X i), initialOf_mul_X_self, initialOf_one]
 
-@[simp] theorem initialOf_X_self_pow (k : ℕ) : (X i ^ k).initialOf i = (1 : R[σ]) :=
+@[simp] theorem initialOf_X_self_pow (k : ℕ) : (X i ^ k).initialOf i = (1 : MvPolynomial σ R) :=
   by rw [← one_mul (X i ^ k), initialOf_mul_X_self_pow, initialOf_one]
 
-theorem initialOf_X_of_ne {i j : σ} (h : i ≠ j) : (X j).initialOf i = (X j : R[σ]) :=
+theorem initialOf_X_of_ne {i j : σ} (h : i ≠ j) : (X j).initialOf i = (X j : MvPolynomial σ R) :=
   by rw [← one_mul (X j), initialOf_mul_X_of_ne _ h, initialOf_one]
 
 theorem initialOf_X_pow_of_ne {i j : σ} (k : ℕ) (h : i ≠ j) :
-    (X j ^ k).initialOf i = (X j : R[σ]) ^ k := by
+    (X j ^ k).initialOf i = (X j : MvPolynomial σ R) ^ k := by
   rw [← one_mul (X j ^ k), initialOf_mul_X_pow_of_ne _ _ h, initialOf_one]
 
 theorem coeff_initialOf_eq_of_apply_ne_zero {s : σ →₀ ℕ} (h : s i ≠ 0) :
@@ -127,7 +127,7 @@ theorem coeff_initialOf_eq (s : σ →₀ ℕ) :
   if hs : s i = 0 then if_pos hs ▸ coeff_initialOf_eq_of_apply_eq_zero i p hs
   else if_neg hs ▸ coeff_initialOf_eq_of_apply_ne_zero i p hs
 
-lemma coeff_initialOf_eq_of_ne_zero {i : σ} {p : R[σ]} {s : σ →₀ ℕ} :
+lemma coeff_initialOf_eq_of_ne_zero {i : σ} {p : MvPolynomial σ R} {s : σ →₀ ℕ} :
     (p.initialOf i).coeff s ≠ 0 → (p.initialOf i).coeff s = p.coeff (s.update i (p.degreeOf i)) :=
   fun h ↦ coeff_initialOf_eq_of_apply_eq_zero i p
     (by contrapose! h; exact (coeff_initialOf_eq_of_apply_ne_zero i p) h)
@@ -143,7 +143,7 @@ lemma coeff_initialOf_eq_of_ne_zero {i : σ} {p : R[σ]} {s : σ →₀ ℕ} :
 
 /-- The initial of `p` with respect to `i` is the leading coefficient
 when viewing `p` as a univariate polynomial in `X i`. -/
-theorem initialOf_eq_leadingCoeff [DecidableEq σ] {p : R[σ]} {i : σ} :
+theorem initialOf_eq_leadingCoeff [DecidableEq σ] {p : MvPolynomial σ R} {i : σ} :
     p.initialOf i = rename Subtype.val
       (optionEquivLeft R {b // b ≠ i} (rename (Equiv.optionSubtypeNe i).symm p)).leadingCoeff := by
   ext s
@@ -191,7 +191,16 @@ theorem initialOf_eq_leadingCoeff [DecidableEq σ] {p : R[σ]} {i : σ} :
     rw [if_pos this]
   exact this _ ▸ coeff_initialOf_eq_of_apply_eq_zero i p hs
 
-theorem initialOf_eq_of_degreeOf_eq_zero {p : R[σ]} {i : σ} :
+theorem vars_initialOf_subset : (p.initialOf i).vars ⊆ p.vars := by
+  classical
+  apply subset_trans (vars_sum_subset _ _)
+  simp only [Finset.biUnion_subset_iff_forall_subset, Finset.mem_filter, mem_support_iff, ne_eq]
+  intro s ⟨hs, _⟩
+  simp only [vars_monomial hs, Finsupp.support_erase]
+  apply subset_trans (Finset.erase_subset i s.support)
+  exact support_subset_vars_of_mem_support <| mem_support_iff.mpr hs
+
+theorem initialOf_eq_of_degreeOf_eq_zero {p : MvPolynomial σ R} {i : σ} :
     p.degreeOf i = 0 → p.initialOf i = p := fun h ↦ Eq.symm (by
   nth_rewrite 1 [p.as_sum, initialOf_def, Finset.sum_filter]
   refine Finset.sum_congr rfl (fun s hs ↦ ?_)
@@ -208,8 +217,8 @@ theorem degreeOf_initialOf_le : (p.initialOf i).degreeOf j ≤ p.degreeOf j := b
   rewrite [Finsupp.erase_ne (Ne.symm hi)]
   apply Finset.le_sup <| mem_support_iff.mpr hs.1
 
-theorem initialOf_add_eq_of_degreeOf_lt {i : σ} {p q : R[σ]} (h : q.degreeOf i < p.degreeOf i) :
-    (p + q).initialOf i = p.initialOf i := by
+theorem initialOf_add_eq_of_degreeOf_lt {i : σ} {p q : MvPolynomial σ R}
+    (h : q.degreeOf i < p.degreeOf i) : (p + q).initialOf i = p.initialOf i := by
   ext s
   rewrite [coeff_initialOf_eq, coeff_initialOf_eq, degreeOf_add_eq_of_degreeOf_lt h, coeff_add]
   split_ifs with hs
@@ -218,7 +227,7 @@ theorem initialOf_add_eq_of_degreeOf_lt {i : σ} {p q : R[σ]} (h : q.degreeOf i
     classical simpa only [Finsupp.update_apply, reduceIte]
   rfl
 
-theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ}
+theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : MvPolynomial σ R} {d : ℕ}
     (q_ne : q ≠ 0) (hq : q.degreeOf i = 0) (hr : r.degreeOf i < d)
     (decomp : p = q * X i ^ d + r) : p.degreeOf i = d := by
   haveI : Nontrivial R := have ⟨s, hs⟩ := ne_zero_iff.mp q_ne; ⟨q.coeff s, 0, hs⟩
@@ -236,8 +245,9 @@ theorem degreeOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ
 @[simp] theorem initialOf_initialOf_self : (p.initialOf i).initialOf i = p.initialOf i :=
   initialOf_eq_of_degreeOf_eq_zero <| degreeOf_initialOf_self ..
 
-theorem initialOf_eq_iff_degreeOf_eq_zero {i : σ} {p : R[σ]} : p.degreeOf i = 0 ↔ p.initialOf i = p
-    := ⟨initialOf_eq_of_degreeOf_eq_zero, fun h ↦ by rw [h.symm, degreeOf_initialOf_self]⟩
+theorem initialOf_eq_iff_degreeOf_eq_zero {i : σ} {p : MvPolynomial σ R} :
+    p.degreeOf i = 0 ↔ p.initialOf i = p :=
+  ⟨initialOf_eq_of_degreeOf_eq_zero, fun h ↦ by rw [h.symm, degreeOf_initialOf_self]⟩
 
 /-- Auxiliary decomposition lemma: `p` can be written as `initᵢ(p) * Xᵢ ^ degᵢ(p) + tail`. -/
 protected lemma _initialOf_decomposition :
@@ -273,17 +283,17 @@ protected lemma _initialOf_decomposition :
 theorem initialOf_decomposition : ∃ q, q.degreeOf i ≤ p.degreeOf i - 1 ∧
     p = p.initialOf i * X i ^ p.degreeOf i + q := ⟨_, p._initialOf_decomposition i⟩
 
-theorem initialOf_ne_zero {p : R[σ]} : p ≠ 0 → p.initialOf i ≠ 0 := mt fun h ↦ by
+theorem initialOf_ne_zero {p : MvPolynomial σ R} : p ≠ 0 → p.initialOf i ≠ 0 := mt fun h ↦ by
   obtain ⟨q, hq1, hq2⟩ := p.initialOf_decomposition i
   rewrite [h, zero_mul, zero_add] at hq2
   rewrite [← hq2] at hq1
   have : p.degreeOf i = 0 := by contrapose! hq1; exact Nat.sub_one_lt hq1
   exact initialOf_eq_of_degreeOf_eq_zero this ▸ h
 
-theorem initialOf_ne_zero_of_degreeOf_ne_zero {i : σ} {p : R[σ]} : p.degreeOf i ≠ 0 →
+theorem initialOf_ne_zero_of_degreeOf_ne_zero {i : σ} {p : MvPolynomial σ R} : p.degreeOf i ≠ 0 →
     p.initialOf i ≠ 0 := fun h ↦ (initialOf_ne_zero i) (ne_zero_of_degreeOf_ne_zero h)
 
-theorem degreeOf_add_lt_of_initialOf_cancel {i : σ} {p q : R[σ]}
+theorem degreeOf_add_lt_of_initialOf_cancel {i : σ} {p q : MvPolynomial σ R}
     (hd : p.degreeOf i = q.degreeOf i) (hi : p.initialOf i + q.initialOf i = 0) :
     (p + q).degreeOf i ≤ p.degreeOf i - 1 := by
   obtain ⟨p', hp1, hp2⟩ := p.initialOf_decomposition i
@@ -296,7 +306,7 @@ theorem degreeOf_add_lt_of_initialOf_cancel {i : σ} {p q : R[σ]}
   rewrite [← this]
   exact le_trans (degreeOf_add_le i p' q') <| max_le hp1 (hd ▸ hq1)
 
-theorem initialOf_cancel_of_degreeOf_add_lt {i : σ} {p q : R[σ]}
+theorem initialOf_cancel_of_degreeOf_add_lt {i : σ} {p q : MvPolynomial σ R}
     (h : (p + q).degreeOf i < p.degreeOf i) : p.initialOf i + q.initialOf i = 0 := by
   ext s
   simp only [coeff_add, coeff_initialOf_eq, coeff_zero]
@@ -313,7 +323,7 @@ theorem initialOf_cancel_of_degreeOf_add_lt {i : σ} {p q : R[σ]}
     classical simpa only [Finsupp.update_apply]
   rw [add_zero]
 
-theorem initialOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : ℕ}
+theorem initialOf_eq_of_initialOf_decomposition {i : σ} {p q r : MvPolynomial σ R} {d : ℕ}
     (q_ne : q ≠ 0) (hq : q.degreeOf i = 0) (hr : r.degreeOf i < d)
     (decomp : p = q * X i ^ d + r) : p.initialOf i = q := by
   ext s
@@ -328,7 +338,7 @@ theorem initialOf_eq_of_initialOf_decomposition {i : σ} {p q r : R[σ]} {d : �
   refine Eq.symm <| notMem_support_iff.mp <| notMem_support_of_degreeOf_lt i ?_
   exact hq ▸ Nat.zero_lt_of_ne_zero hs
 
-theorem initialOf_add_of_degreeOf_eq_of_ne {p q : R[σ]}
+theorem initialOf_add_of_degreeOf_eq_of_ne {p q : MvPolynomial σ R}
     (hi : p.initialOf i + q.initialOf i ≠ 0) (h : q.degreeOf i = p.degreeOf i) :
     (p + q).initialOf i = p.initialOf i + q.initialOf i := by
   by_cases pd_zero : p.degreeOf i = 0
@@ -351,12 +361,14 @@ theorem initialOf_add_of_degreeOf_eq_of_ne {p q : R[σ]}
       lt_of_le_of_lt (degreeOf_add_le ..) <| max_lt hp1 hq1
   exact initialOf_eq_of_initialOf_decomposition hi d_zero hlt decomp
 
-theorem initialOf_mul_decomposition (q : R[σ]) : ∃ r, r.degreeOf i ≤ p.degreeOf i + q.degreeOf i - 1
+variable (q) in
+theorem initialOf_mul_decomposition : ∃ r, r.degreeOf i ≤ p.degreeOf i + q.degreeOf i - 1
     ∧ p * q = p.initialOf i * q.initialOf i * X i ^ (p.degreeOf i + q.degreeOf i) + r := by
   by_cases this : p.degreeOf i = 0 ∨ q.degreeOf i = 0
   · rcases this with h | h <;>
-    have {p q : R[σ]} (h : q.degreeOf i = 0) : ∃ r, r.degreeOf i ≤ p.degreeOf i + q.degreeOf i - 1
-        ∧ p * q = p.initialOf i * q.initialOf i * X i ^ (p.degreeOf i + q.degreeOf i) + r := by
+    have {p q : MvPolynomial σ R} (h : q.degreeOf i = 0) :
+        ∃ r, r.degreeOf i ≤ p.degreeOf i + q.degreeOf i - 1
+          ∧ p * q = p.initialOf i * q.initialOf i * X i ^ (p.degreeOf i + q.degreeOf i) + r := by
       obtain ⟨p', hp1, hp2⟩ := p.initialOf_decomposition i
       rewrite [initialOf_eq_of_degreeOf_eq_zero h]
       refine ⟨q * p', ?_, by nth_rewrite 1 [h, add_zero, hp2]; ring⟩
@@ -390,129 +402,96 @@ end InitialOf
 
 section Initial
 
-variable [DecidableEq R] [LinearOrder σ] {p : R[σ]}
+variable [DecidableEq R] [LinearOrder σ] {p : MvPolynomial σ R}
 
-/-- The "Initial" of a polynomial `p` is `p.initialOf p.mainVariable` if `p` is not a constant,
+/-- The "Initial" of a polynomial `p` is `p.initialOf p.max_vars` if `p` is not a constant,
 and 1 if `p` is a non-zero constant. -/
-noncomputable def initial (p : R[σ]) : R[σ] :=
+noncomputable def initial (p : MvPolynomial σ R) : MvPolynomial σ R :=
   if p = 0 then 0 else
-    match p.mainVariable with
+    match p.vars.max with
     | ⊥ => 1
     | some c => p.initialOf c
 
-@[simp] theorem initial_zero : (0 : R[σ]).initial = 0 := by simp only [initial, reduceIte]
+@[simp] theorem initial_zero : (0 : MvPolynomial σ R).initial = 0 := by
+  simp only [initial, reduceIte]
 
-theorem initial_ne_zero [Nontrivial R] {p : R[σ]} : p ≠ 0 → p.initial ≠ 0 := fun h ↦ by
+theorem initial_ne_zero [Nontrivial R] {p : MvPolynomial σ R} : p ≠ 0 → p.initial ≠ 0 := fun h ↦ by
   simp only [initial, h, ↓reduceIte, ne_eq]
-  match p.mainVariable with
+  match p.vars.max with
   | none => simp only [one_ne_zero, not_false_eq_true]
   | some c => simp only [initialOf_ne_zero c h, not_false_eq_true]
 
-theorem initial_of_mainVariable_eq_bot (hp : p ≠ 0) : p.mainVariable = ⊥ → initial p = 1 :=
+theorem initial_of_max_vars_eq_bot (hp : p ≠ 0) : p.vars.max = ⊥ → initial p = 1 :=
   fun h ↦ by simp only [initial, hp, reduceIte, h]
 
-theorem initial_of_mainVariable_isSome' {c : σ} :
-    p.mainVariable = c → initial p = p.initialOf c := fun h ↦ by
-  have : p.mainVariable ≠ ⊥ := WithBot.ne_bot_iff_exists.mpr <| Exists.intro c h.symm
-  simp only [initial, ne_zero_of_mainVariable_ne_bot this, ↓reduceIte, h]
+theorem initial_of_max_vars_isSome' {c : σ} :
+    p.vars.max = c → initial p = p.initialOf c := fun h ↦ by
+  have : p.vars.max ≠ ⊥ := WithBot.ne_bot_iff_exists.mpr <| Exists.intro c h.symm
+  have : p ≠ 0 := fun h ↦ absurd this (by simp [h])
+  simp only [initial, this, ↓reduceIte, h]
 
-theorem initial_of_mainVariable_isSome {c : σ} : p.mainVariable = c →
+theorem initial_of_max_vars_isSome {c : σ} : p.vars.max = c →
     initial p = ∑ s ∈ p.support with s c = p.degreeOf c, monomial (s.erase c) (p.coeff s) :=
-  fun h ↦ by rw [initial_of_mainVariable_isSome' h, initialOf_def]
+  fun h ↦ by rw [initial_of_max_vars_isSome' h, initialOf_def]
 
-@[simp] theorem initial_C {r : R} (hr : r ≠ 0) : (C r : R[σ]).initial = 1 :=
-  initial_of_mainVariable_eq_bot (C_ne_zero.mpr hr) (mainVariable_C r)
+@[simp] theorem initial_C {r : R} (hr : r ≠ 0) : (C r : MvPolynomial σ R).initial = 1 :=
+  initial_of_max_vars_eq_bot (C_ne_zero.mpr hr) (congrArg _ vars_C)
 
 theorem initial_monomial {s : σ →₀ ℕ} (r : R) {c : σ} :
     s.support.max = c → (monomial s r).initial = monomial (s.erase c) r := fun hs ↦ by
   by_cases r_zero : r = 0
   · simp only [r_zero, initial, monomial_zero, reduceIte]
-  have : (monomial s r).mainVariable = c := hs ▸ mainVariable_monomial s r_zero
-  rw [initial_of_mainVariable_isSome' this, initialOf_monomial]
+  have : (monomial s r).vars.max = c := hs ▸ congrArg _ (vars_monomial r_zero)
+  rw [initial_of_max_vars_isSome' this, initialOf_monomial]
 
-@[simp] theorem initial_X_pow (i : σ) {k : ℕ} (hk : k ≠ 0) : (X i ^ k).initial = (1 : R[σ]) := by
+@[simp] theorem initial_X_pow (i : σ) {k : ℕ} (hk : k ≠ 0) :
+    (X i ^ k).initial = (1 : MvPolynomial σ R) := by
   have : (Finsupp.single i k).support.max = i := by
     rewrite [Finsupp.support_single_ne_zero _ hk]; exact rfl
   rw [X_pow_eq_monomial, initial_monomial 1 this, Finsupp.erase_single, monomial_zero', C_1]
 
-@[simp] theorem initial_X (i : σ) : (X i : R[σ]).initial = 1 :=
-  pow_one (X i : R[σ]) ▸ initial_X_pow i one_ne_zero
+@[simp] theorem initial_X (i : σ) : (X i : MvPolynomial σ R).initial = 1 :=
+  pow_one (X i : MvPolynomial σ R) ▸ initial_X_pow i one_ne_zero
 
-theorem mainVariable_initial_lt (hp : p.mainVariable ≠ ⊥) :
-    (initial p).mainVariable < p.mainVariable := by
-  have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hp
-  rewrite [initial_of_mainVariable_isSome hc.symm, hc.symm]
-  apply lt_of_le_of_lt (mainVariable_sum_le _ _)
-  simp only [WithBot.bot_lt_coe, Finset.sup_lt_iff, Finset.mem_filter, mem_support_iff]
-  intro s hs
-  simp only [mainVariable_monomial _ hs.1, Finsupp.support_erase, Finset.max_eq_sup_coe]
-  rewrite [Finset.sup_lt_iff (hc ▸ WithBot.bot_lt_iff_ne_bot.mpr hp)]
-  simp only [Finset.mem_erase, WithBot.coe_lt_coe]
-  intro i hi
-  have hs : s.support.max ≤ c := by
-    rewrite [hc, mainVariable]
-    apply Finset.le_sup <| mem_support_iff.mpr hs.1
-  have := le_trans (Finset.le_max hi.2) hs
-  exact lt_of_le_of_ne (WithBot.coe_le_coe.mp this) hi.1
+theorem max_vars_initial_lt (hp : p.vars.max ≠ ⊥) :
+    (initial p).vars.max < p.vars.max := by
+  by_contra con
+  have ⟨c, hc⟩ := WithBot.ne_bot_iff_exists.mp hp
+  absurd p.degreeOf_initialOf_self c
+  rewrite [initial_of_max_vars_isSome' hc.symm] at con
+  have con : (p.initialOf c).vars.max = p.vars.max :=
+    eq_of_le_of_not_lt (Finset.max_mono <| vars_initialOf_subset c p) con
+  have con := Finset.mem_of_max (hc ▸ con)
+  simpa only [degreeOf, Multiset.count_ne_zero, vars_def, Multiset.mem_toFinset] using con
 
-theorem degreeOf_initial_le (p : R[σ]) (i : σ) : p.initial.degreeOf i ≤ p.degreeOf i := by
+variable (p) (i) in
+theorem degreeOf_initial_le : p.initial.degreeOf i ≤ p.degreeOf i := by
   by_cases hp : p = 0
   · simp only [hp, initial_zero, degreeOf_zero, le_refl]
-  by_cases hc : p.mainVariable = ⊥
-  · simp only [initial_of_mainVariable_eq_bot hp hc]
-    have : (1 : R[σ]).mainVariable = ⊥ := mainVariable_eq_bot_iff_eq_C.mpr (Exists.intro 1 rfl)
-    rw [degreeOf_of_mainVariable_eq_bot i hc, degreeOf_of_mainVariable_eq_bot i this]
+  by_cases hc : p.vars.max = ⊥
+  · simp only [initial_of_max_vars_eq_bot hp hc, degreeOf_one, zero_le]
   have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hc
-  exact initial_of_mainVariable_isSome' hc.symm ▸ p.degreeOf_initialOf_le c i
+  exact initial_of_max_vars_isSome' hc.symm ▸ p.degreeOf_initialOf_le c i
 
 /-- The product of initials of a set of polynomials. -/
-noncomputable def initialProd (PS : Finset R[σ]) : R[σ] := ∏ p ∈ PS, p.initial
+noncomputable def initialProd (PS : Finset (MvPolynomial σ R)) : MvPolynomial σ R :=
+  ∏ p ∈ PS, p.initial
 
-theorem initialProd_def (PS : Finset R[σ]) : initialProd PS = ∏ p ∈ PS, p.initial := rfl
+theorem initialProd_def (PS : Finset (MvPolynomial σ R)) : initialProd PS = ∏ p ∈ PS, p.initial :=
+  rfl
 
 end Initial
 
-section Reduced
-
-variable [DecidableEq R] [LinearOrder σ] {p q : R[σ]}
-
-theorem initial_reducedTo : q.reducedTo p → q.initial.reducedTo p := fun h ↦ by
-  by_cases hq : q = 0
-  · rewrite [hq, initial_zero]
-    exact zero_reducedTo p
-  by_cases hp : p.mainVariable = ⊥
-  · exact absurd h <| not_reducedTo_of_bot_mainVariable hq hp
-  by_cases hqi : q.initial = 0
-  · exact hqi ▸ zero_reducedTo p
-  have ⟨c, hc⟩ :=  WithBot.ne_bot_iff_exists.mp hp
-  apply (reducedTo_iff hc.symm hqi).mpr
-  have h := (reducedTo_iff hc.symm hq).mp h
-  exact lt_of_le_of_lt (degreeOf_initial_le q c) h
-
-theorem initial_reducedTo_self (hp : p.mainVariable ≠ ⊥) : p.initial.reducedTo p :=
-  reducedTo_of_mainVariable_lt <| mainVariable_initial_lt hp
-
-theorem initial_reducedToSet {α : Type*} [Membership R[σ] α] {p : R[σ]} {a : α} :
-    p.reducedToSet a → p.initial.reducedToSet a :=
-  fun h q hq1 ↦ initial_reducedTo (h q hq1)
-
-end Reduced
-
 section NoZeroDivisors
 
-variable [NoZeroDivisors R] (i : σ) (p : R[σ])
+variable [NoZeroDivisors R] (i : σ) (p : MvPolynomial σ R)
 
-@[simp] theorem initialOf_C_mul {r : R} : (C r * p).initialOf i = C r * p.initialOf i :=
-  by classical simp [initialOf_eq_leadingCoeff]
-
-@[simp] theorem initialOf_mul_C {r : R} : (p * C r).initialOf i = p.initialOf i * C r := by
-  rw [mul_comm _ (C r), mul_comm _ (C r), p.initialOf_C_mul i]
+@[simp] theorem initialOf_mul_eq (q : MvPolynomial σ R) :
+    (p * q).initialOf i = p.initialOf i * q.initialOf i := by
+  classical simp [initialOf_eq_leadingCoeff]
 
 @[simp] theorem initialOf_smul {r : R} : (r • p).initialOf i = r • p.initialOf i := by
-  rw [smul_eq_C_mul, smul_eq_C_mul, p.initialOf_C_mul i]
-
-@[simp] theorem initialOf_mul_eq (q : R[σ]) : (p * q).initialOf i = p.initialOf i * q.initialOf i :=
-  by classical simp [initialOf_eq_leadingCoeff]
+  rw [smul_eq_C_mul, smul_eq_C_mul, initialOf_mul_eq, initialOf_C]
 
 @[simp] theorem initialOf_pow_eq (n : ℕ) : (p ^ n).initialOf i = p.initialOf i ^ n := by
   induction n with
@@ -523,7 +502,7 @@ end NoZeroDivisors
 
 section CommRing
 
-variable {R σ : Type*} [CommRing R] {p q : R[σ]}
+variable {R σ : Type*} [CommRing R] {p q : MvPolynomial σ R}
 
 @[simp] theorem initialOf_neg (i : σ) : (-p).initialOf i = -p.initialOf i :=
   by classical simp [initialOf_eq_leadingCoeff]
@@ -534,7 +513,7 @@ theorem degreeOf_sub_lt_of_initialOf_eq {i : σ} (hi : p.initialOf i = q.initial
   have hd : p.degreeOf i = (-q).degreeOf i := by rw [degreeOf_neg, hd]
   sub_eq_add_neg p q ▸ degreeOf_add_lt_of_initialOf_cancel hd hi
 
-theorem initialOf_eq_of_degreeOf_sub_lt {i : σ} {p q : R[σ]}
+theorem initialOf_eq_of_degreeOf_sub_lt {i : σ} {p q : MvPolynomial σ R}
     (h : (p - q).degreeOf i < p.degreeOf i) : p.initialOf i = q.initialOf i := by
   have : (p + (-q)).degreeOf i < p.degreeOf i := by rw [← sub_eq_add_neg]; exact h
   rw [← add_zero (p.initialOf i), ← add_neg_cancel ((-q).initialOf i), ← add_assoc,

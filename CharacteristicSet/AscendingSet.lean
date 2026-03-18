@@ -1,17 +1,18 @@
-import CharacteristicSet.TriangulatedSet
-import CharacteristicSet.Initial
+import CharacteristicSet.Reduce
 
 /-!
-# Ascending Set and Basic Set
+# Ascending sets and basic sets
 
-This file defines the abstract theory of **Ascending Set** and **Basic Set**.
-An Ascending Set is a Triangulated Set with additional reduction properties.
-A Basic Set is, informally, the "smallest" Ascending Set contained in a given set of polynomials.
+This file defines the abstract theory of **ascending sets** and **basic sets**.
+An ascending set is a triangular set with additional reduction properties.
+A basic set is the "smallest" ascending set contained in a given set of polynomials.
 
-We introduce two type main variables:
-1. `AscendingSetTheory`:
-  Abstracting the definition of an ascending set (e.g., strong vs. weak reduction).
-2. `HasBasicSet`: Abstracting the algorithm to compute a basic set from a list of polynomials.
+## Main declarations
+
+* `AscendingSetTheory`: A typeclass abstracting the definition of an ascending set
+  (e.g., strong vs. weak reduction).
+* `HasBasicSet`: A typeclass abstracting the algorithm to compute a basic set
+  from a list of polynomials.
 
 -/
 
@@ -19,31 +20,31 @@ open MvPolynomial
 
 /--
 The abstract theory of Ascending Sets.
-This class allows us to define what it means for a `TriangulatedSet` to be an "Ascending Set".
+This class allows us to define what it means for a `TriangularSet` to be an "Ascending Set".
 Different instances can implement Ritt's strong ascending sets or Wu's weak ascending sets.
 -/
 class AscendingSetTheory (σ R : Type*) [CommSemiring R] [DecidableEq R] [LinearOrder σ] where
   /-- The reduction relation used to define the ascending property. -/
-  protected reducedTo' : R[σ] → R[σ] → Prop
+  protected reducedTo' : MvPolynomial σ R → MvPolynomial σ R → Prop
   decidableReducedTo : DecidableRel reducedTo' := by infer_instance
   /-- A key property linking the ascending set structure to the initial.
   If `S` is an ascending set, the initial of any non-constant element in `S`
   must be reduced with respect to `S`. -/
-  protected initial_reducedToSet_of_mainVariable_ne_bot : ∀ ⦃S : TriangulatedSet σ R⦄ ⦃i : ℕ⦄,
+  protected initial_reducedToSet_of_max_vars_ne_bot : ∀ ⦃S : TriangularSet σ R⦄ ⦃i : ℕ⦄,
     (∀ ⦃i j⦄, i < j → j < S.length → reducedTo' (S j) (S i)) →
-    (S i).mainVariable ≠ ⊥ → (S i).initial.reducedToSet S
+    (S i).vars.max ≠ ⊥ → (S i).initial.reducedToSet S
 
-attribute [instance 900] AscendingSetTheory.decidableReducedTo
+attribute [instance_reducible, instance 900] AscendingSetTheory.decidableReducedTo
 
 variable {R σ : Type*} [CommSemiring R] [DecidableEq R] [LinearOrder σ]
 
-namespace TriangulatedSet
+namespace TriangularSet
 
-variable [AscendingSetTheory σ R] {S : TriangulatedSet σ R} {p : R[σ]}
+variable [AscendingSetTheory σ R] {S : TriangularSet σ R} {p : MvPolynomial σ R}
 
-/-- A Triangulated Set is an Ascending Set
+/-- A Triangular Set is an Ascending Set
 if every element is reduced with respect to its predecessors. -/
-def isAscendingSet (S : TriangulatedSet σ R) : Prop :=
+def isAscendingSet (S : TriangularSet σ R) : Prop :=
   ∀ ⦃i j⦄, i < j → j < S.length → AscendingSetTheory.reducedTo' (S j) (S i)
 
 lemma isAscendingSet_iff : isAscendingSet S ↔ ∀ j < S.length, ∀ i < j,
@@ -51,15 +52,15 @@ lemma isAscendingSet_iff : isAscendingSet S ↔ ∀ j < S.length, ∀ i < j,
   mp h _ hj _ hi := h hi hj
   mpr h i j hi hj := h j hj i hi
 
-instance : @DecidablePred (TriangulatedSet σ R) isAscendingSet := fun _ ↦
+instance : @DecidablePred (TriangularSet σ R) isAscendingSet := fun _ ↦
   decidable_of_iff _ isAscendingSet_iff.symm
 
-theorem isAscendingSet_single (p : R[σ]) : (single p).isAscendingSet :=
+theorem isAscendingSet_single (p : MvPolynomial σ R) : (single p).isAscendingSet :=
   fun i _ hij hj ↦ False.elim <| Nat.not_lt_zero i <| lt_of_lt_of_le hij <|
     Nat.le_of_lt_succ <| lt_of_lt_of_le hj <| length_single_le_one
 
-theorem isAscendingSet_empty : (∅ : TriangulatedSet σ R).isAscendingSet :=
-  (single_eq_zero_iff.mp rfl : single (0 : R[σ]) = ∅) ▸ isAscendingSet_single 0
+theorem isAscendingSet_empty : (∅ : TriangularSet σ R).isAscendingSet :=
+  (single_eq_zero_iff.mp rfl : single (0 : MvPolynomial σ R) = ∅) ▸ isAscendingSet_single 0
 
 theorem isAscendingSet_take (n : ℕ) :
     S.isAscendingSet → (S.take n).isAscendingSet := fun hs i j hij hj ↦ by
@@ -84,15 +85,15 @@ protected theorem isAscendingSet_takeConcat
   unfold takeConcat
   split_ifs with h1 hc
   repeat exact isAscendingSet_single p
-  refine TriangulatedSet.isAscendingSet_concat _ (fun n hn ↦ ?_) <| isAscendingSet_take _ h
+  refine TriangularSet.isAscendingSet_concat _ (fun n hn ↦ ?_) <| isAscendingSet_take _ h
   rewrite [take_apply' hn]
   exact hp _ (lt_of_lt_of_le hn (Nat.min_le_right ..))
 
-end TriangulatedSet
+end TriangularSet
 
-/-- The type of Ascending Sets, which are Triangulated Sets satisfying the ascending property. -/
+/-- The type of Ascending Sets, which are Triangular Sets satisfying the ascending property. -/
 def AscendingSet (σ R : Type*) [CommSemiring R] [LinearOrder σ] [DecidableEq R]
-    [AscendingSetTheory σ R] := { TS : TriangulatedSet σ R // TS.isAscendingSet }
+    [AscendingSetTheory σ R] := { TS : TriangularSet σ R // TS.isAscendingSet }
 
 /--
 The interface for algorithms computing Basic Sets.
@@ -102,54 +103,55 @@ contained in a given list of polynomials.
 class HasBasicSet (σ R : Type*) [CommSemiring R] [DecidableEq R] [LinearOrder σ]
     extends AscendingSetTheory σ R where
   /-- Computes a Basic Set from a list of polynomials. -/
-  basicSet : List R[σ] → TriangulatedSet σ R
+  basicSet : List (MvPolynomial σ R) → TriangularSet σ R
   /-- The output is always an Ascending Set. -/
-  basicSet_isAscendingSet (l : List R[σ]) : (basicSet l).isAscendingSet
+  basicSet_isAscendingSet (l : List (MvPolynomial σ R)) : (basicSet l).isAscendingSet
   /-- The output is a subset of the input. -/
-  basicSet_subset (l : List R[σ]) : ∀ ⦃c⦄, c ∈ basicSet l → c ∈ l
+  basicSet_subset (l : List (MvPolynomial σ R)) : ∀ ⦃c⦄, c ∈ basicSet l → c ∈ l
   /-- Minimality condition: the output is ≤ any other ascending set contained in the input. -/
-  basicSet_minimal (l : List R[σ]) :
+  basicSet_minimal (l : List (MvPolynomial σ R)) :
       ∀ ⦃S⦄, S.isAscendingSet → (∀ ⦃p⦄, p ∈ S → p ∈ l) → basicSet l ≤ S
-  /-- Rank reduction property: appending a reduced element strictly decreases the basic set rank.
+  /-- Order reduction property: appending a reduced element strictly decreases the basic set order.
   Crucial for proving termination of zero decomposition. -/
-  basicSet_append_lt_of_exists_reducedToSet : ∀ ⦃l1 l2 : List R[σ]⦄,
+  basicSet_append_lt_of_exists_reducedToSet : ∀ ⦃l1 l2 : List (MvPolynomial σ R)⦄,
       (∃ p ∈ l2, p ≠ 0 ∧ p.reducedToSet (basicSet l1)) → basicSet (l2 ++ l1) < basicSet l1
 
 /-- Definition of Standard (Ritt) Ascending Set: strict degree reduction. -/
-def StandardAscendingSet.isAscendingSet (S : TriangulatedSet σ R) : Prop :=
+def StandardAscendingSet.isAscendingSet (S : TriangularSet σ R) : Prop :=
   ∀ ⦃i j⦄, i < j → j < S.length → (S j).reducedTo (S i)
 
 /-- Definition of Weak (Wu) Ascending Set: initial reduction. -/
-def WeakAscendingSet.isAscendingSet (S : TriangulatedSet σ R) : Prop :=
+def WeakAscendingSet.isAscendingSet (S : TriangularSet σ R) : Prop :=
   ∀ ⦃i j⦄, i < j → j < S.length → (S j).initial.reducedTo (S i)
 
-theorem WeakAscendingSet.isAscendingSet_of_isStandardAscendingSet {S : TriangulatedSet σ R} :
+theorem WeakAscendingSet.isAscendingSet_of_isStandardAscendingSet {S : TriangularSet σ R} :
     StandardAscendingSet.isAscendingSet S → WeakAscendingSet.isAscendingSet S :=
   fun h _ _ hij hj ↦ initial_reducedTo (h hij hj)
 
 
-open TriangulatedSet
+open TriangularSet
 
 namespace AscendingSet
 
-variable [AscendingSetTheory σ R] {S T : AscendingSet σ R} {p : R[σ]}
+variable [AscendingSetTheory σ R] {S T : AscendingSet σ R} {p : MvPolynomial σ R}
 
-theorem initial_reducedToSet_of_mainVariable_ne_bot {S : TriangulatedSet σ R} {i : ℕ} :
-    S.isAscendingSet → (S i).mainVariable ≠ ⊥ → (S i).initial.reducedToSet S := fun h ↦
-  AscendingSetTheory.initial_reducedToSet_of_mainVariable_ne_bot h
+theorem initial_reducedToSet_of_max_vars_ne_bot {S : TriangularSet σ R} {i : ℕ} :
+    S.isAscendingSet → (S i).vars.max ≠ ⊥ → (S i).initial.reducedToSet S := fun h ↦
+  AscendingSetTheory.initial_reducedToSet_of_max_vars_ne_bot h
 
-theorem initial_reducedToSet_of_mainVariable_ne_bot' {S : TriangulatedSet σ R}
+theorem initial_reducedToSet_of_max_vars_ne_bot' {S : TriangularSet σ R}
     (h : S.isAscendingSet) :
-    p ∈ S → p.mainVariable ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_, _, hi2⟩ hc ↦
-  hi2 ▸ AscendingSet.initial_reducedToSet_of_mainVariable_ne_bot h (hi2 ▸ hc)
+    p ∈ S → p.vars.max ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_, _, hi2⟩ hc ↦
+  hi2 ▸ AscendingSet.initial_reducedToSet_of_max_vars_ne_bot h (hi2 ▸ hc)
 
-def mk {S : TriangulatedSet σ R} (h : S.isAscendingSet) : AscendingSet σ R := ⟨S, h⟩
+/-- Construct an ascending set from a triangular set and a proof of the ascending property. -/
+def mk {S : TriangularSet σ R} (h : S.isAscendingSet) : AscendingSet σ R := ⟨S, h⟩
 
-instance : Coe (AscendingSet σ R) (TriangulatedSet σ R) := ⟨Subtype.val⟩
+instance : Coe (AscendingSet σ R) (TriangularSet σ R) := ⟨Subtype.val⟩
 
 @[simp] theorem coe_mk (h) : (⟨S, h⟩ : AscendingSet σ R) = S := rfl
 
-theorem coe_mk' (S : TriangulatedSet σ R) (h) : (⟨S, h⟩ : AscendingSet σ R) = S := rfl
+theorem coe_mk' (S : TriangularSet σ R) (h) : (⟨S, h⟩ : AscendingSet σ R) = S := rfl
 
 theorem eq_of_coe_eq (h : S.val = T.val) : S = T := Subtype.ext h
 
@@ -159,11 +161,12 @@ theorem coe_eq_coe : S.val = T.val ↔ S = T := Subtype.ext_iff.symm
 
 theorem coe_ne_coe : S.val ≠ T.val ↔ S ≠ T := Subtype.coe_ne_coe
 
+/-- The length of the ascending set. -/
 def length (S : AscendingSet σ R) : ℕ := S.val.length
 
-def length_coe : S.length = S.val.length := rfl
+theorem length_coe : S.length = S.val.length := rfl
 
-instance : FunLike (AscendingSet σ R) ℕ R[σ] where
+instance : FunLike (AscendingSet σ R) ℕ (MvPolynomial σ R) where
   coe S := S.val
   coe_injective' := DFunLike.coe_injective'.comp Subtype.coe_injective
 
@@ -171,9 +174,9 @@ instance : FunLike (AscendingSet σ R) ℕ R[σ] where
 theorem ext (h : ∀ i, S i = T i) : S = T := DFunLike.ext _ _ h
 
 theorem ext' (h1 : S.length = T.length) (h2 : ∀ i < S.length, S i = T i) : S = T :=
-  eq_of_coe_eq <| TriangulatedSet.ext' h1 h2
+  eq_of_coe_eq <| TriangularSet.ext' h1 h2
 
-instance instSetLike : SetLike (AscendingSet σ R) R[σ] where
+instance instSetLike : SetLike (AscendingSet σ R) (MvPolynomial σ R) where
   coe := fun S ↦ S.val
   coe_injective' := SetLike.coe_injective'.comp Subtype.coe_injective
 
@@ -189,24 +192,27 @@ theorem subset_def : S ⊆ T ↔ S.val ⊆ T.val := Iff.rfl
 
 theorem ssubset_def : S ⊂ T ↔ S.val ⊂ T.val := Iff.rfl
 
-def toFinset (S : AscendingSet σ R) : Finset R[σ] := S.val.toFinset
+/-- Converts a ascending set to a finite set. -/
+def toFinset (S : AscendingSet σ R) : Finset (MvPolynomial σ R) := S.val.toFinset
 
-def toList (S : AscendingSet σ R) : List R[σ] := S.val.toList
+/-- Converts a ascending set to a list. -/
+def toList (S : AscendingSet σ R) : List (MvPolynomial σ R) := S.val.toList
 
 noncomputable instance : EmptyCollection (AscendingSet σ R) := ⟨⟨∅, isAscendingSet_empty⟩⟩
 
 noncomputable instance : Inhabited (AscendingSet σ R) := ⟨∅⟩
 
-theorem empty_coe : (∅ : AscendingSet σ R) = (∅ : TriangulatedSet σ R) := rfl
+theorem empty_coe : (∅ : AscendingSet σ R) = (∅ : TriangularSet σ R) := rfl
 
 theorem empty_eq_default : (∅ : AscendingSet σ R) = default := rfl
 
-noncomputable def rank (S : AscendingSet σ R) : Lex (ℕ → WithTop (WithBot σ ×ₗ ℕ)) :=
-  S.val.rank
+/-- The order on the ascending set is exactly the order on the underlying triangular set. -/
+noncomputable def order (S : AscendingSet σ R) : Lex (ℕ → WithTop (WithBot σ ×ₗ ℕ)) :=
+  S.val.order
 
-theorem rank_def : S.rank = S.val.rank := rfl
+theorem order_coe : S.order = S.val.order := rfl
 
-instance : Preorder (AscendingSet σ R) := Preorder.lift ((↑) : _ → TriangulatedSet σ R)
+instance : Preorder (AscendingSet σ R) := Preorder.lift ((↑) : _ → TriangularSet σ R)
 
 theorem lt_def : S < T ↔ S.val < T.val := Iff.rfl
 
@@ -217,7 +223,7 @@ noncomputable instance : DecidableLE (AscendingSet σ R) :=
 
 noncomputable instance : DecidableLT (AscendingSet σ R) := decidableLTOfDecidableLE
 
-instance : Setoid (AscendingSet σ R) := Setoid.comap ((↑) : _ → TriangulatedSet σ R) inferInstance
+instance : Setoid (AscendingSet σ R) := Setoid.comap ((↑) : _ → TriangularSet σ R) inferInstance
 
 noncomputable instance instDecidableRelEquiv : @DecidableRel (AscendingSet σ R) _ (· ≈ ·) :=
   fun _ _ ↦ instDecidableAnd
@@ -243,6 +249,7 @@ theorem Set.has_min' (h : S'.Nonempty) : ∃ S, Minimal (· ∈ S') S :=
   have ⟨S, hS1, hS2⟩ := has_min S' h
   ⟨S, minimal_iff_forall_lt.mpr ⟨hS1, fun T hT1 hT2 ↦ absurd (hS2 T hT2) <| not_le_of_gt hT1⟩⟩
 
+/-- The minimal element of a nonempty set of ascending sets. -/
 noncomputable def Set.min (h : S'.Nonempty) : AscendingSet σ R := Exists.choose (has_min S' h)
 
 theorem Set.min_mem (h : S'.Nonempty) : min S' h ∈ S' :=
@@ -265,10 +272,10 @@ namespace Classical
 
 noncomputable section
 
-variable [AscendingSetTheory σ R] [Finite σ] {α : Type*} [Membership R[σ] α]
+variable [AscendingSetTheory σ R] [Finite σ] {α : Type*} [Membership (MvPolynomial σ R) α]
 
 /-- The main variableical existence of a Basic Set for any set of polynomials `a`.
-This is guaranteed by the well-foundedness of the rank. -/
+This is guaranteed by the well-foundedness of the order. -/
 protected theorem hasBasicSet (a : α) :
     ∃ S : AscendingSet σ R, Minimal (fun a' ↦ ∀ ⦃p⦄, p ∈ a' → p ∈ a) S :=
   AscendingSet.Set.has_min' _ ⟨∅, fun n hn ↦ absurd hn <| notMem_empty n⟩
@@ -285,7 +292,8 @@ end Classical
 
 namespace List
 
-variable [HasBasicSet σ R] (l : List R[σ]) {l1 l2 : List R[σ]} {S T : AscendingSet σ R}
+variable [HasBasicSet σ R] (l : List (MvPolynomial σ R))
+variable {l1 l2 : List (MvPolynomial σ R)} {S T : AscendingSet σ R}
 
 /-- The Basic Set of a list `l`, as computed by the `HasBasicSet` instance. -/
 def basicSet : AscendingSet σ R := ⟨HasBasicSet.basicSet l, HasBasicSet.basicSet_isAscendingSet l⟩
@@ -305,7 +313,7 @@ theorem basicSet_ge_of_subset : l1 ⊆ l2 → l2.basicSet ≤ l1.basicSet :=
   fun h ↦ l2.basicSet_minimal fun _ hp ↦ h <| l1.basicSet_subset hp
 
 theorem basicSet_append_comm : (l1 ++ l2).basicSet ≈ (l2 ++ l1).basicSet :=
-  have (l1 l2 : List R[σ]) : l2 ++ l1 ⊆ l1 ++ l2 := List.append_subset.mpr ⟨
+  have (l1 l2 : List (MvPolynomial σ R)) : l2 ++ l1 ⊆ l1 ++ l2 := List.append_subset.mpr ⟨
     List.subset_append_of_subset_right l1 fun _ ↦ id,
     List.subset_append_of_subset_left l2 fun _ ↦ id⟩
   And.intro (basicSet_ge_of_subset <| this l1 l2) (basicSet_ge_of_subset <| this l2 l1)
@@ -314,7 +322,7 @@ theorem basicSet_append_lt_of_exists_reducedToSet
     (h : ∃ p ∈ l2, p ≠ 0 ∧ p.reducedToSet l1.basicSet) : (l2 ++ l1).basicSet < l1.basicSet :=
   HasBasicSet.basicSet_append_lt_of_exists_reducedToSet h
 
-theorem _root_.TriangulatedSet.basicSet_toList_le_of_isAscendingSet {S : TriangulatedSet σ R}
+theorem _root_.TriangularSet.basicSet_toList_le_of_isAscendingSet {S : TriangularSet σ R}
     (hS : S.isAscendingSet) : S.toList.basicSet ≤ S := by
   change S.toList.basicSet ≤ ⟨S, hS⟩
   apply S.toList.basicSet_minimal
