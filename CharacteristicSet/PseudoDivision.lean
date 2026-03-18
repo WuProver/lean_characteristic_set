@@ -281,14 +281,41 @@ suffices `(∏ i, (S i).initial ^ es[i]) * g = (∑ i, qs[i] * S i) + r`
 for some `es : List ℕ` and `qs : List (MvPolynomial σ R)`. -/
 def isSetRemainder (r g : MvPolynomial σ R) (S : TriangularSet σ R) : Prop := r.reducedToSet S ∧
   ∃ (es : List ℕ) (qs : List (MvPolynomial σ R)), (es.length = S.length ∧ qs.length = S.length) ∧
-    (∏ i : Fin es.length, (S i).initial ^ es[i]) * g = (∑ i : Fin qs.length, qs[i] * S i) + r
+    es.foldrIdx (fun i e I ↦ (S i).initial ^ e * I) 1 * g =
+      qs.foldrIdx (fun i q Q ↦ q * (S i) + Q) 0 + r
 
 omit [NoZeroDivisors R] in
 theorem isSetRemainder_def (r g : MvPolynomial σ R) (S : TriangularSet σ R) :
     r.isSetRemainder g S ↔ r.reducedToSet S ∧ ∃ (es : List ℕ) (qs : List (MvPolynomial σ R)),
       (es.length = S.length ∧ qs.length = S.length) ∧
-      (∏ i : Fin es.length, (S i).initial ^ es[i]) * g = (∑ i : Fin qs.length, qs[i] * S i) + r
-  := Iff.rfl
+      es.foldrIdx (fun i e I ↦ (S i).initial ^ e * I) 1 * g =
+        qs.foldrIdx (fun i q Q ↦ q * (S i) + Q) 0 + r := Iff.rfl
+
+omit [DecidableEq R] [NoZeroDivisors R] [LinearOrder σ] in
+theorem foldrIdx_mul_eq_prod (es : List ℕ) (S : ℕ → MvPolynomial σ R) :
+    es.foldrIdx (fun i e I ↦ (S i) ^ e * I) 1  = ∏ i : Fin es.length, (S i) ^ es[i] := by
+  have (es : List ℕ) (S : ℕ → MvPolynomial σ R) : es.foldrIdx (fun i e I ↦ (S i) ^ e * I) 1
+      = (∏ i ∈ Finset.range es.length, (S i) ^ es.getD i 0) := by
+    induction es generalizing S with
+    | nil => simp
+    | cons e es ih =>
+      simp only [List.foldrIdx, zero_add, List.length_cons]
+      rewrite [List.foldrIdx_start, ih, add_comm _ 1, Finset.prod_range_add, Finset.prod_range_one]
+      simp [add_comm]
+  simp [this, Finset.prod_range]
+
+omit [DecidableEq R] [NoZeroDivisors R] [LinearOrder σ] in
+theorem foldrIdx_add_eq_sum (qs : List (MvPolynomial σ R)) (S : ℕ → MvPolynomial σ R) :
+    qs.foldrIdx (fun i q Q ↦ q * S i + Q) 0  = ∑ i : Fin qs.length, qs[i] * S i := by
+  have (qs : List _) (S : ℕ → MvPolynomial σ R) : qs.foldrIdx (fun i q Q ↦ q * S i + Q) 0
+      = (∑ i ∈ Finset.range qs.length, qs.getD i 0 * S i) := by
+    induction qs generalizing S with
+    | nil => simp
+    | cons q qs ih =>
+      simp only [List.foldrIdx, zero_add, List.length_cons]
+      rewrite [List.foldrIdx_start, ih, add_comm _ 1, Finset.sum_range_add, Finset.sum_range_one]
+      simp [add_comm]
+  simp [this, Finset.sum_range]
 
 end CommRing
 
@@ -461,32 +488,15 @@ lemma setPseudoGo_equation (f : ℕ → MvPolynomial σ R) (fuel : ℕ) : ∀ (e
       ring
     rw [this, ih es' qs' r' heq']
 
-theorem setPseudo_equation' : letI result := g.setPseudo S
+theorem setPseudo_equation : letI result := g.setPseudo S
     result.exponents.foldrIdx (fun i e I ↦ (S i).initial ^ e * I) 1 * g
       = result.quotients.foldrIdx (fun i q Q ↦ q * S i + Q) 0 + result.remainder :=
   g.setPseudoGo_equation _ _ _ _ _ (by simp only [foldrIdx, one_mul, zero_add])
 
-theorem setPseudo_equation : letI result := g.setPseudo S
+theorem setPseudo_equation' : letI result := g.setPseudo S
     (∏ i : Fin result.exponents.length, (S i).initial ^ result.exponents[i]) * g
     = (∑ i : Fin result.quotients.length, result.quotients[i] * S i) + result.remainder := by
-  have hes (es : List ℕ) (S : ℕ → MvPolynomial σ R) : es.foldrIdx (fun i e I ↦ (S i) ^ e * I) 1
-      = (∏ i ∈ Finset.range es.length, (S i) ^ es.getD i 0) := by
-    induction es generalizing S with
-    | nil => simp
-    | cons e es ih =>
-      simp only [foldrIdx, zero_add, length_cons]
-      rewrite [foldrIdx_start, ih, add_comm _ 1, Finset.prod_range_add, Finset.prod_range_one]
-      simp [add_comm]
-  have hqs (qs : List (MvPolynomial σ R)) (S : ℕ → MvPolynomial σ R) :
-      qs.foldrIdx (fun i q Q ↦ q * S i + Q) 0
-        = (∑ i ∈ Finset.range qs.length, qs.getD i 0 * S i) := by
-    induction qs generalizing S with
-    | nil => simp
-    | cons q qs ih =>
-      simp only [foldrIdx, zero_add, length_cons]
-      rewrite [foldrIdx_start, ih, add_comm _ 1, Finset.sum_range_add, Finset.sum_range_one]
-      simp [add_comm]
-  simpa [hes, hqs, Finset.prod_range, Finset.sum_range] using g.setPseudo_equation' S
+  simpa [foldrIdx_mul_eq_prod, foldrIdx_add_eq_sum] using g.setPseudo_equation S
 
 /-- The remainder of pseudo-dividing `g` by the set `S`.
 This is computationally simpler than `setPseudo` if only the remainder is needed. -/
