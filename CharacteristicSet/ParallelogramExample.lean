@@ -20,6 +20,7 @@ def l : List ℚ[Fin 8] := [p₁, p₂, p₃, p₄]
 
 
 def lCS := [p₅, p₆]
+
 lemma lCS_non_zero : ∀ p ∈ lCS, p ≠ 0 := fun p hp ↦ by
   simp only [lCS, p₅, Fin.isValue, p₆, List.mem_cons, List.not_mem_nil, or_false] at hp
   rcases hp with hp | hp
@@ -40,8 +41,7 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
     ----------
     simp only [l, List.mem_cons, List.not_mem_nil, or_false, p₁, p₂, p₃, p₄] at hg
     rcases hg with hg | hg | hg | hg
-    · use [99, 99]
-      use [99, 99]
+    · use [99, 99], [99, 99]
       simp [CS, TriangularSet.length_list, TriangularSet.list_apply, lCS]
 
       sorry
@@ -77,9 +77,7 @@ example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) 
     simp only [vanishingSet, aeval_eq_eval, List.mem_cons, List.not_mem_nil, or_false, forall_eq,
       Set.setOf_subset_setOf]
     intro x hx
-    have h : I.eval x ≠ 0 := by
-      
-      sorry
+    have h : I.eval x ≠ 0 := sorry
     have hx : ∀ p ∈ CS, (eval x) p = 0 := hCS.2 hx
     have : (I * p₅).eval x = 0 := by
       simp only [heq, Fin.getElem_fin, map_sum, map_mul]
@@ -91,7 +89,6 @@ example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) 
   simp [l, h₁, h₂, h₃, h₄]
 
 example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₆ = 0 := by
-  simp only [p₁, p₂, p₃, p₄, p₆] at *
   sorry
 
 end
