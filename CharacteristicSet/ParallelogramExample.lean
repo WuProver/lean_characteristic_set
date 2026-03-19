@@ -24,13 +24,16 @@ theorem hCS : CS.isCharacteristicSet ℚ l₁ := l₁.cs_isCharacteristicSet ℚ
 example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₅ = 0 := by
   suffices ∀ p ∈ [p₅], p = 0 by simpa using this
   apply forall_eq_zero_of_vanishingSet_subset l₁
-  · have : (0 : ℚ[Fin 8]).isSetRemainder p₅ CS := sorry
+  · have : (0 : ℚ[Fin 8]).isSetRemainder p₅ CS := by
+      sorry
     rcases this with ⟨_, es, qs, ⟨hle, hlq⟩, heq⟩
     set I := (∏ i : Fin es.length, (CS ↑i).initial ^ es[i])
     simp only [vanishingSet, aeval_eq_eval, List.mem_cons, List.not_mem_nil, or_false, forall_eq,
       Set.setOf_subset_setOf]
     intro x hx
-    have h : I.eval x ≠ 0 := sorry
+    have h : I.eval x ≠ 0 := by
+
+      sorry
     have hx : ∀ p ∈ CS, (eval x) p = 0 := hCS.2 hx
     have : (I * p₅).eval x = 0 := by
       simp only [heq, add_zero, Fin.getElem_fin, map_sum, map_mul]

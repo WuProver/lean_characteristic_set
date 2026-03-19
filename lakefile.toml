@@ -23,5 +23,10 @@ git = "https://github.com/leanprover/doc-gen4"
 rev = "main"
 
 [[require]]
+name = "MonomialOrderedPolynomial"
+git = "https://github.com/WuProver/MonomialOrderedPolynomial.git"
+scope  = "WuProver"
+
+[[require]]
 name = "mathlib"
 scope = "leanprover-community"
