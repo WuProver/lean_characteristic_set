@@ -32,6 +32,11 @@ lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.vars.max < q.vars.max := sorry
 
 def CS : TriangularSet (Fin 8) ℚ := TriangularSet.list lCS lCS_non_zero lCS_pairwise
 
+lemma a: p₅.initial = 1 := by
+  rw [p₅]
+  
+  sorry
+
 theorem hCS : CS.isCharacteristicSet ℚ l := by
   constructor
   · intro g hg
@@ -43,11 +48,14 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
     rcases hg with hg | hg | hg | hg
     · use [99, 99], [99, 99]
       simp [CS, TriangularSet.length_list, TriangularSet.list_apply, lCS]
+      rw [p₅]
 
       sorry
     ·
+
       sorry
     ·
+
       sorry
     sorry
     ----------
