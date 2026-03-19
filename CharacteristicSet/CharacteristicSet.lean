@@ -53,11 +53,11 @@ It is the same as `zeroLocus K (Ideal.span a)` for `a : Set (MvPolynomial σ R)`
 def vanishingSet : Set (σ → K) := {x | ∀ p ∈ a, p.aeval x = 0}
 
 /-- The set of points where a single polynomial `p` vanishes. -/
-def singleVanishingSet : Set (σ → K) := {x | aeval x p = 0}
+def vanishingSet' : Set (σ → K) := {x | aeval x p = 0}
 
 theorem vanishingSet_singleton_eq_singleVanishingSet :
-    vanishingSet K ({p} : Set (MvPolynomial σ R)) = singleVanishingSet K p := by
-  simp only [vanishingSet, Set.mem_singleton_iff, forall_eq, singleVanishingSet]
+    vanishingSet K ({p} : Set (MvPolynomial σ R)) = vanishingSet' K p := by
+  simp only [vanishingSet, Set.mem_singleton_iff, forall_eq, vanishingSet']
 
 end VanishingSet
 
@@ -101,10 +101,10 @@ If all polynomials in `PS` reduce to 0 modulo `CS`, then any zero of `CS`
 that isn't a zero of `IP` must be a zero of `PS`. -/
 theorem vanishingSet_diff_initialProd_subset
     (h : (∀ g ∈ PS, (0 : MvPolynomial σ R).isSetRemainder g CS)) :
-    vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) ⊆
+    vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ⊆
       vanishingSet K PS := by
   refine Set.diff_subset_iff.mpr (fun x hx ↦ ?_)
-  simp only [vanishingSet, singleVanishingSet, Set.mem_setOf_eq, Set.mem_union] at *
+  simp only [vanishingSet, vanishingSet', Set.mem_setOf_eq, Set.mem_union] at *
   simp only [or_iff_not_imp_right, not_forall, forall_exists_index, initialProd]
   intro p hp1 hp2
   rcases (h p hp1).2 with ⟨es, qs, h1, h2⟩
@@ -120,19 +120,19 @@ theorem vanishingSet_diff_initialProd_subset
 
 /-- Well-Ordering Principle (2): `Zero(CS/IP) = Zero(PS/IP)`. -/
 theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
-    vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) =
-      vanishingSet K PS \ singleVanishingSet K (initialProd CS.toFinset) := by
+    vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) =
+      vanishingSet K PS \ vanishingSet' K (initialProd CS.toFinset) := by
   refine Set.Subset.antisymm ?_ (Set.diff_subset_diff_left h.2)
   refine Set.subset_diff.mpr ⟨?_ ,Set.disjoint_sdiff_left⟩
   exact vanishingSet_diff_initialProd_subset K h.1
 
 /-- Well-Ordering Principle (3): `Zero(PS) = Zero(CS/IP) ∪ ⋃_{CS} Zero(PS ∪ {init(p)})` -/
 theorem vanishingSet_decomposition (h : CS.isCharacteristicSet K PS) : vanishingSet K PS =
-      vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) ∪
-      ⋃ p ∈ CS, vanishingSet K PS ∩ singleVanishingSet K p.initial := by
-  have : (⋃ p ∈ CS, vanishingSet K PS ∩ singleVanishingSet K p.initial) =
-      vanishingSet K PS ∩ singleVanishingSet K (initialProd CS.toFinset) := Set.ext fun x ↦ by
-    simp [vanishingSet, singleVanishingSet, initialProd, Finset.prod_eq_zero_iff]
+      vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ∪
+      ⋃ p ∈ CS, vanishingSet K PS ∩ vanishingSet' K p.initial := by
+  have : (⋃ p ∈ CS, vanishingSet K PS ∩ vanishingSet' K p.initial) =
+      vanishingSet K PS ∩ vanishingSet' K (initialProd CS.toFinset) := Set.ext fun x ↦ by
+    simp [vanishingSet, vanishingSet', initialProd, Finset.prod_eq_zero_iff]
   rewrite [vanishingSet_diff_initialProd_eq K h, this]
   exact (Set.diff_union_inter _ _).symm
 
@@ -337,26 +337,26 @@ in `zeroDecomposition`, excluding the zeros of their initials.
 -/
 theorem vanishingSet_eq_zeroDecomposition_union :
     vanishingSet K l = ⋃ CS ∈ l.zeroDecomposition,
-      vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) := by
+      vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) := by
   induction l using zeroDecomposition.induct with | case1 l CS ih =>
   -- 1. Unfold recursion
-  suffices vanishingSet K l = vanishingSet K CS \ singleVanishingSet K (initialProd CS.toFinset) ∪
+  suffices vanishingSet K l = vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ∪
       ⋃ p ∈ CS.toList.filter fun p ↦ p.vars.max ≠ ⊥,
         ⋃ CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition,
-          vanishingSet K CS' \ singleVanishingSet K (initialProd CS'.toFinset) by
+          vanishingSet K CS' \ vanishingSet' K (initialProd CS'.toFinset) by
     rewrite [zeroDecomposition]; simpa using this
   -- 2. Apply decomposition theorem to the recursive structure
-  suffices ⋃ p ∈ CS, vanishingSet K l ∩ singleVanishingSet K p.initial =
+  suffices ⋃ p ∈ CS, vanishingSet K l ∩ vanishingSet' K p.initial =
       ⋃ p ∈ CS.toList.filter fun p ↦ p.vars.max ≠ ⊥,
         vanishingSet K (p.initial :: CS.toList ++ l) by
     rw [CharacteristicSet.vanishingSet_decomposition K (l.cs_isCharacteristicSet K),
       ← Set.iUnion₂_congr ih, this]
   -- 3. Prove equality of the union components (ignoring constants)
   ext x
-  suffices (x ∈ vanishingSet K l ∧ ∃ p ∈ CS, x ∈ singleVanishingSet K p.initial) ↔
+  suffices (x ∈ vanishingSet K l ∧ ∃ p ∈ CS, x ∈ vanishingSet' K p.initial) ↔
       ∃ p, (p ∈ CS ∧ ¬p.vars.max = ⊥) ∧ x ∈ vanishingSet K (p.initial :: (CS.toList ++ l)) by
     simpa using this
-  simp only [vanishingSet, Set.mem_setOf_eq, singleVanishingSet, List.mem_cons, List.mem_append,
+  simp only [vanishingSet, Set.mem_setOf_eq, vanishingSet', List.mem_cons, List.mem_append,
     mem_toList_iff, forall_eq_or_imp]
   -- 4. Bidirectional implication
   refine ⟨fun ⟨hx, p, hp1, hp2⟩ ↦ ⟨p, ⟨hp1, ?_⟩, hp2, fun q hq ↦ ?_⟩,
