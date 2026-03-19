@@ -28,13 +28,14 @@ lemma lCS_non_zero : ∀ p ∈ lCS, p ≠ 0 := fun p hp ↦ by
     decide +kernel
   rw [hp]
   decide +kernel
-lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.vars.max < q.vars.max := sorry
+lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.vars.max < q.vars.max :=
+  sorry
 
 def CS : TriangularSet (Fin 8) ℚ := TriangularSet.list lCS lCS_non_zero lCS_pairwise
 
 lemma a: p₅.initial = 1 := by
   rw [p₅]
-  
+
   sorry
 
 theorem hCS : CS.isCharacteristicSet ℚ l := by
@@ -80,7 +81,9 @@ example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) 
   suffices ∀ p ∈ [p₅], p = 0 by simpa using this
   apply forall_eq_zero_of_vanishingSet_subset l
   · have : ∃ (I : ℚ[Fin 8]) (qs : List ℚ[Fin 8]),
-        qs.length = CS.length ∧ I * p₅ = ∑ i : Fin qs.length, qs[i] * CS i := sorry
+        qs.length = CS.length ∧ I * p₅ = ∑ i : Fin qs.length, qs[i] * CS i := by
+        
+        sorry
     rcases this with ⟨I, qs, hl, heq⟩
     simp only [vanishingSet, aeval_eq_eval, List.mem_cons, List.not_mem_nil, or_false, forall_eq,
       Set.setOf_subset_setOf]
@@ -97,6 +100,7 @@ example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) 
   simp [l, h₁, h₂, h₃, h₄]
 
 example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₆ = 0 := by
+
   sorry
 
 end
