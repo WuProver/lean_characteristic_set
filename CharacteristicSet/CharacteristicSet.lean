@@ -111,6 +111,7 @@ theorem vanishingSet_diff_initialProd_subset
   rewrite [add_zero] at h2
   -- If x is a zero of CS but not of initials, and rem(p, CS) = 0, then p(x) must be 0.
   have : ∃ i : Fin es.length, (aeval x) (CS i).initial = 0 ∧ ¬es[i] = 0 := by
+    rewrite [foldrIdx_mul_eq_prod, foldrIdx_add_eq_sum] at h2
     have := congr_arg (aeval x) h2
     simpa [(forall_mem_iff_forall_index' h1.2).mp hx, hp2, Finset.prod_eq_zero_iff] using this
   rcases this with ⟨⟨i, hi1⟩, (hi2 : (aeval x) (CS i).initial = 0), _⟩
@@ -226,7 +227,7 @@ lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingS
         by simpa [RS] using hp
     suffices heq : ∑ i : Fin (g.setPseudo BS).quotients.length,
         (aeval x) (g.setPseudo BS).quotients[i.1] * (aeval x) (BS i) = 0 by
-      have := Eq.symm <| congrArg (aeval x) (hg2 ▸ g.setPseudo_equation BS)
+      have := Eq.symm <| congrArg (aeval x) (hg2 ▸ g.setPseudo_equation' BS)
       have hg2 : aeval x g = 0 := (hl.mp hx) _ <| (List.diff_subset _ _) hg1
       simpa [hg2, heq] using this
     refine Finset.sum_eq_zero fun ⟨i, hi⟩ _ ↦ ?_

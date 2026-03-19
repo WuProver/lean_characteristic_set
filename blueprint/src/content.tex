@@ -17,11 +17,11 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:MvPolynomial.rank}
-    \lean{MvPolynomial.rank}
+    \label{def:MvPolynomial.order}
+    \lean{MvPolynomial.order}
     \leanok
     \uses{def:mainDegree}
-    The rank of a polynomial $p$ is the pair $(mainVar(p), deg(p))$ ordered lexicographically.
+    The order of a polynomial $p$ is the pair $(mainVar(p), deg(p))$ ordered lexicographically.
 \end{definition}
 
 \begin{definition}
@@ -71,11 +71,11 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:TriangularSet.rank}
-    \lean{TriangularSet.rank}
+    \label{def:TriangularSet.order}
+    \lean{TriangularSet.order}
     \leanok
-    \uses{def:TriangularSet, def:MvPolynomial.rank}
-    The rank of a Triangular Set is a lexicographic sequence of ranks of its polynomials.
+    \uses{def:TriangularSet, def:MvPolynomial.order}
+    The order of a Triangular Set is a lexicographic sequence of orders of its polynomials.
     More intuitively, $S < T$ if one of the following two occurs:
     \begin{itemize}
         \item There exists some $k < S.length$ such that $S_0 \sim T_0, S_1 \sim T_1, ..., S_{k-1} \sim T_{k-1}$, while $S_k < T_k$.
@@ -174,7 +174,7 @@
     \label{def:HasBasicSet}
     \lean{HasBasicSet}
     \leanok
-    \uses{def:TriangularSet, def:isAscendingSet, def:reducedToSet, def:TriangularSet.rank}
+    \uses{def:TriangularSet, def:isAscendingSet, def:reducedToSet, def:TriangularSet.order}
     The interface for algorithms computing Basic Sets.
     Any instance of this class provides a "basicSet" function that computes a minimal ascending set
     contained in a given list of polynomials.
@@ -184,7 +184,7 @@
     \label{def:StandardAscendingSet.basicSet}
     \lean{StandardAscendingSet.basicSet}
     \leanok
-    \uses{def:TriangularSet, def:reducedToSet, def:TriangularSet.rank}
+    \uses{def:TriangularSet, def:reducedToSet, def:TriangularSet.order}
     Computes the Standard Basic Set of a list of polynomials.
 
     The algorithm works by:
@@ -200,7 +200,7 @@
     \label{def:WeakAscendingSet.basicSet}
     \lean{WeakAscendingSet.basicSet}
     \leanok
-    \uses{def:initial, def:TriangularSet, def:reducedToSet, def:TriangularSet.rank}
+    \uses{def:initial, def:TriangularSet, def:reducedToSet, def:TriangularSet.order}
     Computes the Weak Basic Set of a list of polynomials.
 
     Difference from Standard: The filter condition includes $mainVar(p) > mainVar(B)$.
@@ -229,14 +229,14 @@
         \item If $RS = \emptyset$, $BS$ is the characteristic set.
         \item If not, let $l = l₀ ++ RS ++ BS$ and go to step 2.
     \end{enumerate}
-    Termination is guaranteed by the well-ordering of ranks.
+    Termination is guaranteed by the well-ordering of orders.
 \end{definition}
 
 \begin{definition}
     \label{def:zeroDecomposition}
     \lean{MvPolynomial.List.zeroDecomposition}
     \leanok
-    \uses{def:characteristicSet, thm:initial_reducedToSet_of_mainVariable_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
+    \uses{def:characteristicSet, thm:initial_reducedToSet_of_max_vars_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
     Decomposes the zero set of a polynomial list into a union of zero sets of triangular sets.
     The algorithm recursively computes the characteristic set $CS$
     and adds branches for the initials of $CS$.
@@ -246,8 +246,8 @@
 \label{chap:thm}
 
 \begin{lemma}
-    \label{lem:reducedTo_of_mainVariable_lt}
-    \lean{MvPolynomial.reducedTo_of_mainVariable_lt}
+    \label{lem:reducedTo_of_max_vars_lt}
+    \lean{MvPolynomial.reducedTo_of_max_vars_lt}
     \leanok
     \uses{def:reducedTo}
     $q$ is reduced w.r.t. $p$ if $mainVar(q) < mainVar(p)$.
@@ -259,10 +259,10 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:reducedTo_iff_gt_of_mainVariable_eq}
-    \lean{MvPolynomial.reducedTo_iff_gt_of_mainVariable_eq}
+    \label{lem:reducedTo_iff_gt_of_max_vars_eq}
+    \lean{MvPolynomial.reducedTo_iff_gt_of_max_vars_eq}
     \leanok
-    \uses{def:reducedTo, def:MvPolynomial.rank}
+    \uses{def:reducedTo, def:MvPolynomial.order}
     If $mainVar(p) = mainVar(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
 \end{lemma}
 
@@ -272,8 +272,8 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:mainVariable_lt_of_reducedTo_of_le}
-    \lean{MvPolynomial.mainVariable_lt_of_reducedTo_of_le}
+    \label{lem:max_vars_lt_of_reducedTo_of_le}
+    \lean{MvPolynomial.max_vars_lt_of_reducedTo_of_le}
     \leanok
     \uses{def:reducedTo}
     $mainVar(p) < mainVar(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
@@ -281,7 +281,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:reducedTo_iff_gt_of_mainVariable_eq}
+    \uses{lem:reducedTo_iff_gt_of_max_vars_eq}
     % TODO
 \end{proof}
 
@@ -393,8 +393,8 @@
 \end{proof}
 
 \begin{lemma}
-    \label{lem:mainVariable_initial_lt}
-    \lean{MvPolynomial.mainVariable_initial_lt}
+    \label{lem:max_vars_initial_lt}
+    \lean{MvPolynomial.max_vars_initial_lt}
     \leanok
     \uses{def:initial}
     $mainVar(init(p)) < mainVar(p)$ for non-constant $p$.
@@ -429,7 +429,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:reducedTo_of_mainVariable_lt, lem:mainVariable_initial_lt}
+    \uses{lem:reducedTo_of_max_vars_lt, lem:max_vars_initial_lt}
     % TODO
 \end{proof}
 
@@ -437,8 +437,8 @@
     \label{inst:TriangularSet.instWellFoundedLT}
     \lean{TriangularSet.instWellFoundedLT}
     \leanok
-    \uses{def:TriangularSet, def:TriangularSet.rank}
-    The set of Triangular Sets is well-founded under the lexicographic rank ordering. This guarantees the termination of the Characteristic Set Algorithm.
+    \uses{def:TriangularSet, def:TriangularSet.order}
+    The set of Triangular Sets is well-founded under the lexicographic order ordering. This guarantees the termination of the Characteristic Set Algorithm.
 \end{theorem}
 
 \begin{proof}
@@ -450,13 +450,13 @@
     \label{thm:takeConcat_lt_of_reducedToSet}
     \lean{TriangularSet.takeConcat_lt_of_reducedToSet}
     \leanok
-    \uses{def:takeConcat, def:reducedToSet, def:TriangularSet.rank}
-    If $p \neq 0$ and is reduced with respect to $S$, then modifying $S$ by appending $p$ (using "takeConcat") strictly decreases the rank of $S$.
+    \uses{def:takeConcat, def:reducedToSet, def:TriangularSet.order}
+    If $p \neq 0$ and is reduced with respect to $S$, then modifying $S$ by appending $p$ (using "takeConcat") strictly decreases the order of $S$.
 \end{theorem}
 
 \begin{proof}
     \leanok
-    \uses{lem:reducedTo_iff_gt_of_mainVariable_eq}
+    \uses{lem:reducedTo_iff_gt_of_max_vars_eq}
     % TODO
 \end{proof}
 
@@ -561,8 +561,8 @@
 \end{proof}
 
 \begin{theorem}
-    \label{thm:initial_reducedToSet_of_mainVariable_ne_bot}
-    \lean{AscendingSet.initial_reducedToSet_of_mainVariable_ne_bot}
+    \label{thm:initial_reducedToSet_of_max_vars_ne_bot}
+    \lean{AscendingSet.initial_reducedToSet_of_max_vars_ne_bot}
     \leanok
     \uses{def:initial, def:reducedToSet, def:isAscendingSet}
     If $p$ is in $S$ and $mainVar(p) \neq \bot$, then $init(p)$ is in $S$.
@@ -584,7 +584,7 @@
 
 \begin{proof}
     \leanok
-    \uses{lem:mainVariable_lt_of_reducedTo_of_le, thm:takeConcat_lt_of_reducedToSet}
+    \uses{lem:max_vars_lt_of_reducedTo_of_le, thm:takeConcat_lt_of_reducedToSet}
     % TODO
 \end{proof}
 
@@ -607,7 +607,7 @@
     \lean{MvPolynomial.List.basicSet_append_lt_of_exists_reducedToSet}
     \leanok
     \uses{def:HasBasicSet}
-    Appending an element which is reduced w.r.t. the basic set of list strictly decreases the rank.
+    Appending an element which is reduced w.r.t. the basic set of list strictly decreases the order.
     Crucial for proving termination of characteristic set and zero decomposition algorithms.
 \end{theorem}
 
@@ -692,8 +692,8 @@
     \label{thm:characteristicSet_le_basicSet}
     \lean{MvPolynomial.List.characteristicSet_le_basicSet}
     \leanok
-    \uses{def:characteristicSet, def:TriangularSet.rank, def:HasBasicSet}
-    The rank of computed characteristic set $\le$ the rank of the input list.
+    \uses{def:characteristicSet, def:TriangularSet.order, def:HasBasicSet}
+    The order of computed characteristic set $\le$ the order of the input list.
 \end{theorem}
 
 \begin{proof}
