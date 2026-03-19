@@ -1,6 +1,5 @@
 import CharacteristicSet.AscendingSet
 import CharacteristicSet.PseudoDivision
-import Mathlib.Algebra.MvPolynomial.Funext
 import Mathlib.RingTheory.Nullstellensatz
 
 /-!
@@ -63,14 +62,6 @@ end VanishingSet
 
 variable [Field R] (K : Type*) [Field K] [Algebra R K] (PS : Set (MvPolynomial σ R))
 
-theorem forall_eq_zero_of_vanishingSet_subset [Infinite R] {α : Type*}
-    [Membership (MvPolynomial σ R) α] (a b : α) (h : vanishingSet R a ⊆ vanishingSet R b) :
-    (∀ p ∈ a, p = 0) → ∀ p ∈ b, p = 0 := by
-  simp only [vanishingSet, Set.setOf_subset_setOf] at h
-  intro ha p hp
-  refine MvPolynomial.funext_iff.mpr fun x ↦ ?_
-  exact h x (fun q hq ↦ by rw [ha q hq, map_zero]) p hp
-
 theorem vanishingSet_eq_zeroLocus_span : vanishingSet K PS = zeroLocus K (Ideal.span PS) :=
   (zeroLocus_span PS).symm
 
@@ -101,8 +92,7 @@ If all polynomials in `PS` reduce to 0 modulo `CS`, then any zero of `CS`
 that isn't a zero of `IP` must be a zero of `PS`. -/
 theorem vanishingSet_diff_initialProd_subset
     (h : (∀ g ∈ PS, (0 : MvPolynomial σ R).isSetRemainder g CS)) :
-    vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ⊆
-      vanishingSet K PS := by
+    vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ⊆ vanishingSet K PS := by
   refine Set.diff_subset_iff.mpr (fun x hx ↦ ?_)
   simp only [vanishingSet, vanishingSet', Set.mem_setOf_eq, Set.mem_union] at *
   simp only [or_iff_not_imp_right, not_forall, forall_exists_index, initialProd]
