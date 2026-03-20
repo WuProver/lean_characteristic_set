@@ -74,7 +74,7 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
   ----------
   sorry
 
-example : ∃ I : ℚ[Fin 8], vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanishingSet' ℚ p₅ := by
+example : { I : ℚ[Fin 8] // vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanishingSet' ℚ p₅ } := by
   let I : ℚ[Fin 8] := 1
   have hI : ∃ (qs : List ℚ[Fin 8]),
     qs.length = CS.length ∧ I * p₅ = qs.foldrIdx (fun i q Q ↦ q * CS i + Q) 0 := by
