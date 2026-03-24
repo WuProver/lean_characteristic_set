@@ -27,15 +27,21 @@ lemma lCS_non_zero : ∀ p ∈ lCS, p ≠ 0 := fun p hp ↦ by
     decide +kernel
   rw [hp]
   decide +kernel
-lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.vars.max < q.vars.max :=
+lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.vars.max < q.vars.max := by
   sorry
 
 def CS : TriangularSet (Fin 8) ℚ := TriangularSet.list lCS lCS_non_zero lCS_pairwise
 
-lemma a: p₅.initial = 1 := by
+lemma a₅: p₅.initial = 1 := by
   rw [p₅]
-
   sorry
+
+lemma a₆: p₆.initial = 1 := by
+  rw [p₆]
+  sorry
+
+
+
 
 theorem hCS : CS.isCharacteristicSet ℚ l := by
   constructor
@@ -46,11 +52,13 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
     ----------
     simp only [l, List.mem_cons, List.not_mem_nil, or_false, p₁, p₂, p₃, p₄] at hg
     rcases hg with hg | hg | hg | hg
-    · use [99, 99], [99, 99]
+    · use [1, 1], [1, 1]
       simp [CS, TriangularSet.length_list, TriangularSet.list_apply, lCS]
+      rw [a₅, a₆, p₅, p₆]
+      sorry
+    ·
 
       sorry
-    · sorry
     · sorry
     sorry
     ----------
@@ -95,9 +103,11 @@ example : { I : ℚ[Fin 8] // vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanis
   exact (mul_eq_zero_iff_left hx.2).mp this
 
 example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₅ = 0 := by
+
   sorry
 
 example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₆ = 0 := by
+
   sorry
 
 end
