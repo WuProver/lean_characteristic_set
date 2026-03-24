@@ -1,8 +1,8 @@
---import MonomialOrderedPolynomial
+import MonomialOrderedPolynomial
 import CharacteristicSet.CharacteristicSet
 import CharacteristicSet.WeakAscendingSet
 
-open MvPolynomial WeakAscendingSet --MonomialOrder
+open MvPolynomial WeakAscendingSet MonomialOrder
 
 scoped[MvPolynomial] notation:9000 R "[" σ "]" => MvPolynomial σ R
 
@@ -71,22 +71,21 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
   ----------
   sorry
 
-def I : ℚ[Fin 8] := 1
-
-lemma lemma_I : ∃ (qs : List ℚ[Fin 8]),
+example : { I : ℚ[Fin 8] // vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanishingSet' ℚ p₅ } := by
+  let I : ℚ[Fin 8] := 1
+  have hI : ∃ (qs : List ℚ[Fin 8]),
     qs.length = CS.length ∧ I * p₅ = qs.foldrIdx (fun i q Q ↦ q * CS i + Q) 0 := by
-  use [1, 0]
-  simp [CS, lCS, TriangularSet.length_list, TriangularSet.list_apply]
-  -----
+    use [1, 0]
+    simp [CS, lCS, TriangularSet.length_list, TriangularSet.list_apply]
+    -----
 
-  -----
-  sorry
-
-example : vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanishingSet' ℚ p₅ := by
+    -----
+    sorry
+  use I
   intro x hx
   simp only [vanishingSet, vanishingSet', Set.mem_diff, Set.mem_setOf_eq] at hx ⊢
   have : (I * p₅).eval x = 0 := by
-    rcases lemma_I with ⟨qs, hl, heq⟩
+    rcases hI with ⟨qs, hl, heq⟩
     have heq := foldrIdx_add_eq_sum qs CS ▸ heq
     simp only [heq, Fin.getElem_fin, map_sum, map_mul]
     have (i : Fin qs.length) : (CS i).eval x = 0 := by
@@ -95,7 +94,7 @@ example : vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanishingSet' ℚ p₅ :=
   rewrite [map_mul] at this
   exact (mul_eq_zero_iff_left hx.2).mp this
 
-example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) (h₅ : I ≠ 0) : p₅ = 0 := by
+example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₅ = 0 := by
   sorry
 
 example (h₁ : p₁ = 0) (h₂ : p₂ = 0) (h₃ : p₃ = 0) (h₄ : p₄ = 0) : p₆ = 0 := by
