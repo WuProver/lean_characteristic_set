@@ -490,7 +490,7 @@ noncomputable def list (l : List (MvPolynomial σ R)) (h1 : ∀ p ∈ l, p ≠ 0
     (h2 : l.Pairwise fun p q ↦ p.vars.max < q.vars.max := by assumption) :
     TriangularSet σ R where
   length' := l.length
-  seq n := l.getD n 0
+  seq n := l[n]?.getD 0
   elements_ne_zero n :=
     ⟨fun hn ↦ by simp [hn, List.forall_mem_iff_getElem.mp h1 n hn],
       fun hn ↦ by contrapose! hn; simp [hn]⟩
@@ -506,11 +506,14 @@ theorem list_nil_eq_empty {l : List (MvPolynomial σ R)} (h1 : ∀ p ∈ l, p �
     (h2 : l.Pairwise fun p q ↦ p.vars.max < q.vars.max) (h3 : l = []) : list l = ∅ :=
   length_eq_zero_iff.mp (by rw [length_list, h3, List.length_nil])
 
+theorem list_apply' {l : List (MvPolynomial σ R)} (h1 : ∀ p ∈ l, p ≠ 0)
+    (h2 : l.Pairwise fun p q ↦ p.vars.max < q.vars.max) {n : ℕ} : (list l) n = l[n]?.getD 0 := rfl
+
 theorem list_apply {l : List (MvPolynomial σ R)} (h1 : ∀ p ∈ l, p ≠ 0)
     (h2 : l.Pairwise fun p q ↦ p.vars.max < q.vars.max)
     {n : ℕ} (hn : n < l.length) : (list l) n = l[n] := by
-  change l.getD n 0 = l[n]
-  simp only [List.getD_eq_getElem?_getD, hn, getElem?_pos, Option.getD_some]
+  change l[n]?.getD 0 = l[n]
+  simp only [hn, getElem?_pos, Option.getD_some]
 
 theorem toList_list_eq {l : List (MvPolynomial σ R)} (h1 : ∀ p ∈ l, p ≠ 0)
     (h2 : l.Pairwise fun p q ↦ p.vars.max < q.vars.max) : (list l).toList = l :=

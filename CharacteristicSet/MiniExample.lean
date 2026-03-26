@@ -40,7 +40,9 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
     rcases hg with hg | hg | hg | hg
     · use [1, 1], [1, 1]
       simp
-      rw [hg]
+      refine ⟨rfl, ?_⟩
+      rw [hg, CS, TriangularSet.list_apply' CS_non_zero CS_pairwise,
+        TriangularSet.list_apply' CS_non_zero CS_pairwise]
 
 
       sorry
