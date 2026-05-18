@@ -20,17 +20,14 @@ def l : List ℚ[Fin 8] := [p₁, p₂, p₃, p₄]
 
 def lCS := [p₅, p₆]
 
-lemma lCS_non_zero : ∀ p ∈ lCS, p ≠ 0 := fun p hp ↦ by
-  simp only [lCS, p₅, Fin.isValue, p₆, List.mem_cons, List.not_mem_nil, or_false] at hp
-  rcases hp with hp | hp
-  · rw [hp]
-    decide +kernel
-  rw [hp]
+lemma lCS_non_zero : 0 ∉ lCS := by
+  simp only [lCS, p₅, Fin.isValue, p₆, List.mem_cons, List.not_mem_nil, or_false, not_or]
   decide +kernel
-lemma lCS_pairwise : lCS.Pairwise fun p q ↦ p.vars.max < q.vars.max := by
+
+lemma lCS_isChain : lCS.IsChain fun p q ↦ p.vars.max < q.vars.max := by
   sorry
 
-def CS : TriangularSet (Fin 8) ℚ := TriangularSet.list lCS lCS_non_zero lCS_pairwise
+def CS : TriangularSet (Fin 8) ℚ := TriangularSet.mk lCS lCS_non_zero lCS_isChain
 
 lemma a₅: p₅.initial = 1 := by
   rw [p₅]
@@ -43,18 +40,21 @@ lemma a₆: p₆.initial = 1 := by
 
 
 
-theorem hCS : CS.isCharacteristicSet ℚ l := by
+theorem hCS : CS.IsCharacteristicSet ℚ l := by
   constructor
   · intro g hg
-    unfold isSetRemainder
+    unfold IsSetRemainder
     constructor
     · exact MvPolynomial.zero_reducedToSet
     ----------
     simp only [l, List.mem_cons, List.not_mem_nil, or_false, p₁, p₂, p₃, p₄] at hg
     rcases hg with hg | hg | hg | hg
     · use [1, 1], [1, 1]
-      simp [CS, TriangularSet.length_list, TriangularSet.list_apply, lCS]
-      rw [a₅, a₆, p₅, p₆]
+      have : CS.toList = lCS := rfl
+      rw [TriangularSet.length, this]
+      simp [← TriangularSet.toList_getElem?_getD, this, lCS]
+
+      -- rw [a₅, a₆, p₅, p₆]
       sorry
     ·
 
@@ -66,8 +66,9 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
   apply zeroLocus_anti_mono
   have : {p | p ∈ CS} = {p | p ∈ lCS} := by
     ext p
-    simp only [SetLike.setOf_mem_eq, SetLike.mem_coe, Set.mem_setOf_eq, CS]
-    exact TriangularSet.mem_list_iff lCS_non_zero lCS_pairwise
+    simp only [SetLike.setOf_mem_eq, SetLike.mem_coe, Set.mem_setOf_eq]
+    have : lCS = CS.toList := rfl
+    rw [this, TriangularSet.mem_toList_iff]
   rw [l, this, lCS]
   simp only [List.mem_cons, List.not_mem_nil, or_false, ge_iff_le]
   have heq1 (p q : ℚ[Fin 8]) : {r | r = p ∨ r = q} = {p, q} := Set.insert_def ..
@@ -79,12 +80,40 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
   ----------
   sorry
 
+lemma foldrIdx_mul_eq_prod {σ R : Type*} [CommSemiring R] [LinearOrder σ] (es : List ℕ)
+    (S : ℕ → MvPolynomial σ R) :
+    es.foldrIdx (fun i e I ↦ (S i) ^ e * I) 1  = ∏ i : Fin es.length, (S i) ^ es[i] := by
+  have (es : List ℕ) (S : ℕ → MvPolynomial σ R) : es.foldrIdx (fun i e I ↦ (S i) ^ e * I) 1
+      = (∏ i ∈ Finset.range es.length, (S i) ^ es.getD i 0) := by
+    induction es generalizing S with
+    | nil => simp
+    | cons e es ih =>
+      simp only [List.foldrIdx, zero_add, List.length_cons]
+      rewrite [List.foldrIdx_start, ih, add_comm _ 1, Finset.prod_range_add, Finset.prod_range_one]
+      simp [add_comm]
+  simp [this, Finset.prod_range]
+
+lemma foldrIdx_add_eq_sum {σ R : Type*} [CommSemiring R] [LinearOrder σ]
+    (qs : List (MvPolynomial σ R)) (S : ℕ → MvPolynomial σ R) :
+    qs.foldrIdx (fun i q Q ↦ q * S i + Q) 0  = ∑ i : Fin qs.length, qs[i] * S i := by
+  have (qs : List _) (S : ℕ → MvPolynomial σ R) : qs.foldrIdx (fun i q Q ↦ q * S i + Q) 0
+      = (∑ i ∈ Finset.range qs.length, qs.getD i 0 * S i) := by
+    induction qs generalizing S with
+    | nil => simp
+    | cons q qs ih =>
+      simp only [List.foldrIdx, zero_add, List.length_cons]
+      rewrite [List.foldrIdx_start, ih, add_comm _ 1, Finset.sum_range_add, Finset.sum_range_one]
+      simp [add_comm]
+  simp [this, Finset.sum_range]
+
 example : { I : ℚ[Fin 8] // vanishingSet ℚ l \ vanishingSet' ℚ I ⊆ vanishingSet' ℚ p₅ } := by
   let I : ℚ[Fin 8] := 1
   have hI : ∃ (qs : List ℚ[Fin 8]),
     qs.length = CS.length ∧ I * p₅ = qs.foldrIdx (fun i q Q ↦ q * CS i + Q) 0 := by
     use [1, 0]
-    simp [CS, lCS, TriangularSet.length_list, TriangularSet.list_apply]
+    have : CS.toList = lCS := rfl
+    rw [TriangularSet.length, this]
+    simp [← TriangularSet.toList_getElem?_getD, this, lCS]
     -----
 
     -----

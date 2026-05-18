@@ -97,8 +97,8 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:isRemainder}
-    \lean{MvPolynomial.isRemainder}
+    \label{def:IsRemainder}
+    \lean{MvPolynomial.IsRemainder}
     \leanok
     \uses{def:reducedTo, def:initial}
     A remainder $r$ of $g$ by $f$ is a polynomial which is reduced with respect to $f$ and
@@ -106,12 +106,12 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:isSetRemainder}
-    \lean{MvPolynomial.isSetRemainder}
+    \label{def:IsSetRemainder}
+    \lean{MvPolynomial.IsSetRemainder}
     \leanok
     \uses{def:reducedTo, def:initial}
     A remainder $r$ of $g$ by a set $S$ is a polynomial which is reduced with respect to $S$ and
-    satisfies $(\prod S_i^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
+    satisfies $(\prod init(S_i)^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
 \end{definition}
 
 \begin{definition}
@@ -146,8 +146,8 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:isAscendingSet}
-    \lean{TriangularSet.isAscendingSet}
+    \label{def:IsAscendingSet}
+    \lean{TriangularSet.IsAscendingSet}
     \leanok
     \uses{def:TriangularSet, def:reducedTo}
     A Triangular Set is an Ascending Set if every element is reduced with respect to its predecessors.
@@ -156,17 +156,17 @@
 
 \begin{definition}
     \label{def:isStandardAscendingSet}
-    \lean{StandardAscendingSet.isAscendingSet}
+    \lean{StandardAscendingSet.IsAscendingSet}
     \leanok
-    \uses{def:isAscendingSet}
+    \uses{def:IsAscendingSet}
     A Triangular Set is a Standard Ascending Set if every element is reduced with respect to its predecessors.
 \end{definition}
 
 \begin{definition}
     \label{def:isWeakAscendingSet}
-    \lean{WeakAscendingSet.isAscendingSet}
+    \lean{WeakAscendingSet.IsAscendingSet}
     \leanok
-    \uses{def:initial, def:isAscendingSet}
+    \uses{def:initial, def:IsAscendingSet}
     A Triangular Set is a Weak Ascending Set if the initial of every element is reduced with respect to its predecessors.
 \end{definition}
 
@@ -174,7 +174,7 @@
     \label{def:HasBasicSet}
     \lean{HasBasicSet}
     \leanok
-    \uses{def:TriangularSet, def:isAscendingSet, def:reducedToSet, def:TriangularSet.order}
+    \uses{def:TriangularSet, def:IsAscendingSet, def:reducedToSet, def:TriangularSet.order}
     The interface for algorithms computing Basic Sets.
     Any instance of this class provides a "basicSet" function that computes a minimal ascending set
     contained in a given list of polynomials.
@@ -207,10 +207,10 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:isCharacteristicSet}
-    \lean{TriangularSet.isCharacteristicSet}
+    \label{def:IsCharacteristicSet}
+    \lean{TriangularSet.IsCharacteristicSet}
     \leanok
-    \uses{def:TriangularSet, def:isSetRemainder}
+    \uses{def:TriangularSet, def:IsSetRemainder}
     $CS$ is a characteristic set of $PS$ if every polynomial in $PS$, $0$ is its remainder by $CS$, and $Zero(PS) \subseteq Zero(CS)$.
 \end{definition}
 
@@ -478,7 +478,7 @@
     \label{thm:pseudo_remainder_isRemainder}
     \lean{MvPolynomial.pseudo_remainder_isRemainder}
     \leanok
-    \uses{def:isRemainder, def:pseudo}
+    \uses{def:IsRemainder, def:pseudo}
     The remainder $r$ of $g$ by $f$ is reduced with respect to $f$ and
     satisfies $init(f)^s \cdot g = q \cdot f + r$ for some $s \in \mathbb{N}$ and $q \in R[X_{\sigma}]$.
 \end{theorem}
@@ -507,7 +507,7 @@
     \label{thm:setPseudo_remainder_isSetRemainder}
     \lean{MvPolynomial.setPseudo_remainder_isSetRemainder}
     \leanok
-    \uses{def:isSetRemainder, def:setPseudo}
+    \uses{def:IsSetRemainder, def:setPseudo}
     The remainder $r$ of $g$ by a set $S$ is reduced with respect to $S$ and
     satisfies $(\prod S_i^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
 \end{theorem}
@@ -564,7 +564,7 @@
     \label{thm:initial_reducedToSet_of_max_vars_ne_bot}
     \lean{AscendingSet.initial_reducedToSet_of_max_vars_ne_bot}
     \leanok
-    \uses{def:initial, def:reducedToSet, def:isAscendingSet}
+    \uses{def:initial, def:reducedToSet, def:IsAscendingSet}
     If $p$ is in $S$ and $mainVar(p) \neq \bot$, then $init(p)$ is in $S$.
 \end{theorem}
 
@@ -621,7 +621,7 @@
     \label{thm:vanishingSet_diff_initialProd_subset}
     \lean{CharacteristicSet.vanishingSet_diff_initialProd_subset}
     \leanok
-    \uses{def:TriangularSet, def:isSetRemainder, def:initialProd}
+    \uses{def:TriangularSet, def:IsSetRemainder, def:initialProd}
     Well-ordering principle (1):
     $Zero(CS/IP) \subseteq Zero(PS)$, where $IP$ is the initial-product of $CS$.
 \end{theorem}
@@ -635,7 +635,7 @@
     \label{thm:vanishingSet_diff_initialProd_eq}
     \lean{CharacteristicSet.vanishingSet_diff_initialProd_eq}
     \leanok
-    \uses{def:TriangularSet, def:isCharacteristicSet, def:initialProd}
+    \uses{def:TriangularSet, def:IsCharacteristicSet, def:initialProd}
     Well-ordering principle (2):
     $Zero(CS/IP) = Zero(PS/IP)$, where $IP$ is the initial-product of $CS$.
 \end{theorem}
@@ -650,7 +650,7 @@
     \label{thm:vanishingSet_decomposition}
     \lean{CharacteristicSet.vanishingSet_decomposition}
     \leanok
-    \uses{def:TriangularSet, def:isCharacteristicSet, def:initialProd}
+    \uses{def:TriangularSet, def:IsCharacteristicSet, def:initialProd}
     Well-ordering principle (3):
     $$ Zero(PS) = Zero(CS/IP) \cup \left(\bigcup_{p \in CS} Zero(PS \cup {init(p)})\right) $$.
 \end{theorem}
@@ -665,7 +665,7 @@
     \label{thm:characteristicSet_isCharacteristicSet}
     \lean{MvPolynomial.List.characteristicSet_isCharacteristicSet}
     \leanok
-    \uses{def:characteristicSet, def:isCharacteristicSet}
+    \uses{def:characteristicSet, def:IsCharacteristicSet}
     The algorithm computes a valid characteristic set for the input list.
 \end{theorem}
 
@@ -679,7 +679,7 @@
     \label{thm:characteristicSet_isAscendingSet}
     \lean{MvPolynomial.List.characteristicSet_isAscendingSet}
     \leanok
-    \uses{def:characteristicSet, def:isAscendingSet}
+    \uses{def:characteristicSet, def:IsAscendingSet}
     The computed characteristic set is an ascending set.
 \end{theorem}
 
@@ -719,7 +719,7 @@
     \label{thm:vanishingSet_eq_zeroDecomposition_union}
     \lean{MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union}
     \leanok
-    \uses{def:isCharacteristicSet, def:zeroDecomposition}
+    \uses{def:IsCharacteristicSet, def:zeroDecomposition}
     \textbf{Zero Decomposition Theorem}:
     The zero set of a polynomial system $PS$ is the union of the zero sets of the triangular systems computed by the algorithm:
     $$ Zero(PS) = \bigcup_{CS \in \mathcal{ZD}(PS)} Zero(CS/IP(CS)) $$.

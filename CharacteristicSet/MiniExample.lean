@@ -15,24 +15,20 @@ def lCS : List ℚ[Fin 8] := [X 0 + X 3 - (X 1 + X 2), X 4 + X 7 - (X 5 + X 6)]
 
 def computed_CS : List ℚ[Fin 8] := [X 0 + X 3 - (X 1 + X 2), X 4 + X 7 - (X 5 + X 6)]
 
-lemma CS_non_zero : ∀ p ∈ computed_CS, p ≠ 0 := fun p hp ↦ by
-  simp only [computed_CS, Fin.isValue, List.mem_cons, List.not_mem_nil, or_false] at hp
-  rcases hp with hp | hp
-  · rw [hp]
-    decide +kernel
-  rw [hp]
+lemma CS_non_zero : 0 ∉ computed_CS := by
+  simp only [computed_CS, Fin.isValue, List.mem_cons, List.not_mem_nil, or_false, not_or]
   decide +kernel
 
 
-lemma CS_pairwise : computed_CS.Pairwise fun p q ↦ p.vars.max < q.vars.max := by
+lemma CS_isChain : computed_CS.IsChain fun p q ↦ p.vars.max < q.vars.max := by
   sorry
 
-def CS : TriangularSet (Fin 8) ℚ := TriangularSet.list computed_CS CS_non_zero CS_pairwise
+def CS : TriangularSet (Fin 8) ℚ := TriangularSet.mk computed_CS CS_non_zero CS_isChain
 
-theorem hCS : CS.isCharacteristicSet ℚ l := by
+theorem hCS : CS.IsCharacteristicSet ℚ l := by
   constructor
   · intro g hg
-    unfold isSetRemainder
+    unfold IsSetRemainder
     constructor
     · exact MvPolynomial.zero_reducedToSet
       ----------
@@ -41,8 +37,7 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
     · use [1, 1], [1, 1]
       simp
       refine ⟨rfl, ?_⟩
-      rw [hg, CS, TriangularSet.list_apply' CS_non_zero CS_pairwise,
-        TriangularSet.list_apply' CS_non_zero CS_pairwise]
+      simp only [hg, CS, ← TriangularSet.toList_getElem?_getD, Fin.isValue]
 
 
       sorry
@@ -56,8 +51,9 @@ theorem hCS : CS.isCharacteristicSet ℚ l := by
   apply zeroLocus_anti_mono
   have : {p | p ∈ CS} = {p | p ∈ lCS} := by
     ext p
-    simp only [SetLike.setOf_mem_eq, SetLike.mem_coe, Set.mem_setOf_eq, CS]
-    exact TriangularSet.mem_list_iff CS_non_zero CS_pairwise
+    simp only [SetLike.setOf_mem_eq, SetLike.mem_coe, Set.mem_setOf_eq]
+    have : lCS = CS.toList := rfl
+    rw [this, TriangularSet.mem_toList_iff]
   rw [l, this, lCS]
   simp only [List.mem_cons, List.not_mem_nil, or_false, ge_iff_le]
   have heq1 (p q : ℚ[Fin 8]) : {r | r = p ∨ r = q} = {p, q} := Set.insert_def ..

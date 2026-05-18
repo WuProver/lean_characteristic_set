@@ -54,7 +54,7 @@ def vanishingSet : Set (σ → K) := {x | ∀ p ∈ a, p.aeval x = 0}
 /-- The set of points where a single polynomial `p` vanishes. -/
 def vanishingSet' : Set (σ → K) := {x | aeval x p = 0}
 
-theorem vanishingSet_singleton_eq_singleVanishingSet :
+theorem vanishingSet_singleton_eq_vanishingSet' :
     vanishingSet K ({p} : Set (MvPolynomial σ R)) = vanishingSet' K p := by
   simp only [vanishingSet, Set.mem_singleton_iff, forall_eq, vanishingSet']
 
@@ -79,9 +79,9 @@ variable [Membership (MvPolynomial σ R) α] (K : Type*)
 /-- A Triangular Set `CS` is a Characteristic Set for `a` if:
 1. Every element in `a` reduce to 0 modulo `CS`.
 2. `Zero(a) ⊆ Zero(CS)` (geometric containment). -/
-def TriangularSet.isCharacteristicSet [CommSemiring K] [Algebra R K]
+def TriangularSet.IsCharacteristicSet [CommSemiring K] [Algebra R K]
     (CS : TriangularSet σ R) (a : α) : Prop :=
-  (∀ g ∈ a, (0 : MvPolynomial σ R).isSetRemainder g CS) ∧ vanishingSet K a ⊆ vanishingSet K CS
+  (∀ g ∈ a, (0 : MvPolynomial σ R).IsSetRemainder g CS) ∧ vanishingSet K a ⊆ vanishingSet K CS
 
 namespace CharacteristicSet
 
@@ -91,25 +91,25 @@ variable [Field K] [Algebra R K] {PS : α} {CS : TriangularSet σ R}
 If all polynomials in `PS` reduce to 0 modulo `CS`, then any zero of `CS`
 that isn't a zero of `IP` must be a zero of `PS`. -/
 theorem vanishingSet_diff_initialProd_subset
-    (h : (∀ g ∈ PS, (0 : MvPolynomial σ R).isSetRemainder g CS)) :
-    vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ⊆ vanishingSet K PS := by
+    (h : (∀ g ∈ PS, (0 : MvPolynomial σ R).IsSetRemainder g CS)) :
+    vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ⊆
+      vanishingSet K PS := by
   refine Set.diff_subset_iff.mpr (fun x hx ↦ ?_)
   simp only [vanishingSet, vanishingSet', Set.mem_setOf_eq, Set.mem_union] at *
   simp only [or_iff_not_imp_right, not_forall, forall_exists_index, initialProd]
   intro p hp1 hp2
   rcases (h p hp1).2 with ⟨es, qs, h1, h2⟩
-  rewrite [add_zero] at h2
+  rw [add_zero] at h2
   -- If x is a zero of CS but not of initials, and rem(p, CS) = 0, then p(x) must be 0.
   have : ∃ i : Fin es.length, (aeval x) (CS i).initial = 0 ∧ ¬es[i] = 0 := by
-    rewrite [foldrIdx_mul_eq_prod, foldrIdx_add_eq_sum] at h2
     have := congr_arg (aeval x) h2
     simpa [(forall_mem_iff_forall_index' h1.2).mp hx, hp2, Finset.prod_eq_zero_iff] using this
   rcases this with ⟨⟨i, hi1⟩, (hi2 : (aeval x) (CS i).initial = 0), _⟩
-  rewrite [map_prod, Finset.prod_eq_zero_iff]
+  rw [map_prod, Finset.prod_eq_zero_iff]
   exact ⟨CS i, mem_toFinset_iff.mpr <| apply_mem <| h1.1 ▸ hi1, hi2⟩
 
 /-- Well-Ordering Principle (2): `Zero(CS/IP) = Zero(PS/IP)`. -/
-theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
+theorem vanishingSet_diff_initialProd_eq (h : CS.IsCharacteristicSet K PS) :
     vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) =
       vanishingSet K PS \ vanishingSet' K (initialProd CS.toFinset) := by
   refine Set.Subset.antisymm ?_ (Set.diff_subset_diff_left h.2)
@@ -117,13 +117,13 @@ theorem vanishingSet_diff_initialProd_eq (h : CS.isCharacteristicSet K PS) :
   exact vanishingSet_diff_initialProd_subset K h.1
 
 /-- Well-Ordering Principle (3): `Zero(PS) = Zero(CS/IP) ∪ ⋃_{CS} Zero(PS ∪ {init(p)})` -/
-theorem vanishingSet_decomposition (h : CS.isCharacteristicSet K PS) : vanishingSet K PS =
+theorem vanishingSet_decomposition (h : CS.IsCharacteristicSet K PS) : vanishingSet K PS =
       vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ∪
       ⋃ p ∈ CS, vanishingSet K PS ∩ vanishingSet' K p.initial := by
   have : (⋃ p ∈ CS, vanishingSet K PS ∩ vanishingSet' K p.initial) =
       vanishingSet K PS ∩ vanishingSet' K (initialProd CS.toFinset) := Set.ext fun x ↦ by
     simp [vanishingSet, vanishingSet', initialProd, Finset.prod_eq_zero_iff]
-  rewrite [vanishingSet_diff_initialProd_eq K h, this]
+  rw [vanishingSet_diff_initialProd_eq K h, this]
   exact (Set.diff_union_inter _ _).symm
 
 end CharacteristicSet
@@ -141,7 +141,7 @@ lemma characteristicSetGo_decreasing (BS : TriangularSet σ R) (lBS RS : List (M
     (hRS : RS ≠ []) (hBS : BS = l.basicSet.val) (hlBS : lBS = BS.toList)
     (hRS1 : RS = ((l \ lBS).map fun p ↦ (p.setPseudo BS).remainder).filter (· ≠ 0)) :
     (l₀ ++ RS ++ lBS).basicSet < l.basicSet := by
-  rewrite [hRS1, hlBS, hBS] at hRS ⊢
+  rw [hRS1, hlBS, hBS] at hRS ⊢
   apply TriangularSet.lt_of_lt_of_equiv ?_ l.basicSet_toList_equiv
   apply basicSet_append_lt_of_exists_reducedToSet
   have ⟨p, hp⟩ := List.exists_mem_of_ne_nil _ hRS
@@ -177,11 +177,11 @@ Termination is guaranteed by the well-ordering of orders.
 noncomputable def characteristicSet : TriangularSet σ R := characteristicSet.go l l
 
 lemma zero_isSetRemainder_characteristicSetGo : l₀ ⊆ l → ∀ p ∈ l₀,
-    (0 : MvPolynomial σ R).isSetRemainder p (characteristicSet.go l₀ l) := by
+    (0 : MvPolynomial σ R).IsSetRemainder p (characteristicSet.go l₀ l) := by
   induction l using characteristicSet.go.induct l₀ with
   | case1 l BS lBS RS h =>
     intro hl p hp1
-    rewrite [characteristicSet.go, if_pos h]
+    rw [characteristicSet.go, if_pos h]
     apply isSetRemainder_of_eq_setPseudo_remainder
     rcases em (p ∈ lBS) with hp2 | hp2
     · exact setPseudo_remainder_eq_zero_of_mem BS (mem_toList_iff.mp hp2)
@@ -189,7 +189,7 @@ lemma zero_isSetRemainder_characteristicSetGo : l₀ ⊆ l → ∀ p ∈ l₀,
     exact (h p <| List.mem_diff_of_mem (hl hp1) hp2)
   | case2 l BS lBS RS h ih =>
     intro hl
-    rewrite [characteristicSet.go, if_neg h]
+    rw [characteristicSet.go, if_neg h]
     exact ih (List.subset_append_of_subset_left lBS (List.subset_append_left _ _))
 
 variable (K : Type*) [CommSemiring K] [Algebra R K] (l₀ l : List (MvPolynomial σ R))
@@ -200,12 +200,12 @@ lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingS
   induction l using characteristicSet.go.induct l₀ with
   | case1 l BS lBS RS h =>
     intro hl x hx p hp
-    rewrite [characteristicSet.go, if_pos h] at hp
+    rw [characteristicSet.go, if_pos h] at hp
     have hx : ∀ p ∈ l, aeval x p = 0 := (Set.ext_iff.mp hl x).mp hx
     exact hx p <| l.basicSet_subset hp
   | case2 l BS lBS RS h ih =>
     intro hl
-    rewrite [characteristicSet.go, if_neg h]
+    rw [characteristicSet.go, if_neg h]
     refine ih (Set.ext fun x ↦ ?_)
     simp only [Set.mem_setOf_eq, List.append_assoc, List.mem_append]
     have hl := Set.mem_setOf_eq ▸ Set.mem_setOf_eq ▸ (Set.ext_iff.mp hl x)
@@ -217,7 +217,7 @@ lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingS
         by simpa [RS] using hp
     suffices heq : ∑ i : Fin (g.setPseudo BS).quotients.length,
         (aeval x) (g.setPseudo BS).quotients[i.1] * (aeval x) (BS i) = 0 by
-      have := Eq.symm <| congrArg (aeval x) (hg2 ▸ g.setPseudo_equation' BS)
+      have := Eq.symm <| congrArg (aeval x) (hg2 ▸ g.setPseudo_equation BS)
       have hg2 : aeval x g = 0 := (hl.mp hx) _ <| (List.diff_subset _ _) hg1
       simpa [hg2, heq] using this
     refine Finset.sum_eq_zero fun ⟨i, hi⟩ _ ↦ ?_
@@ -225,35 +225,33 @@ lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingS
 
 /-- The computed `characteristicSet` satisfies the required properties. -/
 theorem characteristicSet_isCharacteristicSet :
-    l.characteristicSet.isCharacteristicSet K l where
+    l.characteristicSet.IsCharacteristicSet K l where
   left := zero_isSetRemainder_characteristicSetGo l l fun _ ↦ id
   right := characteristicSetGo_vanishingSet_subset K l l rfl
 
 lemma characteristicSetGo_le_basicSet : characteristicSet.go l₀ l ≤ l.basicSet := by
   induction l using characteristicSet.go.induct l₀ with
-  | case1 l BS lBS RS h =>
-    rewrite [characteristicSet.go, if_pos h]
-    exact le_refl _
+  | case1 l BS lBS RS h => rw [characteristicSet.go, if_pos h]
   | case2 l BS lBS RS h ih =>
-    rewrite [characteristicSet.go, if_neg h]
+    rw [characteristicSet.go, if_neg h]
     refine le_trans ih (le_of_lt ?_)
     exact characteristicSetGo_decreasing l₀ l _ _ _ h rfl rfl rfl
 
 theorem characteristicSet_le_basicSet : l.characteristicSet ≤ l.basicSet :=
   characteristicSetGo_le_basicSet l l
 
-lemma characteristicSetGo_isAscendingSet : (characteristicSet.go l₀ l).isAscendingSet := by
+lemma characteristicSetGo_isAscendingSet : (characteristicSet.go l₀ l).IsAscendingSet := by
   induction l using characteristicSet.go.induct l₀ with
   | case1 l BS lBS =>
     expose_names
-    rewrite [characteristicSet.go, if_pos h]
+    rw [characteristicSet.go, if_pos h]
     exact l.basicSet.prop
   | case2 l BS lBS RS =>
     expose_names
-    rewrite [characteristicSet.go, if_neg h]
+    rw [characteristicSet.go, if_neg h]
     exact ih1
 
-theorem characteristicSet_isAscendingSet : l.characteristicSet.isAscendingSet :=
+theorem characteristicSet_isAscendingSet : l.characteristicSet.IsAscendingSet :=
   characteristicSetGo_isAscendingSet l l
 
 protected alias cs := characteristicSet
@@ -295,7 +293,7 @@ noncomputable def zeroDecomposition (l : List (MvPolynomial σ R)) : List (Trian
     exact this q <| mem_toList_iff.mp <| CS.toList.basicSet_subset hq
 
 theorem isAscendingSet_of_mem_zeroDecomposition :
-    ∀ CS ∈ l.zeroDecomposition, CS.isAscendingSet := by
+    ∀ CS ∈ l.zeroDecomposition, CS.IsAscendingSet := by
   induction l using zeroDecomposition.induct with | case1 l CS ih =>
   intro CS' hCS'
   have hCS' : CS' = CS ∨ ∃ p, (p ∈ CS ∧ ¬p.vars.max = ⊥) ∧
@@ -306,7 +304,7 @@ theorem isAscendingSet_of_mem_zeroDecomposition :
   exact ih p (List.mem_filter_of_mem (mem_toList_iff.mpr hp1) (decide_eq_true hp2)) _ hp3
 
 theorem zero_isSetRemainder_of_mem_zeroDecomposition :
-    ∀ CS ∈ l.zeroDecomposition, ∀ g ∈ l, (0 : MvPolynomial σ R).isSetRemainder g CS := by
+    ∀ CS ∈ l.zeroDecomposition, ∀ g ∈ l, (0 : MvPolynomial σ R).IsSetRemainder g CS := by
   induction l using zeroDecomposition.induct with | case1 l CS ih =>
   intro CS' hCS'
   have hCS' : CS' = CS ∨ ∃ p, (p ∈ CS ∧ ¬p.vars.max = ⊥) ∧
@@ -334,7 +332,7 @@ theorem vanishingSet_eq_zeroDecomposition_union :
       ⋃ p ∈ CS.toList.filter fun p ↦ p.vars.max ≠ ⊥,
         ⋃ CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition,
           vanishingSet K CS' \ vanishingSet' K (initialProd CS'.toFinset) by
-    rewrite [zeroDecomposition]; simpa using this
+    rw [zeroDecomposition]; simpa using this
   -- 2. Apply decomposition theorem to the recursive structure
   suffices ⋃ p ∈ CS, vanishingSet K l ∩ vanishingSet' K p.initial =
       ⋃ p ∈ CS.toList.filter fun p ↦ p.vars.max ≠ ⊥,

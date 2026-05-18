@@ -47,14 +47,14 @@ theorem mainDegree_eq_zero_iff : p.mainDegree = 0 ↔ p.vars.max = ⊥ where
     match hc : p.vars.max with
     | ⊥ => rfl
     | some c => by
-      rewrite [mainDegree_of_max_vars_isSome hc, degreeOf] at h
+      rw [mainDegree_of_max_vars_isSome hc, degreeOf] at h
       have : c ∉ p.degrees := by simpa only [Multiset.count_eq_zero] using h
       have hc := Finset.mem_of_max hc
       simp only [vars_def, Multiset.mem_toFinset] at hc
       exact absurd hc this
   mpr h := by rw [mainDegree, h]
 
-theorem mainDegree_eq_zero_iff' : p.mainDegree = 0 ↔ (∃ r : R, p = C r) :=
+theorem mainDegree_eq_zero_iff_eq_C : p.mainDegree = 0 ↔ p = C (p.coeff 0) :=
   mainDegree_eq_zero_iff.trans <| Finset.max_eq_bot.trans vars_eq_empty_iff_eq_C
 
 theorem degreeOf_max_vars_ne_zero : p.vars.max = c → p.degreeOf c ≠ 0 := fun h ↦
@@ -68,7 +68,7 @@ theorem max_vars_mem_degrees : p.vars.max = c → c ∈ p.degrees := fun h ↦
 
 @[simp] theorem mainDegree_monomial {s : σ →₀ ℕ} {r : R} (hr : r ≠ 0)
     (hs : s.support.max = c) : (monomial s r).mainDegree = s c := by
-  rewrite [mainDegree_of_max_vars_isSome <| (congrArg _ (vars_monomial hr)).trans hs]
+  rw [mainDegree_of_max_vars_isSome <| (congrArg _ (vars_monomial hr)).trans hs]
   exact degreeOf_monomial_eq s c hr
 
 @[simp] theorem mainDegree_C (r : R) : (C r : MvPolynomial σ R).mainDegree = 0 :=
