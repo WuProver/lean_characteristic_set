@@ -5,8 +5,8 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSet.Reduced
-public import CharacteristicSet.MainDegree
+public import CharacteristicSetTheory.Reduced
+public import CharacteristicSetTheory.MainDegree
 
 /-!
 # Rank and Orderings on polynomials and triangular sets

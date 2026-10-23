@@ -1,3 +1,3 @@
 module
 
-public import CharacteristicSet.CharacteristicSet
+public import CharacteristicSet.Computable

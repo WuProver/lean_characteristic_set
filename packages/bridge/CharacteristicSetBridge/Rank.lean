@@ -1,8 +1,8 @@
 module
 
 public import CharacteristicSet.Computable.Rank
-public import CharacteristicSet.Bridge.Basic
-public import CharacteristicSet.Rank
+public import CharacteristicSetBridge.Basic
+public import CharacteristicSetTheory.Rank
 
 /-! Correspondence of executable ranks and their comparisons with Wu rank. -/
 

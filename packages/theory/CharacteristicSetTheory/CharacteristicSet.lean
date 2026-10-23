@@ -5,8 +5,8 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSet.AscendingSet
-public import CharacteristicSet.PseudoDivision
+public import CharacteristicSetTheory.AscendingSet
+public import CharacteristicSetTheory.PseudoDivision
 public import Mathlib.RingTheory.Nullstellensatz
 
 /-!

@@ -1,15 +1,21 @@
 FROM mcr.microsoft.com/devcontainers/base:jammy
 
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential ca-certificates curl git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER vscode
 WORKDIR /home/vscode
+SHELL ["/bin/bash", "-c"]
 
-# install dependencies -- we assumes that we don't update dependencies frequently, so we install them in the image.
-# ~/.lake will be linked to the workspace later.
-COPY lean-toolchain lake-manifest.json lakefile.toml .
+# Install the pinned toolchain in the image. Package dependencies are prepared
+# in the checked-out Bridge workspace by devcontainer.json.
+COPY --chown=vscode:vscode lean-toolchain .
 
-# once dependencies are updated, the elan will be reinstalled too
+# Reinstall elan when the pinned toolchain changes.
 RUN curl https://elan.lean-lang.org/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
 
-RUN . ~/.profile && lake exe cache get-
+RUN . ~/.profile && lean --version
 
 ENV PATH="/home/vscode/.elan/bin:${PATH}"

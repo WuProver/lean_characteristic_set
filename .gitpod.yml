@@ -1,0 +1,11 @@
+image:
+  file: Dockerfile.gitpod
+  context: .
+
+tasks:
+  - name: Build Lean workspace
+    init: lake -d packages/bridge exe cache get && lake -d packages/bridge build
+
+vscode:
+  extensions:
+    - leanprover.lean4

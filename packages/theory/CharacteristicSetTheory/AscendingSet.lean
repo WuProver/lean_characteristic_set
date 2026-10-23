@@ -5,7 +5,7 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSet.Rank
+public import CharacteristicSetTheory.Rank
 
 /-!
 # Ascending sets and basic sets

@@ -1,0 +1,19 @@
+name = "CharacteristicSetTheory"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["CharacteristicSetTheory"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+maxSynthPendingDepth = 3
+weak.linter.mathlibStandardSet = true
+
+[[lean_lib]]
+name = "CharacteristicSetTheory"
+globs = ["CharacteristicSetTheory.*"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.35.0"

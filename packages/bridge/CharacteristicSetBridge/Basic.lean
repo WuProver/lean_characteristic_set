@@ -1,7 +1,7 @@
 module
 
 public import CharacteristicSet.Computable.Basic
-public import CharacteristicSet.MainDegree
+public import CharacteristicSetTheory.MainDegree
 public import HexMvPolyTheory.Correspondence
 
 /-! Correctness of the executable main variable and main degree. -/

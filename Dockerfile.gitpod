@@ -1,8 +1,5 @@
-# This is the Dockerfile for `leanprovercommunity/gitpod4`.
-
-# This container does not come with a pre-installed version of mathlib.
-# When a gitpod container is spawned, elan will be updated and mathlib will be downloaded:
-# see the .gitpod.yml file for more information.
+# Gitpod Classic workspace image. The pinned Lean toolchain is installed here;
+# .gitpod.yml prepares package dependencies after the repository is checked out.
 
 FROM ubuntu:jammy
 
@@ -10,7 +7,7 @@ USER root
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
-    && apt-get install sudo git curl git bash-completion python3 python3-pip python3-requests --no-install-suggests --no-install-recommends -y \
+    && apt-get install sudo git curl bash-completion build-essential ca-certificates python3 python3-pip python3-requests --no-install-suggests --no-install-recommends -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
@@ -24,14 +21,13 @@ SHELL ["/bin/bash", "-c"]
 # gitpod bash prompt
 RUN { echo && echo "PS1='\[\033[01;32m\]\u\[\033[00m\] \[\033[01;34m\]\w\[\033[00m\]\$(__git_ps1 \" (%s)\") $ '" ; } >> .bashrc
 
-# install dependencies -- we assumes that we don't update dependencies frequently, so we install them in the image.
-# ~/.lake will be linked to the workspace later.
-COPY lean-toolchain lake-manifest.json lakefile.toml .
+# Pin the toolchain independently of the three Lake package manifests.
+COPY --chown=gitpod:gitpod lean-toolchain .
 
-# once dependencies are updated, the elan will be reinstalled too
+# Reinstall elan when the pinned toolchain changes.
 RUN curl https://elan.lean-lang.org/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
 
-RUN . ~/.profile && lake exe cache get && rm -r .lake/packages/*/*/ ~/.cache
+RUN . ~/.profile && lean --version
 
 # install neovim (for any lean.nvim user), via tarball since the appimage doesn't work for some reason, and jammy's version is ancient
 RUN curl -s -L https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.tar.gz | tar xzf - && sudo mv nvim-linux-x86_64 /opt/nvim

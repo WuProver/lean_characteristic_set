@@ -5,7 +5,7 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSet.Reduced
+public import CharacteristicSetTheory.Reduced
 public import Mathlib.Algebra.BigOperators.Fin
 
 /-!

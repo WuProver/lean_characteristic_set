@@ -2,10 +2,11 @@
   "name": "Dev container",
 
   "build": {
-    "dockerfile": "../Dockerfile.devcontainer"
+    "dockerfile": "../Dockerfile.devcontainer",
+    "context": ".."
   },
 
-  "onCreateCommand": "ln -s ~/.lake/ && lake exe cache unpack && lake build",
+  "onCreateCommand": "lake -d packages/bridge exe cache get && lake -d packages/bridge build",
 
   "hostRequirements": {
      "cpus": 4

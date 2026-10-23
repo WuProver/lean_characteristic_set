@@ -5,8 +5,8 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSet.Initial
-public import CharacteristicSet.TriangularSet
+public import CharacteristicSetTheory.Initial
+public import CharacteristicSetTheory.TriangularSet
 
 /-!
 # Reduction relation

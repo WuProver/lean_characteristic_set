@@ -1,8 +1,8 @@
 module
 
 public import CharacteristicSet.Computable.Initial
-public import CharacteristicSet.Bridge.Basic
-public import CharacteristicSet.Initial
+public import CharacteristicSetBridge.Basic
+public import CharacteristicSetTheory.Initial
 
 /-! Correctness of executable initial coefficients. -/
 

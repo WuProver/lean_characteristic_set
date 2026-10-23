@@ -39,24 +39,27 @@ jobs:
         run: curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
 
       - name: Get Mathlib cache
+        working-directory: packages/bridge
         run: ~/.elan/bin/lake exe cache get || true
 
       - name: Build project
-        run: ~/.elan/bin/lake build CharacteristicSet
+        working-directory: packages/bridge
+        run: ~/.elan/bin/lake build
 
       - name: Cache API documentation
         uses: actions/cache@v4
         with:
           path: |
-            .lake/build/doc
-            .lake/build/doc-data
-            .lake/build/api-docs.db
-          key: ApiDoc-v2-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+            packages/bridge/.lake/build/doc
+            packages/bridge/.lake/build/doc-data
+            packages/bridge/.lake/build/api-docs.db
+          key: ApiDoc-v3-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'packages/theory/lake-manifest.json', 'packages/bridge/lake-manifest.json') }}
 
       - name: Build project API documentation
+        working-directory: packages/bridge
         env:
           LEAN_NUM_THREADS: "2"
-        run: ~/.elan/bin/lake build CharacteristicSet:docs
+        run: ~/.elan/bin/lake build CharacteristicSetBridge:docs
 
       - name: Check for `home_page` folder # this is meant to detect a Jekyll-based website
         id: check_home_page
@@ -92,11 +95,12 @@ jobs:
             cp -r blueprint/web home_page/blueprint
 
       - name: Check declarations mentioned in the blueprint exist in Lean code
+        working-directory: packages/bridge
         run: |
-            ~/.elan/bin/lake exe checkdecls blueprint/lean_decls
+            ~/.elan/bin/lake exe checkdecls ../../blueprint/lean_decls
 
       - name: Copy API documentation to `home_page/docs`
-        run: cp -r .lake/build/doc home_page/docs
+        run: cp -r packages/bridge/.lake/build/doc home_page/docs
 
       - name: Remove unnecessary lake files from documentation in `home_page/docs`
         run: |
@@ -125,6 +129,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Make sure the API documentation cache works
-        run: mv home_page/docs .lake/build/doc

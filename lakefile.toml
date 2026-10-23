@@ -2,37 +2,17 @@ name = "CharacteristicSet"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["CharacteristicSet"]
-[[lean_lib]]
-name = "CharacteristicSet"
 
 [leanOptions]
-pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+pp.unicode.fun = true
 autoImplicit = false
-weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
 
-
-[[require]]
-name = "checkdecls"
-git = "https://github.com/PatrickMassot/checkdecls.git"
-rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
-
-[[require]]
-name = "«doc-gen4»"
-git = "https://github.com/leanprover/doc-gen4"
-rev = "v4.35.0"
+[[lean_lib]]
+name = "CharacteristicSet"
+globs = ["CharacteristicSet.*"]
 
 [[require]]
 name = "HexMvPoly"
 git = "https://github.com/leanprover/hex-mv-poly.git"
 rev = "71d140d97e32713fc6b46a9006b8b8b86e4b3075"
-
-[[require]]
-name = "HexMvPolyTheory"
-git = "https://github.com/leanprover/hex-mv-poly-theory.git"
-rev = "cca4bb9172ecdd1b988b09a82e1653cfa4ed78cd"
-
-[[require]]
-name = "mathlib"
-scope = "leanprover-community"
-rev = "v4.35.0"
