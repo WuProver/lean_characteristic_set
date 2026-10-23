@@ -23,6 +23,16 @@ git = "https://github.com/leanprover/doc-gen4"
 rev = "v4.35.0"
 
 [[require]]
+name = "HexMvPoly"
+git = "https://github.com/leanprover/hex-mv-poly.git"
+rev = "71d140d97e32713fc6b46a9006b8b8b86e4b3075"
+
+[[require]]
+name = "HexMvPolyTheory"
+git = "https://github.com/leanprover/hex-mv-poly-theory.git"
+rev = "cca4bb9172ecdd1b988b09a82e1653cfa4ed78cd"
+
+[[require]]
 name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.35.0"

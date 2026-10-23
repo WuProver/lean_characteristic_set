@@ -53,6 +53,31 @@ example (l : List (MvPolynomial (Fin 2) ℚ)) :
   List.characteristicSet_isCharacteristicSet ℚ l
 ```
 
+### Executable foundations
+
+`import CharacteristicSet.Computable` provides `mainVar`, numerical `mainDegree`,
+`initialOf`, `initial`, `rank`, and `compareRank` in `CharacteristicSet.Computable`.
+They run directly on `Hex.MvPoly n R cmp`; the computation layer imports no Mathlib.
+The main variable uses the natural order on `Fin n`, independently of the storage
+comparator `cmp`. `compareRank` compares the variable and then the degree;
+its `.eq` result means equal ranks, and polynomial equality remains Hex equality.
+
+`import CharacteristicSet.Bridge` adds general correctness theorems relating these
+operations to the existing `MvPolynomial` definitions, using
+`HexMvPolyTheory.toMvPolynomial`. The original `CharacteristicSet` entry point
+continues to provide the reference theory and algorithms.
+
+Build both entry points and run the rational-coefficient examples with:
+
+```bash
+lake build CharacteristicSet.Computable CharacteristicSet.Bridge CharacteristicSet.Computable.Examples
+lake env lean CharacteristicSet/Computable/Examples.lean
+```
+
+See [the examples](./CharacteristicSet/Computable/Examples.lean) for construction,
+arithmetic, zero and constant cases, and different storage orders. Executable
+pseudo-division and characteristic-set algorithms are not included in this layer yet.
+
 ## Project Resources
 
 We maintain a set of web-based resources to track and explore the formalization effort:
