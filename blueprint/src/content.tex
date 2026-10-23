@@ -13,22 +13,23 @@
     \label{def:mainDegree}
     \lean{MvPolynomial.mainDegree}
     \leanok
-    The degree of $p$ with respect to its class.
+    The multiset consisting of the maximal variable of $p$, repeated according to its degree.
+    Its cardinality is the degree in that variable; constants and zero have the empty multiset.
 \end{definition}
 
 \begin{definition}
-    \label{def:MvPolynomial.order}
-    \lean{MvPolynomial.order}
+    \label{def:MvPolynomial.rank}
+    \lean{MvPolynomial.rank}
     \leanok
     \uses{def:mainDegree}
-    The order of a polynomial $p$ is the pair $(mainVar(p), deg(p))$ ordered lexicographically.
+    The rank of a polynomial $p$ is the pair $(mainVar(p), |mainDegree(p)|)$ ordered lexicographically.
 \end{definition}
 
 \begin{definition}
     \label{def:reducedTo}
     \lean{MvPolynomial.reducedTo}
     \leanok
-    $q$ is reduced with respect to $p$ if the degree of $q$ in the main variable of $p$ is strictly less than the main degree of $p$.
+    $q$ is reduced with respect to $p$ if $q = 0$, or $p$ has a main variable and the degree of $q$ in that variable is strictly less than the degree of $p$ in the same variable.
 \end{definition}
 
 \begin{definition}
@@ -52,7 +53,8 @@
     \lean{MvPolynomial.initial}
     \leanok
     \uses{def:initialOf}
-    The initial of a polynomial $p$ is the initial with respect to its class.
+    The initial of a nonconstant polynomial $p$ is the initial with respect to its class.
+    The initial of zero is zero, and the initial of a nonzero constant is one.
 \end{definition}
 
 \begin{definition}
@@ -71,11 +73,11 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:TriangularSet.order}
-    \lean{TriangularSet.order}
+    \label{def:TriangularSet.rank}
+    \lean{TriangularSet.rank}
     \leanok
-    \uses{def:TriangularSet, def:MvPolynomial.order}
-    The order of a Triangular Set is a lexicographic sequence of orders of its polynomials.
+    \uses{def:TriangularSet, def:MvPolynomial.rank}
+    The rank of a Triangular Set is a lexicographic sequence of ranks of its polynomials.
     More intuitively, $S < T$ if one of the following two occurs:
     \begin{itemize}
         \item There exists some $k < S.length$ such that $S_0 \sim T_0, S_1 \sim T_1, ..., S_{k-1} \sim T_{k-1}$, while $S_k < T_k$.
@@ -151,56 +153,49 @@
     \leanok
     \uses{def:TriangularSet, def:reducedTo}
     A Triangular Set is an Ascending Set if every element is reduced with respect to its predecessors.
-    Here "reduced" is an abstract predicate.
+    This is the standard (Ritt) ascending-set predicate.
 \end{definition}
 
-\begin{definition}
-    \label{def:isStandardAscendingSet}
-    \lean{StandardAscendingSet.IsAscendingSet}
-    \leanok
-    \uses{def:IsAscendingSet}
-    A Triangular Set is a Standard Ascending Set if every element is reduced with respect to its predecessors.
-\end{definition}
 
 \begin{definition}
     \label{def:isWeakAscendingSet}
-    \lean{WeakAscendingSet.IsAscendingSet}
+    \lean{TriangularSet.IsWeakAscendingSet}
     \leanok
     \uses{def:initial, def:IsAscendingSet}
     A Triangular Set is a Weak Ascending Set if the initial of every element is reduced with respect to its predecessors.
 \end{definition}
 
 \begin{definition}
-    \label{def:HasBasicSet}
-    \lean{HasBasicSet}
+    \label{def:AscendingSetTheory}
+    \lean{AscendingSetTheory}
     \leanok
-    \uses{def:TriangularSet, def:IsAscendingSet, def:reducedToSet, def:TriangularSet.order}
-    The interface for algorithms computing Basic Sets.
+    \uses{def:TriangularSet, def:IsAscendingSet, def:reducedToSet, def:TriangularSet.rank}
+    The interface for algorithms computing Basic Sets, parameterized by an ascending-set predicate.
     Any instance of this class provides a "basicSet" function that computes a minimal ascending set
     contained in a given list of polynomials.
 \end{definition}
 
 \begin{definition}
-    \label{def:StandardAscendingSet.basicSet}
-    \lean{StandardAscendingSet.basicSet}
+    \label{def:IsAscendingSet.basicSet}
+    \lean{IsAscendingSet.basicSet}
     \leanok
-    \uses{def:TriangularSet, def:reducedToSet, def:TriangularSet.order}
+    \uses{def:TriangularSet, def:reducedToSet, def:TriangularSet.rank}
     Computes the Standard Basic Set of a list of polynomials.
 
     The algorithm works by:
     \begin{enumerate}
         \item Sort the list and let $BS = \emptyset$.
         \item Pick the first (minimal) element $B$ in the list.
-        \item Append $B$ to the tail of the current basic set $BS$.
+        \item Update $BS$ using $BS.takeConcat(B)$, retaining a prefix and appending $B$.
         \item Filter the remaining list to keep only elements reduced w.r.t. the new $BS$ and go to step 2.
     \end{enumerate}
 \end{definition}
 
 \begin{definition}
-    \label{def:WeakAscendingSet.basicSet}
-    \lean{WeakAscendingSet.basicSet}
+    \label{def:IsWeakAscendingSet.basicSet}
+    \lean{IsWeakAscendingSet.basicSet}
     \leanok
-    \uses{def:initial, def:TriangularSet, def:reducedToSet, def:TriangularSet.order}
+    \uses{def:initial, def:TriangularSet, def:reducedToSet, def:TriangularSet.rank}
     Computes the Weak Basic Set of a list of polynomials.
 
     Difference from Standard: The filter condition includes $mainVar(p) > mainVar(B)$.
@@ -218,8 +213,8 @@
     \label{def:characteristicSet}
     \lean{MvPolynomial.List.characteristicSet}
     \leanok
-    \uses{def:TriangularSet, def:HasBasicSet, def:setPseudo, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
-    Computes the Characteristic Set of a polynomial list $l$.
+    \uses{def:TriangularSet, def:AscendingSetTheory, def:setPseudo, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
+    Computes the Characteristic Set of a polynomial list $l$ using an explicitly supplied ascending-set predicate.
 
     Algorithm:
     \begin{enumerate}
@@ -227,7 +222,7 @@
         \item Compute $BS = BasicSet(l)$.
         \item Compute remainders $RS$ of $l \setminus BS$ with respect to $BS$.
         \item If $RS = \emptyset$, $BS$ is the characteristic set.
-        \item If not, let $l = l₀ ++ RS ++ BS$ and go to step 2.
+        \item If not, let $l = l_0 ++ RS ++ BS$ and go to step 2.
     \end{enumerate}
     Termination is guaranteed by the well-ordering of orders.
 \end{definition}
@@ -237,7 +232,8 @@
     \lean{MvPolynomial.List.zeroDecomposition}
     \leanok
     \uses{def:characteristicSet, thm:initial_reducedToSet_of_max_vars_ne_bot, thm:characteristicSet_isAscendingSet, thm:characteristicSet_le_basicSet}
-    Decomposes the zero set of a polynomial list into a union of zero sets of triangular sets.
+    Decomposes the zero set of a polynomial list into a union of zero sets of triangular sets,
+    using an explicitly supplied ascending-set predicate.
     The algorithm recursively computes the characteristic set $CS$
     and adds branches for the initials of $CS$.
 \end{definition}
@@ -262,7 +258,7 @@
     \label{lem:reducedTo_iff_gt_of_max_vars_eq}
     \lean{MvPolynomial.reducedTo_iff_gt_of_max_vars_eq}
     \leanok
-    \uses{def:reducedTo, def:MvPolynomial.order}
+    \uses{def:reducedTo, def:MvPolynomial.rank}
     If $mainVar(p) = mainVar(q)$, then $q$ is reduced with respect to $p$ if and only if $q < p$.
 \end{lemma}
 
@@ -276,7 +272,7 @@
     \lean{MvPolynomial.max_vars_lt_of_reducedTo_of_le}
     \leanok
     \uses{def:reducedTo}
-    $mainVar(p) < mainVar(q)$ if $p ≤ q$ and $q$ is reduced with respect to $p$.
+    $mainVar(p) < mainVar(q)$ if $p \le q$ and $q$ is reduced with respect to $p$.
 \end{lemma}
 
 \begin{proof}
@@ -352,11 +348,12 @@
 \end{proof}
 
 \begin{theorem}
-    \label{thm:initialOf_decomposition}
-    \lean{MvPolynomial.initialOf_decomposition}
+    \label{thm:initialOf_mul_X_pow_add_eraseInitOf}
+    \lean{MvPolynomial.initialOf_mul_X_pow_add_eraseInitOf}
     \leanok
     \uses{def:initialOf}
-    $p = init_i(p) x_i ^ d + q$, where $deg_i(q) < d = deg_i(p)$.
+    $p = init_i(p) x_i ^ d + q$, where $d = deg_i(p)$ and $q$ is obtained by deleting the terms of degree $d$ in $x_i$.
+    If $d > 0$, then $deg_i(q) < d$.
 \end{theorem}
 
 \begin{proof}
@@ -369,12 +366,12 @@
     \lean{MvPolynomial.degreeOf_add_lt_of_initialOf_cancel}
     \leanok
     \uses{def:initialOf}
-    $deg_i(p + q) < deg_i(p)$ if $deg_i(p) = deg_i(q)$ and $init_i(p) + init_i(q) = 0$.
+    $deg_i(p + q) < d$ if $deg_i(p) = deg_i(q) = d > 0$ and $init_i(p) + init_i(q) = 0$.
 \end{lemma}
 
 \begin{proof}
     \leanok
-    \uses{thm:initialOf_decomposition}
+    \uses{thm:initialOf_mul_X_pow_add_eraseInitOf}
     % TODO
 \end{proof}
 
@@ -437,7 +434,7 @@
     \label{inst:TriangularSet.instWellFoundedLT}
     \lean{TriangularSet.instWellFoundedLT}
     \leanok
-    \uses{def:TriangularSet, def:TriangularSet.order}
+    \uses{def:TriangularSet, def:TriangularSet.rank}
     The set of Triangular Sets is well-founded under the lexicographic order ordering. This guarantees the termination of the Characteristic Set Algorithm.
 \end{theorem}
 
@@ -450,7 +447,7 @@
     \label{thm:takeConcat_lt_of_reducedToSet}
     \lean{TriangularSet.takeConcat_lt_of_reducedToSet}
     \leanok
-    \uses{def:takeConcat, def:reducedToSet, def:TriangularSet.order}
+    \uses{def:takeConcat, def:reducedToSet, def:TriangularSet.rank}
     If $p \neq 0$ and is reduced with respect to $S$, then modifying $S$ by appending $p$ (using "takeConcat") strictly decreases the order of $S$.
 \end{theorem}
 
@@ -465,7 +462,7 @@
     \lean{MvPolynomial.degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
     \leanok
     \uses{def:pseudoOf}
-    $deg_i(r) < deg_i(g)$ where $r$ is the remainder of $g$ by $f$ w.r.t. $i$ if $deg_i(f) \ne 0$.
+    $deg_i(r) < deg_i(f)$ where $r$ is the remainder of $g$ by $f$ w.r.t. $i$ if $deg_i(f) \ne 0$.
 \end{lemma}
 
 \begin{proof}
@@ -509,7 +506,7 @@
     \leanok
     \uses{def:IsSetRemainder, def:setPseudo}
     The remainder $r$ of $g$ by a set $S$ is reduced with respect to $S$ and
-    satisfies $(\prod S_i^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
+    satisfies $(\prod init(S_i)^{e_i}) \cdot g = \sum q_i \cdot S_i + r$ for some $\{e_i\}$ and $\{q_i\}$.
 \end{theorem}
 
 \begin{proof}
@@ -562,10 +559,10 @@
 
 \begin{theorem}
     \label{thm:initial_reducedToSet_of_max_vars_ne_bot}
-    \lean{AscendingSet.initial_reducedToSet_of_max_vars_ne_bot}
+    \lean{TriangularSet.initial_reducedToSet_of_max_vars_ne_bot}
     \leanok
     \uses{def:initial, def:reducedToSet, def:IsAscendingSet}
-    If $p$ is in $S$ and $mainVar(p) \neq \bot$, then $init(p)$ is in $S$.
+    If $S$ is ascending, $p$ is in $S$, and $mainVar(p) \neq \bot$, then $init(p)$ is reduced with respect to $S$.
 \end{theorem}
 
 \begin{proof}
@@ -575,10 +572,10 @@
 \end{proof}
 
 \begin{theorem}
-    \label{inst:StandardAscendingSet.instHasBasicSet}
-    \lean{StandardAscendingSet.instHasBasicSet}
+    \label{inst:IsAscendingSet.basicSet_minimal}
+    \lean{IsAscendingSet.basicSet_minimal}
     \leanok
-    \uses{def:isStandardAscendingSet, def:HasBasicSet, def:StandardAscendingSet.basicSet}
+    \uses{def:IsAscendingSet, def:AscendingSetTheory, def:IsAscendingSet.basicSet}
     The algorithm computes a minimal standard ascending set contained in the input list.
 \end{theorem}
 
@@ -589,10 +586,10 @@
 \end{proof}
 
 \begin{theorem}
-    \label{inst:WeakAscendingSet.instHasBasicSet}
-    \lean{WeakAscendingSet.instHasBasicSet}
+    \label{inst:IsWeakAscendingSet.basicSet_minimal}
+    \lean{IsWeakAscendingSet.basicSet_minimal}
     \leanok
-    \uses{def:isWeakAscendingSet, def:HasBasicSet, def:WeakAscendingSet.basicSet}
+    \uses{def:isWeakAscendingSet, def:AscendingSetTheory, def:IsWeakAscendingSet.basicSet}
     The algorithm computes a minimal weak ascending set contained in the input list.
 \end{theorem}
 
@@ -606,7 +603,7 @@
     \label{thm:basicSet_append_lt_of_exists_reducedToSet}
     \lean{MvPolynomial.List.basicSet_append_lt_of_exists_reducedToSet}
     \leanok
-    \uses{def:HasBasicSet}
+    \uses{def:AscendingSetTheory}
     Appending an element which is reduced w.r.t. the basic set of list strictly decreases the order.
     Crucial for proving termination of characteristic set and zero decomposition algorithms.
 \end{theorem}
@@ -692,8 +689,8 @@
     \label{thm:characteristicSet_le_basicSet}
     \lean{MvPolynomial.List.characteristicSet_le_basicSet}
     \leanok
-    \uses{def:characteristicSet, def:TriangularSet.order, def:HasBasicSet}
-    The order of computed characteristic set $\le$ the order of the input list.
+    \uses{def:characteristicSet, def:TriangularSet.rank, def:AscendingSetTheory}
+    The rank of the computed characteristic set is at most the rank of the basic set of the input list.
 \end{theorem}
 
 \begin{proof}

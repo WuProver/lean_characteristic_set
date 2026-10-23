@@ -1,3 +1,3 @@
-import CharacteristicSet.CharacteristicSet
-import CharacteristicSet.StandardAscendingSet
-import CharacteristicSet.WeakAscendingSet
+module
+
+public import CharacteristicSet.CharacteristicSet

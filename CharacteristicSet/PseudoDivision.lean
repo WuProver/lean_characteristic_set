@@ -1,7 +1,15 @@
-import CharacteristicSet.Reduce
-import Mathlib.Algebra.BigOperators.Fin
+/-
+Copyright (c) 2026 Yuxuan Xiao. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Yuxuan Xiao
+-/
+module
+
+public import CharacteristicSet.Reduced
+public import Mathlib.Algebra.BigOperators.Fin
 
 /-!
+
 # Pseudo-Division
 
 This file defines **pseudo-division** of multivariate polynomials,
@@ -17,10 +25,10 @@ a fundamental operation in the Characteristic Set Method.
   Successive pseudo-division by all polynomials in a triangular set.
 * `MvPolynomial.setPseudoRem`:
   Computes only the remainder (more efficient when quotients are not needed).
-* `MvPolynomial.isRemainder`:
+* `MvPolynomial.IsRemainder`:
   A predicate stating that `r` is a valid remainder of `g` by `f`,
   meaning `r` is reduced w.r.t. `f` and `init(f)^s * g = q * f + r` for some `s, q`.
-* `MvPolynomial.isSetRemainder`:
+* `MvPolynomial.IsSetRemainder`:
   A predicate stating that `r` is a valid remainder of `g` by a triangular set `S`,
   meaning `r` is reduced w.r.t. `S` and satisfies the extended division equation.
 
@@ -28,14 +36,18 @@ a fundamental operation in the Characteristic Set Method.
 
 * `pseudoOf_equation`: `init(f) ^ s * g = q * f + r` where `deg(r) < deg(f)`
 * `pseudoOf_remainder_reducedTo`: The remainder is reduced w.r.t. the divisor
-* `pseudo_remainder_isRemainder`: The remainder satisfies the `isRemainder` predicate
-* `setPseudo_remainder_isSetRemainder`: The remainder satisfies the `isSetRemainder` predicate
+* `pseudo_remainder_isRemainder`: The remainder satisfies the `IsRemainder` predicate
+* `setPseudo_remainder_isSetRemainder`: The remainder satisfies the `IsSetRemainder` predicate
 * `setPseudo_remainder_eq_zero_of_mem`: Elements of `S` have zero remainder when divided by `S`
 
 ## References
+* [Wen-Tsun Wu, *Basic principles of mechanical theorem proving in elementary geometries*]
+  [wen1986basic]
 * [Wen-Tsun Wu, *Mathematics Mechanization*][wen2000mathematics]
 
 -/
+
+@[expose] public section
 
 namespace MvPolynomial
 
@@ -61,7 +73,7 @@ structure SetPseudoResult (α : Type*) where
 
 section CommRing
 
-variable {R σ : Type*} [CommRing R] [NoZeroDivisors R] (i : σ) (g f : MvPolynomial σ R)
+variable {R σ : Type*} [CommRing R]
 
 /-- The recursive algorithm of pseudo-division -/
 noncomputable def pseudoOf.go [NoZeroDivisors R] (i : σ) (f : MvPolynomial σ R) (s : ℕ)
@@ -108,11 +120,13 @@ noncomputable def pseudoOf.go [NoZeroDivisors R] (i : σ) (f : MvPolynomial σ R
 /-- Pseudo-division of `g` by `f` regarding the variable `i`.
 This algorithm computes `q` and `r` such that `initᵢ(f) ^ s * g = q * f + r`,
 where `degᵢ(r) < degᵢ(f)`.
-It uses a `fuel` parameter to guarantee termination. -/
-noncomputable def pseudoOf [NoZeroDivisors R] (i : σ) (f : MvPolynomial σ R)
+Termination is guaranteed by `pseudoOf.go` which recurses on the degree of the remainder. -/
+noncomputable def pseudoOf [NoZeroDivisors R] (i : σ) (g f : MvPolynomial σ R)
     : PseudoResult (MvPolynomial σ R) :=
   if h : f.degreeOf i = 0 then ⟨1, g, 0⟩
   else pseudoOf.go i f 0 0 g h
+
+variable [NoZeroDivisors R] (i : σ) (g f : MvPolynomial σ R)
 
 theorem zero_pseudoOf : (0 : MvPolynomial σ R).pseudoOf i f = ⟨1 - f.degreeOf i, 0, 0⟩ := by
   rw [pseudoOf]
@@ -193,7 +207,7 @@ theorem dvd_pseudoOf_remainder_of_dvd (i : σ) {g f : MvPolynomial σ R} (h : f 
 theorem pseudoOf_remainder_eq_of_degreeOf_eq_zero {i : σ} {g f : MvPolynomial σ R}
     (h1 : g.degreeOf i = 0) (h2 : f.degreeOf i ≠ 0) : (g.pseudoOf i f).remainder = g := by
   have : g.pseudoOf i f = pseudoOf.go i f 0 0 g h2 := by simp only [pseudoOf, h2, ↓reduceDIte]
-  rw [this, pseudoOf.go, h1, if_pos (Nat.ne_zero_iff_zero_lt.mp h2)]
+  rw [this, pseudoOf.go, h1, ite_eq_left (Nat.ne_zero_iff_zero_lt.mp h2)]
 
 theorem degreeOf_pseudoOfGo_remainder_lt_of_degreeOf_ne_zero {i : σ} {f : MvPolynomial σ R}
     (h : f.degreeOf i ≠ 0) (s : ℕ) (q r : MvPolynomial σ R) :
@@ -225,7 +239,7 @@ variable [DecidableEq R] [LinearOrder σ]
 
 theorem pseudoOf_remainder_reducedTo {c : σ} (g : MvPolynomial σ R) {f : MvPolynomial σ R}
     (hc : f.vars.max = c) : (g.pseudoOf c f).remainder.reducedTo f := by
-  have : f.degreeOf c ≠ 0 := degreeOf_max_vars_ne_zero hc
+  have : f.degreeOf c ≠ 0 := mem_vars_iff_degreeOf_ne_zero.mp <| Finset.mem_of_max hc
   by_cases r_zero : (g.pseudoOf c f).remainder = 0
   · simp only [r_zero, reducedTo, ↓reduceIte]
   apply (reducedTo_iff hc r_zero).mpr
@@ -271,7 +285,7 @@ noncomputable def pseudo : PseudoResult (MvPolynomial σ R) :=
     | some c => g.pseudoOf c f
 
 @[simp] theorem pseudo_zero {g : MvPolynomial σ R} : g.pseudo 0 = ⟨0, 0, g⟩ := by
-  rw [pseudo, if_pos]; rfl
+  rw [pseudo, ite_eq_left]; rfl
 
 @[simp] theorem pseudo_C {g : MvPolynomial σ R} {r : R} (hr : r ≠ 0) :
     g.pseudo (C r) = ⟨0, r⁻¹ • g, 0⟩ := by
@@ -285,7 +299,9 @@ noncomputable def pseudo : PseudoResult (MvPolynomial σ R) :=
   | ⊥ => simp only
   | some c =>
     simp only [PseudoResult.mk.injEq, and_self, and_true]
-    rw [Nat.sub_eq_zero_of_le (Nat.pos_of_ne_zero <| degreeOf_max_vars_ne_zero hc)]
+    rw [Nat.sub_eq_zero_of_le ?_]
+    apply Nat.pos_of_ne_zero
+    exact mem_vars_iff_degreeOf_ne_zero.mp <| Finset.mem_of_max hc
 
 @[simp] theorem pseudo_remainder_self : (f.pseudo f).remainder = 0 := by
   simp only [pseudo, pseudoOf_self]
@@ -320,11 +336,14 @@ theorem degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero {i : σ} {f : MvPolynom
   match hc : f.vars.max with
   | ⊥ => simp only [degreeOf_zero, zero_le]
   | some c =>
-    have : c ≠ i := by contrapose! h; exact degreeOf_max_vars_ne_zero <| h ▸ hc
-    exact degreeOf_pseudoOf_remainder_le_of_degreeOf_eq_zero g this h
+    suffices c ≠ i from degreeOf_pseudoOf_remainder_le_of_degreeOf_eq_zero g this h
+    contrapose! h
+    rw [← h]
+    apply mem_vars_iff_degreeOf_ne_zero.mp
+    exact Finset.mem_of_max hc
 
 theorem pseudo_remainder_reducedTo (h : f ≠ 0) : (g.pseudo f).remainder.reducedTo f := by
-  rw [pseudo, if_neg h]
+  rw [pseudo, ite_eq_right h]
   match h : f.vars.max with
   | ⊥ => simp only; trivial
   | some c => exact g.pseudoOf_remainder_reducedTo h
@@ -343,7 +362,10 @@ theorem pseudo_remainder_eq_zero_of_dvd {g f : MvPolynomial σ R} (h : f ∣ g) 
   · simpa [h_1] using h
   match hc : f.vars.max with
   | ⊥ => simp only
-  | some c => exact pseudoOf_remainder_eq_zero_of_dvd h <| degreeOf_max_vars_ne_zero hc
+  | some c =>
+    apply pseudoOf_remainder_eq_zero_of_dvd h
+    apply mem_vars_iff_degreeOf_ne_zero.mp
+    exact Finset.mem_of_max hc
 
 theorem pseudo_remainder_eq_of_degreeOf_eq_zero {g f : MvPolynomial σ R} {c : σ}
     (h1 : f.vars.max = some c) (h2 : g.degreeOf c = 0) : (g.pseudo f).remainder = g := by
@@ -351,7 +373,9 @@ theorem pseudo_remainder_eq_of_degreeOf_eq_zero {g f : MvPolynomial σ R} {c : �
   split <;> expose_names
   · simp only
   simp only [h1]
-  exact pseudoOf_remainder_eq_of_degreeOf_eq_zero h2 <| degreeOf_max_vars_ne_zero h1
+  apply pseudoOf_remainder_eq_of_degreeOf_eq_zero h2
+  apply mem_vars_iff_degreeOf_ne_zero.mp
+  exact Finset.mem_of_max h1
 
 open TriangularSet List
 
@@ -487,7 +511,8 @@ theorem setPseudo_remainder_eq_setPseudoRem : (g.setPseudo S).remainder = g.setP
     simp only [tsub_self, TriangularSet.drop_zero, add_tsub_cancel_left] at this
     rw [this, ih _ (by simp [h, add_tsub_cancel_right]), toList_drop, drop_one]
     have h : S.toList ≠ [] := length_pos_iff.mp (length_toList S ▸ h ▸ Nat.zero_lt_succ n)
-    rw [← cons_head_tail h, foldr_cons, cons_head_tail, head_eq_getElem_zero, toList_getElem]
+    rw [← cons_head_tail h, foldr_cons, cons_head_tail, head_eq_getElem_zero,
+      toList_getElem (S := S) (List.length_pos_iff.mpr h)]
 
 lemma setPseudoRem_reducedTo (l : List (MvPolynomial σ R)) (hl1 : ∀ ⦃p⦄, p ∈ l → p ≠ 0)
     (hl2 : l.Pairwise fun p q ↦ p.vars.max < q.vars.max) : ∀ g p : MvPolynomial σ R, p ∈ l →
@@ -504,7 +529,7 @@ lemma setPseudoRem_reducedTo (l : List (MvPolynomial σ R)) (hl1 : ∀ ⦃p⦄, 
     rw [reducedTo] at ih ⊢
     split_ifs with hr'
     have r'_ne_zero : r' ≠ 0 := fun h ↦ by absurd hr'; simp only [h, zero_pseudo]
-    rw [if_neg r'_ne_zero] at ih
+    rw [ite_eq_right r'_ne_zero] at ih
     split at ih <;> expose_names
     · exact ih
     suffices (r'.pseudo a).remainder.degreeOf c ≤ r'.degreeOf c by exact lt_of_le_of_lt this ih
@@ -568,4 +593,5 @@ theorem setPseudo_remainder_eq_zero_of_mem {p : MvPolynomial σ R} (hp : p ∈ S
   exact Nat.add_lt_of_lt_sub' (S.length_drop _ ▸ hi1)
 
 end Field
+
 end MvPolynomial

@@ -4,6 +4,10 @@ The goal of this project is to formalize the Characteristic Set Method (also kno
 
 This project is a work in progress; feedback, fixes, and suggestions are highly welcome.
 
+The project uses **Lean 4.35.0** and official **mathlib v4.35.0**. Its characteristic-set
+implementation is ported from [SnkXyx/mathlib4, `full-pr-draft` at `b7f37486`](https://github.com/SnkXyx/mathlib4/tree/b7f37486b1c723b65299b4fd7ad635131674d9e8),
+with local module paths and compatibility changes for Lean 4.35.0.
+
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/WuProver/lean_characteristic_set)
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/WuProver/lean_characteristic_set)
@@ -12,24 +16,42 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 
 ### Definitions
 
-- [`MvPolynomial.mainVariable`](./CharacteristicSet/Basic.lean): The **Main Variable** of a polynomial (the largest variable index in its support).
-- [`MvPolynomial.pseudo`](./CharacteristicSet/PseudoDivision.lean): **Pseudo-division** of a polynomial $g$ by a polynomial $f$ (or a triangulated set).
-- [`TriangulatedSet`](./CharacteristicSet/TriangulatedSet.lean): A finite ordered sequence of polynomials with strictly increasing classes.
-- [`AscendingSet`](./CharacteristicSet/AscendingSet.lean): An abstract **Ascending Set**. This is a `TriangulatedSet` where every element is reduced with respect to its predecessors.
-- [`StandardAscendingSet`](./CharacteristicSet/StandardAscendingSet.lean) and [`WeakAscendingSet`](./CharacteristicSet/WeakAscendingSet.lean): Concrete instances of ascending sets using **strong reduction** (Ritt) and **initial reduction** (Wu), respectively.
-- [`MvPolynomial.List.basicSet`](./CharacteristicSet/AscendingSet.lean): The **Basic Set** of a polynomial set, defined as the minimal ascending set contained within the set.
-- [`MvPolynomial.List.characteristicSet`](./CharacteristicSet/CharacteristicSet.lean): The **Characteristic Set** of a polynomial set.
-- [`MvPolynomial.List.zeroDecomposition`](./CharacteristicSet/CharacteristicSet.lean): A list of characteristic sets that decompose the zero set of a polynomial set.
+- [`MvPolynomial.mainDegree`](./CharacteristicSet/MainDegree.lean): The multiset of occurrences of the largest variable in a polynomial. Its cardinality is the degree in that variable; it is empty for constants and zero.
+- [`MvPolynomial.rank` and `TriangularSet.rank`](./CharacteristicSet/Rank.lean): The ranks used to order polynomials and triangular sets.
+- [`MvPolynomial.pseudo` and `MvPolynomial.setPseudo`](./CharacteristicSet/PseudoDivision.lean): Pseudo-division by a polynomial or a triangular set.
+- [`TriangularSet`](./CharacteristicSet/TriangularSet.lean): A finite ordered sequence of nonzero polynomials with strictly increasing classes.
+- [`TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`](./CharacteristicSet/AscendingSet.lean): Ritt's strong ascending sets and Wu's weak ascending sets, respectively.
+- [`AscendingSetTheory`](./CharacteristicSet/AscendingSet.lean): An interface parameterized by the ascending-set predicate, providing the basic-set algorithm and its properties.
+- [`MvPolynomial.List.basicSet`](./CharacteristicSet/AscendingSet.lean): The minimal ascending set contained in a list of polynomials.
+- [`MvPolynomial.List.characteristicSet`](./CharacteristicSet/CharacteristicSet.lean): The characteristic set of a list of polynomials.
+- [`MvPolynomial.List.zeroDecomposition`](./CharacteristicSet/CharacteristicSet.lean): A list of triangular sets that decompose the zero set of a polynomial system.
 
 ### Main Statements
 
 Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomials $PS \subseteq K[x_\sigma]$, we establish the following core results:
 
-- [`MvPolynomial.Classical.hasBasicSet`](./CharacteristicSet/AscendingSet.lean): For any set of polynomials, there exists a Basic Set (a minimal ascending set) contained within it.
-- [`StandardAscendingSet.basicSet_minimal`](./CharacteristicSet/StandardAscendingSet.lean) and [`WeakAscendingSet.basicSet_minimal`](./WeakAscendingSet.lean): The provided algorithms correctly compute the Basic Set according to Ritt's and Wu's definitions, respectively.
-- [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./CharacteristicSet/CharacteristicSet.lean): The computed Characteristic Set $CS$ satisfies the key algebraic property (pseudo-remainder of input polynomials is 0) and the geometric property ( $Zero(PS) \subseteq Zero(CS)$ ).
-- [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./CharacteristicSet/CharacteristicSet.lean): **Zero Decomposition Theorem**. The zero set of a polynomial system $PS$ can be decomposed into a finite union of "quasi-varieties" defined by triangular sets:
-  $Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS / \text{InitialProd}(CS))$
+- [`MvPolynomial.List.basicSet_minimal`](./CharacteristicSet/AscendingSet.lean): The computed basic set is minimal among ascending sets contained in the input list, for either ascending-set predicate.
+- [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./CharacteristicSet/CharacteristicSet.lean): The computed characteristic set $CS$ has zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
+- [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./CharacteristicSet/CharacteristicSet.lean): The zero set of a polynomial system is a finite union of quasi-varieties:
+  $Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS / \text{InitialProd}(CS))$.
+
+The algorithms take the ascending-set predicate explicitly, so both theories can be used together:
+
+```lean
+import CharacteristicSet
+
+open MvPolynomial
+
+noncomputable section
+
+example (l : List (MvPolynomial (Fin 2) ℚ)) :
+    (l.characteristicSet TriangularSet.IsAscendingSet).IsCharacteristicSet ℚ l :=
+  List.characteristicSet_isCharacteristicSet ℚ l
+
+example (l : List (MvPolynomial (Fin 2) ℚ)) :
+    (l.characteristicSet TriangularSet.IsWeakAscendingSet).IsCharacteristicSet ℚ l :=
+  List.characteristicSet_isCharacteristicSet ℚ l
+```
 
 ## Project Resources
 

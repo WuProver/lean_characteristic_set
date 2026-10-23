@@ -1,6 +1,13 @@
-import CharacteristicSet.Lemmas
-import Mathlib.Data.DFinsupp.WellFounded
-import Mathlib.Data.Fintype.WithTopBot
+/-
+Copyright (c) 2026 Yuxuan Xiao. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Yuxuan Xiao
+-/
+module
+
+public import Mathlib.Algebra.MvPolynomial.Variables
+public import Mathlib.Data.DFinsupp.WellFounded
+public import Mathlib.Data.Fintype.WithTopBot
 
 /-!
 # Triangular Set
@@ -20,7 +27,13 @@ such that their main (max) variables are strictly increasing:
 * `TriangularSet.takeConcat_lt_of_reducedToSet`: Appending a reduced element
   strictly decreases the order, used to prove termination of basic set algorithms.
 
+## References
+* [Wen-Tsun Wu, *Basic principles of mechanical theorem proving in elementary geometries*]
+  [wen1986basic]
+
 -/
+
+@[expose] public section
 
 open MvPolynomial
 
@@ -38,16 +51,9 @@ namespace TriangularSet
 variable {R σ : Type*} [CommSemiring R] [LinearOrder σ]
 variable {S T : TriangularSet σ R} {p : MvPolynomial σ R} {m n : ℕ}
 
-/-- Construct an triangular set from a list. -/
-def mk' {l : List (MvPolynomial σ R)} (hl1 : 0 ∉ l)
-    (hl2 : l.IsChain (·.vars.max < ·.vars.max)) : TriangularSet σ R where
-  toList := l
-  zero_notMem' := hl1
-  isChain_max_vars' := hl2
-
 noncomputable instance instFunLike : FunLike (TriangularSet σ R) ℕ (MvPolynomial σ R) where
   coe S n := S.toList[n]?.getD 0
-  coe_injective' := by
+  coe_injective := by
     rintro ⟨ls, hs1, hs2⟩ ⟨lt, ht1, ht2⟩ h
     congr
     apply List.ext_getElem? fun n ↦ ?_
@@ -193,14 +199,15 @@ theorem exists_index_max_vars_between_of_max_vars_first_lt
 theorem toList_nodup (S : TriangularSet σ R) : S.toList.Nodup := by
   refine List.nodup_iff_injective_getElem.mpr ?_
   intro ⟨i, hi⟩ ⟨j, hj⟩ (h : S.toList[i] = S.toList[j])
-  rw [toList_getElem, toList_getElem] at h
-  exact (Fin.mk.injEq ..) ▸ index_eq_of_apply_eq hi hj h
+  apply Fin.ext
+  apply index_eq_of_apply_eq hi hj
+  exact (toList_getElem (S := S) hi).symm.trans (h.trans (toList_getElem (S := S) hj))
 
 /-! ### Set-like behavior -/
 
 instance instSetLike : SetLike (TriangularSet σ R) (MvPolynomial σ R) where
   coe := fun S ↦ {p | ∃ n < S.length, S n = p}
-  coe_injective' := by
+  coe_injective := by
     intro S T (h : (fun p ↦ ∃ n < S.length, S n = p) = (fun p ↦ ∃ n < T.length, T n = p))
     have h (p : MvPolynomial σ R) : p ∈ S.toList ↔ p ∈ T.toList := by
       rw [mem_toList_iff', mem_toList_iff']
@@ -262,8 +269,13 @@ def toFinset (S : TriangularSet σ R) : Finset (MvPolynomial σ R) :=
   simp [toFinset]
 
 @[simp] theorem mem_toFinset_iff : p ∈ S.toFinset ↔ p ∈ S := by
-  refine Iff.trans ?_ SetLike.mem_coe
-  simp [toFinset, SetLike.coe, Fin.exists_iff, toList_getElem]
+  constructor
+  · intro hp
+    obtain ⟨i, _, hi⟩ := Finset.mem_map.mp hp
+    exact ⟨i, i.isLt, (toList_getElem (S := S) i.isLt).symm.trans hi⟩
+  · rintro ⟨i, hi, hp⟩
+    exact Finset.mem_map.mpr ⟨⟨i, hi⟩, Finset.mem_univ _,
+      (toList_getElem (S := S) hi).trans hp⟩
 
 @[simp] theorem toFinset_eq_iff_eq : S.toFinset = T.toFinset ↔ S = T := by
   refine ⟨fun h ↦ SetLike.ext fun p ↦ ?_, congrArg _⟩
@@ -275,11 +287,11 @@ theorem toFinset_eq_coe_set (S : TriangularSet σ R) : S.toFinset = (S : Set (Mv
 
 theorem length_le_of_subset : S ⊆ T → S.length ≤ T.length := fun h ↦ by
   rw [← card_toFinset, ← card_toFinset]
-  exact Finset.card_le_card <| Finset.coe_subset.mp (by simpa [toFinset_eq_coe_set] using h)
+  exact Finset.card_le_card <| Finset.coe_subset.mp (by simpa [toFinset_eq_coe_set])
 
 theorem length_lt_of_ssubset : S ⊂ T → S.length < T.length := fun h ↦ by
   rw [← card_toFinset, ← card_toFinset]
-  exact Finset.card_lt_card <| Finset.coe_ssubset.mp (by simpa [toFinset_eq_coe_set] using h)
+  exact Finset.card_lt_card <| Finset.coe_ssubset.mp (by simpa [toFinset_eq_coe_set])
 
 
 
@@ -351,7 +363,7 @@ theorem take_apply (S : TriangularSet σ R) (n m : ℕ) :
 
 theorem take_apply' {S : TriangularSet σ R} {n m : ℕ} (h : m < n ⊓ S.length) :
     (S.take n) m = S m := by
-  rw [take_apply, if_pos (lt_of_lt_of_le h (Nat.min_le_left ..))]
+  rw [take_apply, ite_eq_left (lt_of_lt_of_le h (Nat.min_le_left ..))]
 
 @[simp] theorem take_zero (S : TriangularSet σ R) : S.take 0 = ∅ := ext fun _ ↦ rfl
 
@@ -440,11 +452,11 @@ theorem concat_apply_length {p : MvPolynomial σ R} (h : S.CanConcat p) :
 
 theorem mem_concat {p : MvPolynomial σ R} (h : S.CanConcat p) : p ∈ S.concat p := by
   use S.length
-  rw [length_concat, concat_apply h, if_neg (Nat.lt_irrefl S.length), if_pos rfl]
+  rw [length_concat, concat_apply h, ite_eq_right (Nat.lt_irrefl S.length), ite_eq_left rfl]
   simp only [lt_add_iff_pos_right, zero_lt_one, and_self]
 
 theorem subset_concat {p : MvPolynomial σ R} (h : S.CanConcat p) : S ⊆ S.concat p := fun _ ⟨i, hi⟩ ↦
-  ⟨i, (length_concat h) ▸ Nat.lt_add_one_of_lt hi.1, (concat_apply h _) ▸ if_pos hi.1 ▸ hi.2⟩
+  ⟨i, (length_concat h) ▸ Nat.lt_add_one_of_lt hi.1, (concat_apply h _) ▸ ite_eq_left hi.1 ▸ hi.2⟩
 
 theorem mem_concat_iff {p q : MvPolynomial σ R} (h : S.CanConcat p) :
     q ∈ S.concat p ↔ q = p ∨ q ∈ S := by
@@ -453,7 +465,8 @@ theorem mem_concat_iff {p q : MvPolynomial σ R} (h : S.CanConcat p) :
 
 theorem coe_concat_eq_insert {p : MvPolynomial σ R} (h : S.CanConcat p) :
     S.concat p = (S : Set (MvPolynomial σ R)).insert p := Set.ext fun q ↦ by
-  simpa using mem_concat_iff h
+  simp only [SetLike.mem_coe, mem_concat_iff h]
+  rfl
 
 variable [DecidableEq R] {S T : TriangularSet σ R} {p q : MvPolynomial σ R}
 
@@ -533,7 +546,7 @@ noncomputable def takeConcat (S : TriangularSet σ R) (p : MvPolynomial σ R) :
     have max_vars_lt : (S.take k).CanConcat p := by
       rw [CanConcat, length_take, min_eq_left hk.1, take_apply]
       refine ⟨fun hp ↦ absurd (LT.lt.ne_bot <| lt_of_not_ge hc) (by simp [hp]), ?_⟩
-      exact fun hkz ↦ if_pos (Nat.sub_one_lt_of_lt hkz) ▸ hk.2.1
+      exact fun hkz ↦ ite_eq_left (Nat.sub_one_lt_of_lt hkz) ▸ hk.2.1
     (S.take k).concat p
 
 theorem takeConcat_eq_concat_of_canConcat (h : S.CanConcat p) : S.takeConcat p = S.concat p := by

@@ -1,8 +1,11 @@
-/.lake
-/.venv
-backup/
+.lake/
+.venv/
+.local/
 /blueprint/print
 /blueprint/web
 /blueprint/lean_decls
 /blueprint/src/web.paux
 .DS_Store
+
+AGENTS.md
+CLAUDE.md

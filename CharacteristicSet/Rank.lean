@@ -1,52 +1,65 @@
-import CharacteristicSet.MainDegree
-import CharacteristicSet.TriangularSet
+/-
+Copyright (c) 2026 Yuxuan Xiao. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Yuxuan Xiao
+-/
+module
+
+public import CharacteristicSet.Reduced
+public import CharacteristicSet.MainDegree
 
 /-!
-# Orderings on polynomials and triangular sets
+# Rank and Orderings on polynomials and triangular sets
 
-This file defines order structures on multivariate polynomials and triangular sets,
+This file defines rank structures on multivariate polynomials and triangular sets,
 which are essential for the Characteristic Set Method (Wu's Method).
 
 ## Main definitions
 
-* `MvPolynomial.order`: The order of a polynomial `p` is the pair `(max_vars p, mainDegree p)`,
+* `MvPolynomial.rank`: The rank of a polynomial `p` is the pair `(max_vars p, mainDegree.card p)`,
   ordered lexicographically. This defines a well-ordering on polynomials when the variable type
   is well-founded.
 
-* `TriangularSet.order`: The order of a triangular set is a lexicographic sequence
-  of orders of its polynomials. For two triangular sets `S` and `T`, `S < T` if either:
+* `TriangularSet.rank`: The rank of a triangular set is a lexicographic sequence
+  of ranks of its polynomials. For two triangular sets `S` and `T`, `S < T` if either:
   1. There exists `k < S.length` such that `S₀ ≈ T₀`, `S₁ ≈ T₁`, ..., `Sₖ₋₁ ≈ Tₖ₋₁` and `Sₖ < Tₖ`;
   2. `S.length > T.length` and `∀ i < T.length, Sᵢ ≈ Tᵢ`.
 
 ## Main results
 
 * `MvPolynomial.instWellFoundedLT`: When `σ` is well-founded, polynomials are well-founded
-  under the order ordering.
+  under the rank ordering.
 
 * `TriangularSet.instWellFoundedLT`: When `σ` is finite, triangular sets are well-founded
-  under the order ordering. This guarantees termination of characteristic set algorithms.
+  under the rank ordering. This guarantees termination of characteristic set algorithms.
+
+## References
+* [Wen-Tsun Wu, *Basic principles of mechanical theorem proving in elementary geometries*]
+  [wen1986basic]
 
 -/
+
+@[expose] public section
 
 variable {R σ : Type*} [CommSemiring R] [LinearOrder σ] {p q : MvPolynomial σ R}
 
 namespace MvPolynomial
 
-section Order
+section Rank
 
-/-- The order of a polynomial `p` is the pair `(max_vars p, degree p)`,
+/-- The rank of a polynomial `p` is the pair `(max_vars p, degree p)`,
 which is ordered lexicographically. -/
-noncomputable def order (p : MvPolynomial σ R) : WithBot σ ×ₗ ℕ := (p.vars.max, p.mainDegree)
+noncomputable def rank (p : MvPolynomial σ R) : WithBot σ ×ₗ ℕ := (p.vars.max, p.mainDegree.card)
 
-theorem order_eq_iff : p.order = q.order ↔
-    p.vars.max = q.vars.max ∧ p.mainDegree = q.mainDegree := Prod.mk_inj
+theorem rank_eq_iff : p.rank = q.rank ↔
+    p.vars.max = q.vars.max ∧ p.mainDegree.card = q.mainDegree.card := Prod.mk_inj
 
 instance instPreorder : Preorder (MvPolynomial σ R) where
-  le := InvImage (· ≤ ·) order
+  le := InvImage (· ≤ ·) rank
   le_refl := fun _ ↦ by rw [InvImage]
   le_trans := fun _ _ _ ↦ le_trans
 
-theorem le_def' : p ≤ q ↔ p.order ≤ q.order := Iff.rfl
+theorem le_def' : p ≤ q ↔ p.rank ≤ q.rank := Iff.rfl
 
 noncomputable instance instDecidableLE : DecidableLE (MvPolynomial σ R) := fun _ _ ↦
   decidable_of_iff _ le_def'.symm
@@ -54,28 +67,28 @@ noncomputable instance instDecidableLE : DecidableLE (MvPolynomial σ R) := fun 
 noncomputable instance instDecidableLT : DecidableLT (MvPolynomial σ R) := decidableLTOfDecidableLE
 
 instance instIsTotalLe : Std.Total (@LE.le (MvPolynomial σ R) _) where
-  total p q := le_total p.order q.order
+  total p q := le_total p.rank q.rank
 
 theorem le_def : p ≤ q ↔ p.vars.max < q.vars.max ∨
-    p.vars.max = q.vars.max ∧ p.mainDegree ≤ q.mainDegree := Prod.lex_def
+    p.vars.max = q.vars.max ∧ p.mainDegree.card ≤ q.mainDegree.card := Prod.lex_def
 
 theorem le_iff_not_imp : p ≤ q ↔ ¬p.vars.max < q.vars.max →
-    p.vars.max = q.vars.max ∧ p.mainDegree ≤ q.mainDegree :=
+    p.vars.max = q.vars.max ∧ p.mainDegree.card ≤ q.mainDegree.card :=
   Iff.trans le_def <| Decidable.or_iff_not_imp_left
 
 theorem max_vars_le_of_le : p ≤ q → p.vars.max ≤ q.vars.max :=
   fun h ↦ Or.elim (le_def.mp h) le_of_lt (fun h ↦ le_of_eq h.1)
 
-theorem lt_def' : p < q ↔ p.order < q.order := Iff.trans lt_iff_le_not_ge (by
+theorem lt_def' : p < q ↔ p.rank < q.rank := Iff.trans lt_iff_le_not_ge (by
   rw [le_def', le_def', not_le, and_iff_right_iff_imp]
   exact le_of_lt)
 
 theorem lt_def : p < q ↔ p.vars.max < q.vars.max ∨
-    p.vars.max = q.vars.max ∧ p.mainDegree < q.mainDegree :=
+    p.vars.max = q.vars.max ∧ p.mainDegree.card < q.mainDegree.card :=
   Iff.trans lt_def' Prod.lex_def
 
 theorem lt_iff_not_imp : p < q ↔ ¬p.vars.max < q.vars.max
-    → p.vars.max = q.vars.max ∧ p.mainDegree < q.mainDegree :=
+    → p.vars.max = q.vars.max ∧ p.mainDegree.card < q.mainDegree.card :=
   Iff.trans lt_def <| Decidable.or_iff_not_imp_left
 
 theorem lt_of_max_vars_lt : p.vars.max < q.vars.max → p < q :=
@@ -95,14 +108,14 @@ noncomputable instance instDecidableRelEquiv : @DecidableRel (MvPolynomial σ R)
 
 theorem equiv_def'' : p ≈ q ↔ p ≤ q ∧ q ≤ p := Iff.rfl
 
-theorem equiv_def' : p ≈ q ↔ p.order = q.order := Iff.trans equiv_def''
+theorem equiv_def' : p ≈ q ↔ p.rank = q.rank := Iff.trans equiv_def''
   (by rw [le_def', le_def']; exact Std.le_antisymm_iff)
 
 theorem equiv_def : p ≈ q ↔ ¬p < q ∧ ¬q < p := Iff.trans equiv_def''
   (by rw [not_lt_iff_ge, not_lt_iff_ge, and_comm])
 
-theorem equiv_iff : p ≈ q ↔ p.vars.max = q.vars.max ∧ p.mainDegree = q.mainDegree :=
-  Iff.trans equiv_def' order_eq_iff
+theorem equiv_iff : p ≈ q ↔ p.vars.max = q.vars.max ∧ p.mainDegree.card = q.mainDegree.card :=
+  Iff.trans equiv_def' rank_eq_iff
 
 theorem le_iff_lt_or_equiv : p ≤ q ↔ p < q ∨ p ≈ q := le_iff_lt_or_antisymmRel
 
@@ -113,15 +126,15 @@ theorem lt_of_lt_of_equiv {r : MvPolynomial σ R} : p < q → q ≈ r → p < r 
 theorem equiv_of_le_of_ge : p ≤ q → q ≤ p → p ≈ q := And.intro
 
 protected theorem zero_le : 0 ≤ p :=
-  le_def'.mpr <| StrictMono.minimal_preimage_bot (fun ⦃_ _⦄ a ↦ a) rfl p.order
+  le_def'.mpr <| StrictMono.minimal_preimage_bot (fun ⦃_ _⦄ a ↦ a) rfl p.rank
 
-end Order
+end Rank
 
 section WellFounded
 
 theorem wellFoundedLT_variables_of_wellFoundedLT [Nontrivial R] :
     WellFoundedLT (MvPolynomial σ R) → WellFoundedLT σ := fun h ↦ by
-  rw [WellFoundedLT, isWellFounded_iff, wellFounded_iff_isEmpty_descending_chain] at h ⊢
+  rw [WellFoundedLT, wellFounded_iff_isEmpty_descending_chain] at h ⊢
   contrapose! h
   rcases nonempty_subtype.mp h with ⟨f, hf⟩
   exact ⟨X ∘ f, fun n ↦ X_lt_of_lt <| hf n⟩
@@ -135,7 +148,7 @@ theorem wellFoundedLT_iff [Nontrivial R] : WellFoundedLT (MvPolynomial σ R) ↔
 variable [WellFoundedLT (MvPolynomial σ R)] (PS : Set (MvPolynomial σ R))
 
 theorem Set.has_min (h : PS.Nonempty) : ∃ p ∈ PS, ∀ q ∈ PS, ¬q < p :=
-  haveI : WellFounded (· < ·) := @wellFounded_lt (MvPolynomial σ R) _ _
+  have : WellFounded (· < ·) := @wellFounded_lt (MvPolynomial σ R) _ _
   WellFounded.has_min this PS h
 
 /-- The minimal element of a nonempty set of multivariate polynomials. -/
@@ -144,8 +157,57 @@ noncomputable def Set.min (h : PS.Nonempty) : MvPolynomial σ R := Exists.choose
 theorem Set.min_mem (h : PS.Nonempty) : (min PS h) ∈ PS := (Exists.choose_spec (has_min PS h)).1
 
 end WellFounded
-end MvPolynomial
 
+section Reduced
+
+variable [DecidableEq R] {p q r : MvPolynomial σ R}
+
+theorem reducedTo_congr_right (h : p ≈ q) : (r.reducedTo p ↔ r.reducedTo q) := by
+  suffices ∀ (p q : MvPolynomial σ R) (h : p ≈ q), r.reducedTo p → r.reducedTo q from
+    ⟨this p q h, this q p h.symm⟩
+  intro p q h
+  have : p.vars.max = q.vars.max ∧ p.mainDegree.card = q.mainDegree.card := equiv_iff.mp h
+  simp only [reducedTo, ite_true_left]
+  intro hr1 hr2
+  match hc : q.vars.max with
+  | none => simp [hr2, hc ▸ this.1] at hr1
+  | some c =>
+    have hc' := hc ▸ this.1
+    simp [hr2, hc', card_mainDegree_eq_degreeOf hc' ▸ this.2] at hr1
+    simp only [card_mainDegree_eq_degreeOf hc ▸ hr1]
+
+theorem reducedTo_iff_gt_of_max_vars_eq (hq : q ≠ 0) (h : q.vars.max = p.vars.max) :
+    q.reducedTo p ↔ q < p where
+  mp hl :=
+    match hp : p.vars.max with
+    | ⊥ => absurd hl <| not_reducedTo_of_bot_max_vars hq hp
+    | some c => lt_def.mpr <| Or.inr ⟨h, by
+      rw [card_mainDegree_eq_degreeOf hp, card_mainDegree_eq_degreeOf <| h.trans hp]
+      exact (reducedTo_iff hp hq).mp hl⟩
+  mpr hr :=
+    have : q.mainDegree.card < p.mainDegree.card := (lt_iff_not_imp.mp hr <| Eq.not_lt h).2
+    match hp : p.vars.max with
+    | ⊥ => by
+      rw [card_mainDegree_eq_zero_iff.mpr hp, card_mainDegree_eq_zero_iff.mpr (h ▸ hp)] at this
+      exact absurd this <| Nat.not_lt_zero 0
+    | some c => by
+      rw [card_mainDegree_eq_degreeOf hp, card_mainDegree_eq_degreeOf (h ▸ hp)] at this
+      exact (reducedTo_iff hp hq).mpr this
+
+theorem max_vars_lt_of_reducedTo_of_le (h1 : q ≠ 0) (h2 : p ≤ q) (h3 : q.reducedTo p) :
+    p.vars.max < q.vars.max := by
+  by_contra con
+  have con : q.vars.max = p.vars.max :=
+    le_antisymm (not_lt.mp con) (max_vars_le_of_le h2)
+  have := (reducedTo_iff_gt_of_max_vars_eq h1 con).mp h3
+  exact absurd h2 <| not_le_iff_gt.mpr this
+
+theorem lt_of_reducedTo_of_le (h1 : q ≠ 0) (h2 : p ≤ q) (h3 : q.reducedTo p) : p < q :=
+  lt_of_max_vars_lt <| max_vars_lt_of_reducedTo_of_le h1 h2 h3
+
+end Reduced
+
+end MvPolynomial
 
 open MvPolynomial
 
@@ -166,54 +228,58 @@ theorem le_of_index_le : m ≤ n → n < S.length → S m ≤ S n := fun hmn h �
     (fun hmn ↦ le_of_lt <| MvPolynomial.lt_of_max_vars_lt <| max_vars_lt_of_index_lt h hmn)
     (fun hmn ↦ by simp only [hmn, le_refl])
 
-/-! ### Order and Ordering -/
-
-section Order
-
-/-- The order of a Triangular Set is a lexicographic sequence of orders of its polynomials.
-A more intuitive definition is `order_lt_iff`, `S < T` if one of the following two occurs:
+section Rank
+/-- The rank of a Triangular Set is a lexicographic sequence of ranks of its polynomials.
+A more intuitive definition is `rank_lt_iff`, `S < T` if one of the following two occurs:
 1. There exists some `k < S.length` such that
    `S₀ ≈ T₀`, `S₁ ≈ T₁`, ..., `Sₖ₋₁ ≈ Tₖ₋₁` and `Sₖ < Tₖ`.
 2. `S.length > T.length` and `∀ i < T.length, Sᵢ ≈ Tᵢ` -/
-noncomputable def order (S : TriangularSet σ R) : Lex (ℕ → WithTop (WithBot σ ×ₗ ℕ)) :=
-  fun i ↦ if i < S.length then WithTop.some (S i).order else ⊤
+noncomputable def rank (S : TriangularSet σ R) : Lex (ℕ → WithTop (WithBot σ ×ₗ ℕ)) :=
+  toLex fun i ↦ if i < S.length then WithTop.some (S i).rank else ⊤
 
-theorem order_def : S.order = fun i ↦ if i < S.length then WithTop.some (S i).order else ⊤ := rfl
+theorem rank_def : S.rank = fun i ↦ if i < S.length then WithTop.some (S i).rank else ⊤ := rfl
 
-theorem order_apply {i : ℕ} (h : i < S.length) : S.order i = (S i).order := if_pos h
+theorem rank_apply {i : ℕ} (h : i < S.length) : S.rank i = (S i).rank := ite_eq_left h
 
-theorem order_apply' {i : ℕ} (h : S.length ≤ i) : S.order i = ⊤ := if_neg <| not_lt_of_ge h
+theorem rank_apply' {i : ℕ} (h : S.length ≤ i) : S.rank i = ⊤ := ite_eq_right <| not_lt_of_ge h
 
-theorem order_lt_iff : S.order < T.order ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨
+theorem rank_lt_iff : S.rank < T.rank ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨
     (T.length < S.length ∧ ∀ i < T.length, S i ≈ T i) where
   mp h := by
-    rw [order_def, order_def, Pi.instLTLexForall] at h
-    simp only [Pi.Lex] at h
+    change ∃ k : ℕ, (∀ i < k,
+      (if i < S.length then WithTop.some (S i).rank else ⊤) =
+        (if i < T.length then WithTop.some (T i).rank else ⊤)) ∧
+      (if k < S.length then WithTop.some (S k).rank else ⊤) <
+        (if k < T.length then WithTop.some (T k).rank else ⊤) at h
     rcases h with ⟨k, hk1, hk2⟩
-    have klts : k < S.length := Decidable.byContradiction fun h ↦ not_top_lt <| if_neg h ▸ hk2
-    rw [if_pos klts] at hk2
+    have klts : k < S.length := Decidable.byContradiction fun h ↦ not_top_lt <| ite_eq_right h ▸ hk2
+    rw [ite_eq_left klts] at hk2
     by_cases kltt : k < T.length
-    · rw [if_pos kltt, WithTop.coe_lt_coe, ← MvPolynomial.lt_def'] at hk2
+    · rw [ite_eq_left kltt, WithTop.coe_lt_coe, ← MvPolynomial.lt_def'] at hk2
       refine Or.inl ⟨k, klts, hk2, fun i hi ↦ ?_⟩
       have := hk1 i hi
-      rw [if_pos <| lt_trans hi klts, if_pos <| lt_trans hi kltt, WithTop.coe_eq_coe] at this
+      rw [ite_eq_left <| lt_trans hi klts, ite_eq_left <| lt_trans hi kltt,
+        WithTop.coe_eq_coe] at this
       exact MvPolynomial.equiv_def'.mpr this
     have tlek : T.length ≤ k := Nat.le_of_not_lt kltt
     have tlts : T.length < S.length := lt_of_le_of_lt tlek klts
     refine Or.inr ⟨tlts, fun i hi ↦ ?_⟩
     have := hk1 i <| lt_of_lt_of_le hi tlek
-    rw [if_pos (lt_trans hi tlts), if_pos hi, WithTop.coe_eq_coe] at this
+    rw [ite_eq_left (lt_trans hi tlts), ite_eq_left hi, WithTop.coe_eq_coe] at this
     exact MvPolynomial.equiv_def'.mpr this
   mpr h := by
-    rw [order_def, order_def, Pi.instLTLexForall]
-    simp only [Pi.Lex]
+    change ∃ k : ℕ, (∀ i < k,
+      (if i < S.length then WithTop.some (S i).rank else ⊤) =
+        (if i < T.length then WithTop.some (T i).rank else ⊤)) ∧
+      (if k < S.length then WithTop.some (S k).rank else ⊤) <
+        (if k < T.length then WithTop.some (T k).rank else ⊤)
     rcases h with (⟨k, hk, hk1, hk2⟩ | ⟨hlen, heq⟩)
     · use k ⊓ T.length
       constructor
       · intro i hi
         have hi := lt_min_iff.mp hi
-        simp only [if_pos <| lt_trans hi.1 hk]
-        rw [if_pos hi.2, WithTop.coe_eq_coe, ← MvPolynomial.equiv_def']
+        simp only [ite_eq_left <| lt_trans hi.1 hk]
+        rw [ite_eq_left hi.2, WithTop.coe_eq_coe, ← MvPolynomial.equiv_def']
         exact hk2 i hi.1
       by_cases klt' : k < T.length
       · simpa [min_eq_left_of_lt klt', hk, klt'] using MvPolynomial.lt_def'.mp hk1
@@ -223,9 +289,9 @@ theorem order_lt_iff : S.order < T.order ↔ (∃ k < S.length, S k < T k ∧ �
     · simpa [lt_trans hi hlen, hi] using MvPolynomial.equiv_def'.mp (heq i hi)
     simp only [hlen, reduceIte, lt_self_iff_false, WithTop.coe_lt_top]
 
-theorem order_eq_iff : S.order = T.order ↔ S.length = T.length ∧ ∀ k, S k ≈ T k where
+theorem rank_eq_iff : S.rank = T.rank ↔ S.length = T.length ∧ ∀ k, S k ≈ T k where
   mp h := by
-    rw [order_def, order_def] at h
+    rw [rank_def, rank_def] at h
     have h := funext_iff.mp h
     have tles := h S.length
     have slet := h T.length
@@ -241,7 +307,7 @@ theorem order_eq_iff : S.order = T.order ↔ S.length = T.length ∧ ∀ k, S k 
     have s0 : S i = 0 := eq_zero_iff_length_le.mp <| Nat.le_of_not_lt <| ltheq ▸ ilt
     rw [t0, s0]
   mpr h := by
-    rw [order_def, order_def, h.1]
+    rw [rank_def, rank_def, h.1]
     funext i
     split_ifs with ilt
     · rw [WithTop.coe_eq_coe]
@@ -249,9 +315,9 @@ theorem order_eq_iff : S.order = T.order ↔ S.length = T.length ∧ ∀ k, S k 
     rfl
 
 open scoped Classical in
-theorem order_le_iff : S.order ≤ T.order ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨
+theorem rank_le_iff : S.rank ≤ T.rank ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨
     (T.length ≤ S.length ∧ ∀ k < T.length, S k ≤ T k) := by
-  rw [Iff.trans le_iff_lt_or_eq (or_congr order_lt_iff order_eq_iff), or_assoc]
+  rw [Iff.trans le_iff_lt_or_eq (or_congr rank_lt_iff rank_eq_iff), or_assoc]
   refine ⟨fun h ↦ Or.elim h Or.inl (fun h ↦ Or.inr <| Or.elim h
       (fun h ↦ ⟨le_of_lt h.1, fun k hk ↦ (MvPolynomial.equiv_def''.mp <| h.2 k hk).1⟩)
       (fun h ↦ ⟨ge_of_eq h.1, fun k hk ↦ (MvPolynomial.equiv_def''.mp <| h.2 k).1⟩)),
@@ -271,13 +337,13 @@ theorem order_le_iff : S.order ≤ T.order ↔ (∃ k < S.length, S k < T k ∧ 
         eq_zero_iff_length_le.mp <| le_of_not_gt <| h ▸ hk]⟩)
 
 instance instPreorder : Preorder (TriangularSet σ R) where
-  le := InvImage (· ≤ ·) order
+  le := InvImage (· ≤ ·) rank
   le_refl := fun _ ↦ by rw [InvImage]
   le_trans := fun _ _ _ hpq hqr ↦ le_trans hpq hqr
-  lt S T := S.order ≤ T.order ∧ ¬T.order ≤ S.order
+  lt S T := S.rank ≤ T.rank ∧ ¬T.rank ≤ S.rank
   lt_iff_le_not_ge := by intros; rw [InvImage, InvImage]
 
-theorem le_def' : S ≤ T ↔ S.order ≤ T.order := Iff.rfl
+theorem le_def' : S ≤ T ↔ S.rank ≤ T.rank := Iff.rfl
 
 noncomputable instance : DecidableLE (TriangularSet σ R) :=
   fun _ _ ↦ decidable_of_iff _ le_def'.symm
@@ -285,17 +351,17 @@ noncomputable instance : DecidableLE (TriangularSet σ R) :=
 noncomputable instance : DecidableLT (TriangularSet σ R) := decidableLTOfDecidableLE
 
 instance : Std.Total (@LE.le (TriangularSet σ R) _) where
-  total S T := le_total S.order T.order
+  total S T := le_total S.rank T.rank
 
 theorem le_def : S ≤ T ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨
-    (T.length ≤ S.length ∧ ∀ k < T.length, S k ≤ T k) := order_le_iff
+    (T.length ≤ S.length ∧ ∀ k < T.length, S k ≤ T k) := rank_le_iff
 
-theorem lt_def' : S < T ↔ S.order < T.order := Iff.trans lt_iff_le_not_ge (by
+theorem lt_def' : S < T ↔ S.rank < T.rank := Iff.trans lt_iff_le_not_ge (by
   rw [le_def', le_def', not_le]
   exact and_iff_right_iff_imp.mpr le_of_lt)
 
 theorem lt_def : S < T ↔ (∃ k < S.length, S k < T k ∧ ∀ i < k, S i ≈ T i) ∨
-    (T.length < S.length ∧ ∀ i < T.length, S i ≈ T i) := Iff.trans lt_def' order_lt_iff
+    (T.length < S.length ∧ ∀ i < T.length, S i ≈ T i) := Iff.trans lt_def' rank_lt_iff
 
 theorem lt_empty : S ≠ ∅ → S < ∅ := fun h ↦ lt_def.mpr <| Or.inr
   ⟨by rw [length_empty]; exact length_ge_one_iff.mpr h,
@@ -339,14 +405,14 @@ noncomputable instance instDecidableRelEquiv : @DecidableRel (TriangularSet σ R
 
 theorem equiv_def'' : S ≈ T ↔ S ≤ T ∧ T ≤ S := Iff.rfl
 
-theorem equiv_def' : S ≈ T ↔ S.order = T.order := Iff.trans equiv_def''
+theorem equiv_def' : S ≈ T ↔ S.rank = T.rank := Iff.trans equiv_def''
   (by rw [le_def', le_def']; exact Std.le_antisymm_iff)
 
 theorem equiv_def : S ≈ T ↔ ¬S < T ∧ ¬T < S := Iff.trans equiv_def''
   (by rw [not_lt_iff_ge, not_lt_iff_ge, and_comm])
 
 theorem equiv_iff : S ≈ T ↔ S.length = T.length ∧ (∀ k, S k ≈ T k) :=
-  Iff.trans equiv_def' order_eq_iff
+  Iff.trans equiv_def' rank_eq_iff
 
 theorem equiv_iff' : S ≈ T ↔ S.length = T.length ∧ (∀ k < S.length, S k ≈ T k) := by
   simp only [equiv_iff, and_congr_right_iff]
@@ -376,7 +442,7 @@ theorem gt_of_ssubset : S ⊂ T → T < S := fun h ↦ by
 
 theorem lt_take : n < S.length → S < S.take n := fun h ↦
   lt_def.mpr <| Or.inr ⟨S.length_take n ▸ inf_lt_of_left_lt h,
-  fun i hi ↦ by rw [take_apply, if_pos (min_eq_left_of_lt h ▸ length_take S n ▸ hi)]⟩
+  fun i hi ↦ by rw [take_apply, ite_eq_left (min_eq_left_of_lt h ▸ length_take S n ▸ hi)]⟩
 
 theorem lt_drop : S ≠ ∅ → 0 < n → S < S.drop n := fun h1 h2 ↦
   if gel : S.length ≤ n then drop_eq_empty_of_ge_length gel ▸ lt_empty h1
@@ -387,7 +453,7 @@ theorem lt_drop : S ≠ ∅ → 0 < n → S < S.drop n := fun h1 h2 ↦
     fun i hi ↦ absurd hi <| Nat.not_lt_zero i⟩
 
 theorem concat_lt {p : MvPolynomial σ R} (h : S.CanConcat p) : S.concat p h < S := lt_def.mpr <|
-  Or.inr ⟨length_concat h ▸ lt_add_one S.length, fun i hi ↦ by rw [concat_apply h, if_pos hi]⟩
+  Or.inr ⟨length_concat h ▸ lt_add_one S.length, fun i hi ↦ by rw [concat_apply h, ite_eq_left hi]⟩
 
 theorem single_lt_empty [DecidableEq R] : p ≠ 0 → (single p) < ∅ :=
   fun h ↦ lt_empty <| (not_iff_not.mpr single_eq_zero_iff).mp h
@@ -398,7 +464,7 @@ theorem gt_single_of_first_gt [DecidableEq R] : p ≠ 0 → p < S 0 → single p
     (single_apply_zero p).symm ▸ hs,
     fun i hi ↦ absurd hi <| Nat.not_lt_zero i⟩
 
-end Order
+end Rank
 
 
 /-! ### Well-Foundedness -/
@@ -407,7 +473,7 @@ section WellFounded
 
 theorem wellFoundedLT_mvPolynomial_of_wellFoundedLT :
     WellFoundedLT (TriangularSet σ R) → WellFoundedLT (MvPolynomial σ R) := fun h ↦ by
-  rw [WellFoundedLT, isWellFounded_iff, wellFounded_iff_isEmpty_descending_chain] at h ⊢
+  rw [WellFoundedLT, wellFounded_iff_isEmpty_descending_chain] at h ⊢
   contrapose! h
   rcases nonempty_subtype.mp h with ⟨f, hf1⟩
   have hf2 (n : ℕ) : f n ≠ 0 := by
@@ -417,7 +483,9 @@ theorem wellFoundedLT_mvPolynomial_of_wellFoundedLT :
   use fun n ↦ single' (hf2 n)
   intro n
   refine lt_def.mpr <| Or.inl ⟨0, ?_⟩
-  simpa [length_single'] using hf1 n
+  simp only [length_single', zero_lt_one, not_lt_zero, AntisymmRel.setoid_r, IsEmpty.forall_iff,
+    implies_true, and_true, true_and]
+  exact hf1 n
 
 theorem wellFoundedLT_variables_of_wellFoundedLT [Nontrivial R] :
     WellFoundedLT (TriangularSet σ R) → WellFoundedLT σ :=
@@ -426,8 +494,8 @@ theorem wellFoundedLT_variables_of_wellFoundedLT [Nontrivial R] :
 
 theorem wellFoundedGT_variables_of_wellFoundedLT [Nontrivial R] :
     WellFoundedLT (TriangularSet σ R) → WellFoundedGT σ := fun h ↦ by
-  rw [WellFoundedGT, isWellFounded_iff, wellFounded_iff_isEmpty_descending_chain]
-  rw [WellFoundedLT, isWellFounded_iff, wellFounded_iff_isEmpty_descending_chain] at h
+  rw [WellFoundedGT, wellFounded_iff_isEmpty_descending_chain]
+  rw [WellFoundedLT, wellFounded_iff_isEmpty_descending_chain] at h
   contrapose! h
   rcases nonempty_subtype.mp h with ⟨f, hf1⟩
   have hf2 (n : ℕ) : (MvPolynomial.X (f n) : MvPolynomial σ R) < MvPolynomial.X (f (n + 1)) :=
@@ -455,47 +523,48 @@ theorem length_le [Fintype σ] : S.length ≤ Fintype.card σ + 1 := by
   rw [Fintype.card_fin, this, Fintype.card_option] at card_le
   exact card_le
 
-/-- An auxiliary order mapping into a finite domain to prove well-foundedness. -/
-private noncomputable def _order [Fintype σ] (S : TriangularSet σ R) :
-  Lex (Fin (Fintype.card σ + 1) → WithTop (WithBot σ ×ₗ ℕ)) := fun i ↦ S.order i.1
+/-- An auxiliary rank mapping into a finite domain to prove well-foundedness. -/
+private noncomputable def _rank [Fintype σ] (S : TriangularSet σ R) :
+  Lex (Fin (Fintype.card σ + 1) → WithTop (WithBot σ ×ₗ ℕ)) := toLex fun i ↦ S.rank i.1
 
-private theorem _order_def [Fintype σ] : S._order = fun i ↦ S.order i.1 := rfl
+private theorem _rank_def [Fintype σ] : S._rank = fun i ↦ S.rank i.1 := rfl
 
-private theorem _order_lt_iff [Fintype σ] : S._order < T._order ↔ S.order < T.order where
+private theorem _rank_lt_iff [Fintype σ] : S._rank < T._rank ↔ S.rank < T.rank where
   mp h := by
-    rw [Pi.instLTLexForall] at h ⊢
-    rw [_order_def, _order_def] at h
-    simp only [Pi.Lex] at h
+    change ∃ k : Fin (Fintype.card σ + 1),
+      (∀ i < k, S.rank i = T.rank i) ∧ S.rank k < T.rank k at h
+    change ∃ k : ℕ, (∀ i < k, S.rank i = T.rank i) ∧ S.rank k < T.rank k
     rcases h with ⟨k, hk1, hk2⟩
     have kn : k < Fintype.card σ + 1 := Decidable.byContradiction fun con ↦ by
-      simp only [order_apply' <| le_trans length_le <| Nat.le_of_not_lt con] at hk2
+      simp only [rank_apply' <| le_trans length_le <| Nat.le_of_not_lt con] at hk2
       exact (lt_self_iff_false ⊤).mp hk2
     exact Exists.intro k.1 ⟨fun i hi ↦ hk1 ⟨i, lt_trans hi kn⟩ hi, hk2⟩
   mpr h := by
-    rw [Pi.instLTLexForall] at h ⊢
-    rw [_order_def, _order_def] at ⊢
-    simp only [Pi.Lex] at h
+    change ∃ k : ℕ, (∀ i < k, S.rank i = T.rank i) ∧ S.rank k < T.rank k at h
+    change ∃ k : Fin (Fintype.card σ + 1),
+      (∀ i < k, S.rank i = T.rank i) ∧ S.rank k < T.rank k
     rcases h with ⟨k, hk1, hk2⟩
     have kn : k < Fintype.card σ + 1 := Decidable.byContradiction fun con ↦ by
-      simp only [order_apply' <| le_trans length_le <| Nat.le_of_not_lt con] at hk2
+      simp only [rank_apply' <| le_trans length_le <| Nat.le_of_not_lt con] at hk2
       exact (lt_self_iff_false ⊤).mp hk2
     exact Exists.intro ⟨k, kn⟩ ⟨fun _ hi ↦ hk1 _ hi, hk2⟩
 
 variable [Finite σ] (S' : Set (TriangularSet σ R))
 
-/-- The set of Triangular Sets is well-founded under the lexicographic order ordering.
+/-- The set of Triangular Sets is well-founded under the lexicographic rank ordering.
 This is a crucial result that guarantees the termination of the Characteristic Set Algorithm. -/
-instance instIsWellFoundedOrderLT : IsWellFounded (TriangularSet σ R) (InvImage (· < ·) order) :=
+instance instIsWellFoundedOrderLT :
+    WellFounded (InvImage (· < ·) (rank : TriangularSet σ R → _)) :=
   haveI : Fintype σ := Fintype.ofFinite σ
-  Subrelation.isWellFounded (InvImage (· < ·) _order) _order_lt_iff.mpr
+  Subrelation.isWellFounded (InvImage (· < ·) _rank) _rank_lt_iff.mpr
 
 instance : WellFoundedLT (TriangularSet σ R) :=
-  Subrelation.isWellFounded (InvImage (· < ·) order) lt_def'.mp
+  Subrelation.isWellFounded (InvImage (· < ·) rank) lt_def'.mp
 
-instance : WellFoundedRelation (TriangularSet σ R) := ⟨(· < ·), instWellFoundedLT.wf⟩
+instance : WellFoundedRelation (TriangularSet σ R) := ⟨(· < ·), instWellFoundedLT⟩
 
 theorem Set.has_min (h : S'.Nonempty) : ∃ S ∈ S', ∀ T ∈ S', S ≤ T :=
-  haveI : WellFounded (· < ·) := @wellFounded_lt (TriangularSet σ R) _ _
+  have : WellFounded (· < ·) := @wellFounded_lt (TriangularSet σ R) _ _
   have ⟨S, hS1, hS2⟩ := WellFounded.has_min this S' h
   ⟨S, hS1, fun T hT ↦ not_lt_iff_ge.mp (hS2 T hT)⟩
 
@@ -509,4 +578,55 @@ theorem Set.min_le (h : S'.Nonempty) : ∀ T ∈ S', min S' h ≤ T :=
   (Exists.choose_spec (has_min S' h)).2
 
 end WellFounded
+
+section Reduced
+
+variable [DecidableEq R] {p q r : MvPolynomial σ R}
+
+theorem reducedToSet_congr_right : S ≈ T → (q.reducedToSet S ↔ q.reducedToSet T) := fun h ↦ by
+  have := TriangularSet.equiv_iff.mp h
+  rw [reducedToSet_iff, reducedToSet_iff, ← this.1, forall_congr']
+  refine fun i ↦ imp_congr_right fun _ ↦ reducedTo_congr_right <| this.2 i
+
+/--
+Key Lemma for the Basic Set Algorithm:
+If `p` is non-zero and reduced with respect to `S`, then modifying `S`
+by appending `p` (using `takeConcat`) strictly decreases the order of the triangular set.
+This order decrease is what guarantees the termination of the characteristic set computation.
+-/
+theorem _root_.TriangularSet.takeConcat_lt_of_reducedToSet
+    (p_ne_zero : p ≠ 0) (hp : p.reducedToSet S) : S.takeConcat p < S := by
+  unfold takeConcat
+  rw [reducedToSet_iff] at hp
+  split_ifs with hS hc
+  · exact hS ▸ single_lt_empty p_ne_zero
+  · refine gt_single_of_first_gt p_ne_zero ?_
+    rcases lt_or_eq_of_le hc with h | h
+    · exact MvPolynomial.lt_of_max_vars_lt h
+    apply (MvPolynomial.reducedTo_iff_gt_of_max_vars_eq p_ne_zero h).mp
+    exact hp 0 <| length_ge_one_iff.mpr hS
+  let k := Nat.find <| exists_index_max_vars_between_of_max_vars_first_lt <| lt_of_not_ge hc
+  have hk : k ≤ S.length ∧ (S (k - 1)).vars.max < p.vars.max ∧
+      (p.vars.max ≤ (S k).vars.max ∨ k = S.length) :=
+    Nat.find_spec <| exists_index_max_vars_between_of_max_vars_first_lt <| lt_of_not_ge hc
+  have length_tk : (S.take k).length = k := S.length_take k ▸ (min_eq_left hk.1)
+  change (S.take k).concat p _ < S
+  by_cases keq : k = S.length
+  · refine TriangularSet.lt_def.mpr <| Or.inr ?_
+    rw [length_concat, length_tk]
+    refine ⟨keq ▸ lt_add_one S.length, fun i hi ↦ ?_⟩
+    rw [concat_apply, length_tk, keq, take_length, ite_eq_left hi]
+  refine TriangularSet.lt_def.mpr <| Or.inl ?_
+  simp only [length_concat, concat_apply, length_tk]
+  refine ⟨k, lt_add_one k, ?_, fun i hi ↦ by rw [take_apply, ite_eq_left hi, ite_eq_left hi]⟩
+  rw [ite_eq_right <| Nat.lt_irrefl k, ite_eq_left rfl]
+  by_cases max_vars_lt' : p.vars.max < (S k).vars.max
+  · exact MvPolynomial.lt_of_max_vars_lt max_vars_lt'
+  have : p.vars.max ≤ (S k).vars.max := (or_iff_left keq).mp hk.2.2
+  have : p.vars.max = (S k).vars.max := eq_of_le_of_ge this <| le_of_not_gt max_vars_lt'
+  have := MvPolynomial.reducedTo_iff_gt_of_max_vars_eq p_ne_zero this
+  exact this.mp <| hp k <| Nat.lt_of_le_of_ne hk.1 keq
+
+end Reduced
+
 end TriangularSet
