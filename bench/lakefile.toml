@@ -1,0 +1,20 @@
+name = "CharacteristicSetBench"
+version = "0.1.0"
+defaultTargets = ["characteristic_bench"]
+
+[[require]]
+name = "CharacteristicSet"
+path = ".."
+
+[[require]]
+name = "lean-bench"
+git = "https://github.com/kim-em/lean-bench.git"
+rev = "8a37daf1074c3bdbd0da479b55538bad4a0022db"
+
+[[lean_lib]]
+name = "CharacteristicSetBench"
+globs = ["CharacteristicSetBench.*"]
+
+[[lean_exe]]
+name = "characteristic_bench"
+root = "CharacteristicSetBench"
