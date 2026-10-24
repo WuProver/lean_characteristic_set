@@ -4,10 +4,6 @@ The goal of this project is to formalize the Characteristic Set Method (also kno
 
 This project is a work in progress; feedback, fixes, and suggestions are highly welcome.
 
-The project uses **Lean 4.35.0** and official **mathlib v4.35.0**. Its characteristic-set
-implementation is ported from [SnkXyx/mathlib4, `full-pr-draft` at `b7f37486`](https://github.com/SnkXyx/mathlib4/tree/b7f37486b1c723b65299b4fd7ad635131674d9e8),
-with local module paths and compatibility changes for Lean 4.35.0.
-
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/WuProver/lean_characteristic_set)
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/WuProver/lean_characteristic_set)
@@ -34,24 +30,6 @@ Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomia
 - [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The computed characteristic set $CS$ has zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
 - [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The zero set of a polynomial system is a finite union of quasi-varieties:
   $Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS / \text{InitialProd}(CS))$.
-
-The algorithms take the ascending-set predicate explicitly, so both theories can be used together:
-
-```lean
-import CharacteristicSetTheory
-
-open MvPolynomial
-
-noncomputable section
-
-example (l : List (MvPolynomial (Fin 2) ℚ)) :
-    (l.characteristicSet TriangularSet.IsAscendingSet).IsCharacteristicSet ℚ l :=
-  List.characteristicSet_isCharacteristicSet ℚ l
-
-example (l : List (MvPolynomial (Fin 2) ℚ)) :
-    (l.characteristicSet TriangularSet.IsWeakAscendingSet).IsCharacteristicSet ℚ l :=
-  List.characteristicSet_isCharacteristicSet ℚ l
-```
 
 ### Packages and executable foundations
 
