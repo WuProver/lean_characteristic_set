@@ -13,6 +13,8 @@ namespace CharacteristicSet.Bridge
 open Hex HexMvPolyTheory MvPolynomial
 open scoped HexMvPolyTheory
 
+section CommRing
+
 variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [CommRing R] [DecidableEq R]
   [NoZeroDivisors R]
@@ -151,5 +153,106 @@ theorem pseudoOf_remainder_degree_lt (i : Fin n) (g f : MvPoly n R cmp)
     (Computable.pseudoOf i g f).remainder.degreeOf i < f.degreeOf i := by
   rw [Computable.pseudoOf, ite_eq_right h]
   exact pseudoOf_go_stops i f h (g.degreeOf i + 1) 0 0 g (Nat.lt_succ_self _)
+
+end CommRing
+
+section Field
+
+variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
+  [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Field R] [DecidableEq R]
+
+private theorem pseudo_termsList_isEmpty_iff (p : MvPoly n R cmp) :
+    p.termsList.isEmpty = true ↔ toMvPolynomial p = 0 := by
+  rw [List.isEmpty_iff]
+  constructor
+  · intro h
+    have hp : p = 0 := MvPoly.termsList_inj h
+    simp [hp]
+  · intro h
+    have hp : p = 0 := toMvPolynomial_injective (by simpa using h)
+    subst p
+    rfl
+
+/-- General pseudo-division agrees exactly with the theory, including constants. -/
+theorem pseudo_toMvPolynomial (g f : MvPoly n R cmp) :
+    pseudoResultToMvPolynomial (Computable.pseudo g f) =
+      (toMvPolynomial g).pseudo (toMvPolynomial f) := by
+  unfold Computable.pseudo MvPolynomial.pseudo
+  simp only [pseudo_termsList_isEmpty_iff]
+  split_ifs with h
+  · simp [pseudoResultToMvPolynomial]
+  · rw [← mainVar_toMvPolynomial]
+    cases Computable.mainVar f with
+    | none =>
+      simp only [pseudoResultToMvPolynomial, toMvPolynomial_mul, toMvPolynomial_C,
+        toMvPolynomial_zero, ← MvPolynomial.smul_eq_C_mul]
+      congr 2
+      simpa using (coeff_toMvPolynomial (Mono.zero : Mono n) f).symm
+    | some i => exact pseudoOf_toMvPolynomial i g f
+
+/-- The exponent counts exactly the eliminations performed by general pseudo-division. -/
+theorem pseudo_exponent (g f : MvPoly n R cmp) :
+    (Computable.pseudo g f).exponent =
+      ((toMvPolynomial g).pseudo (toMvPolynomial f)).exponent :=
+  congrArg MvPolynomial.PseudoResult.exponent (pseudo_toMvPolynomial g f)
+
+/-- Exact interpretation of the general pseudo-quotient. -/
+theorem pseudo_quotient (g f : MvPoly n R cmp) :
+    toMvPolynomial (Computable.pseudo g f).quotient =
+      ((toMvPolynomial g).pseudo (toMvPolynomial f)).quotient :=
+  congrArg MvPolynomial.PseudoResult.quotient (pseudo_toMvPolynomial g f)
+
+/-- Exact interpretation of the general pseudo-remainder. -/
+theorem pseudo_remainder (g f : MvPoly n R cmp) :
+    toMvPolynomial (Computable.pseudo g f).remainder =
+      ((toMvPolynomial g).pseudo (toMvPolynomial f)).remainder :=
+  congrArg MvPolynomial.PseudoResult.remainder (pseudo_toMvPolynomial g f)
+
+/-- General pseudo-division reconstructs the dividend as an equality in Hex. -/
+theorem pseudo_equation (g f : MvPoly n R cmp) :
+    Computable.initial f ^ (Computable.pseudo g f).exponent * g =
+      (Computable.pseudo g f).quotient * f + (Computable.pseudo g f).remainder := by
+  apply toMvPolynomial_injective
+  simpa only [toMvPolynomial_mul, toMvPolynomial_pow, initial_toMvPolynomial,
+    toMvPolynomial_add, pseudo_exponent, pseudo_quotient, pseudo_remainder] using
+    MvPolynomial.pseudo_equation (toMvPolynomial g) (toMvPolynomial f)
+
+/-- For a nonzero divisor, the interpreted output satisfies the theory's remainder relation. -/
+theorem pseudo_remainder_isRemainder (g f : MvPoly n R cmp) (h : f ≠ 0) :
+    (toMvPolynomial (Computable.pseudo g f).remainder).IsRemainder
+      (toMvPolynomial g) (toMvPolynomial f) := by
+  rw [pseudo_remainder]
+  apply MvPolynomial.pseudo_remainder_isRemainder
+  intro hf
+  apply h
+  exact toMvPolynomial_injective (by simpa using hf)
+
+/-- Zero divisors preserve the dividend, with zero exponent and quotient. -/
+theorem pseudo_zero (g : MvPoly n R cmp) :
+    Computable.pseudo g 0 = ⟨0, 0, g⟩ := rfl
+
+/-- Nonzero constants perform ordinary coefficient division. -/
+theorem pseudo_C (g : MvPoly n R cmp) (c : R) (h : c ≠ 0) :
+    Computable.pseudo g (MvPoly.C c) = ⟨0, MvPoly.C c⁻¹ * g, 0⟩ := by
+  have hv : Computable.mainVar (MvPoly.C c : MvPoly n R cmp) = none := by
+    simpa only [toMvPolynomial_C, vars_C, Finset.max_empty, WithBot.none_eq_bot] using
+      mainVar_toMvPolynomial (MvPoly.C c : MvPoly n R cmp)
+  unfold Computable.pseudo
+  simp only [pseudo_termsList_isEmpty_iff, toMvPolynomial_C, C_ne_zero.mpr h,
+    ↓reduceIte, hv, MvPoly.coeff_C, ↓reduceIte]
+
+/-- A divisor with a main variable selects precisely the existing `pseudoOf` result. -/
+theorem pseudo_of_mainVar (g f : MvPoly n R cmp) (i : Fin n)
+    (h : Computable.mainVar f = some i) :
+    Computable.pseudo g f = Computable.pseudoOf i g f := by
+  have hn : toMvPolynomial f ≠ 0 := by
+    intro hf
+    have hv := mainVar_toMvPolynomial f
+    rw [h, hf] at hv
+    simp at hv
+  unfold Computable.pseudo
+  simp only [pseudo_termsList_isEmpty_iff, hn, ↓reduceIte, h]
+
+end Field
 
 end CharacteristicSet.Bridge

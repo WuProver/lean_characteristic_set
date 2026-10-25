@@ -61,4 +61,52 @@ setup_benchmark degreeJump k => Nat.log2 k + 1 with prep := prep_degreeJump wher
   tags := #["pseudo"]
 }
 
+/-- Bench-local rational polynomial; normalized numerator and denominator are both consumed. -/
+structure RatPoly where
+  value : MvPoly 2 Rat Mono.lex
+
+instance : Hashable RatPoly where
+  hash p := hash (p.value.termsList.map fun (m, c) => (m.toList, c.num, c.den))
+
+/-- Both rational inputs are constructed before timing. -/
+structure ConstantInput where
+  dividend : RatPoly
+  divisor : RatPoly
+
+instance : Hashable ConstantInput where
+  hash s := hash (hash s.dividend, hash s.divisor)
+
+/-- Exhaustive output consumption for general rational pseudo-division. -/
+structure RatResult where
+  exponent : Nat
+  quotient : RatPoly
+  remainder : RatPoly
+
+instance : Hashable RatResult where
+  hash r := hash (r.exponent, hash r.quotient, hash r.remainder)
+
+/-- T distinct powers of x with coefficients 1 through 7; divisor 2. -/
+def prep_constant (t : Nat) : ConstantInput :=
+  let terms := (List.range (max 1 t)).map fun j =>
+    (Vector.ofFn (fun i : Fin 2 => if i.val == 0 then j + 1 else 0),
+      ((j % 7 + 1 : Nat) : Rat))
+  ⟨⟨MvPoly.ofTerms terms⟩, ⟨MvPoly.C 2⟩⟩
+
+/-- General pseudo-division by a nonzero rational constant.
+At fixed variable count and small coefficients, T * (log2 T + 1) models
+ordered-map construction plus full result hashing, as a diagnostic only. -/
+@[noinline] def constant (s : ConstantInput) : RatResult :=
+  let r := CharacteristicSet.Computable.pseudo s.dividend.value s.divisor.value
+  ⟨r.exponent, ⟨r.quotient⟩, ⟨r.remainder⟩⟩
+
+setup_benchmark constant t => t * (Nat.log2 t + 1) with prep := prep_constant where {
+  paramSchedule := .custom #[128, 512, 2048, 8192]
+  paramFloor := 128
+  paramCeiling := 8192
+  targetInnerNanos := 1000000000
+  maxSecondsPerCall := 5.0
+  outerTrials := 3
+  tags := #["pseudo"]
+}
+
 end CharacteristicSetBench.PseudoDivision

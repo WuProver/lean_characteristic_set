@@ -3,7 +3,7 @@ module
 public import CharacteristicSet.Computable.Initial
 public import HexMvPoly.Operations
 
-/-! Executable pseudo-division in a specified variable on sparse Hex polynomials. -/
+/-! Executable specified-variable and general pseudo-division on sparse Hex polynomials. -/
 
 @[expose] public section
 
@@ -13,7 +13,7 @@ universe u
 
 /-- Actual elimination count, quotient, and remainder of pseudo-division. -/
 structure PseudoResult (α : Type u) where
-  /-- Number of elimination steps (one in the degree-zero divisor branch). -/
+  /-- Number of elimination steps (one in `pseudoOf`'s degree-zero divisor branch). -/
   exponent : Nat
   /-- Accumulated pseudo-quotient. -/
   quotient : α
@@ -45,5 +45,14 @@ All computation stays in the Hex representation. -/
 def pseudoOf (i : Fin n) (g f : MvPoly n R cmp) : PseudoResult (MvPoly n R cmp) :=
   if f.degreeOf i = 0 then ⟨1, g, 0⟩
   else pseudoOf.go i f (g.degreeOf i + 1) 0 0 g
+
+/-- Pseudo-divide using the divisor's greatest occurring variable.
+Zero returns `(0, 0, g)`; a nonzero constant returns ordinary division
+`(0, C c⁻¹ * g, 0)`. Only the native coefficient inverse interface is needed. -/
+def pseudo [Inv R] (g f : MvPoly n R cmp) : PseudoResult (MvPoly n R cmp) :=
+  if f.termsList.isEmpty then ⟨0, 0, g⟩
+  else match mainVar f with
+    | none => ⟨0, MvPoly.C (f.coeff Mono.zero)⁻¹ * g, 0⟩
+    | some i => pseudoOf i g f
 
 end CharacteristicSet.Computable

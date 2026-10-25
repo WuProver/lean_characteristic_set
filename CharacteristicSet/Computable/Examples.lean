@@ -83,3 +83,24 @@ def gy : ZG := X 1
   ⟨4, gy ^ 3 - gy ^ 2 + gy - C 1, C 2⟩
 
 end PseudoExamples
+
+-- General division distinguishes zero and constants and automatically selects the main variable.
+namespace GeneralPseudoExamples
+
+#guard pseudo (y + C 1) (0 : P) == ⟨0, 0, y + C 1⟩
+#guard pseudo (0 : P) 0 == ⟨0, 0, 0⟩
+#guard pseudo (0 : P) (C 2) == ⟨0, 0, 0⟩
+#guard pseudo (0 : P) (y + C 1) == ⟨0, 0, 0⟩
+#guard pseudo (y + C 1) (C 2) == ⟨0, C (1 / 2) * y + C (1 / 2), 0⟩
+#guard pseudo (y + C 1) (C (-2)) == ⟨0, C (-1 / 2) * y + C (-1 / 2), 0⟩
+#guard pseudo (C (2 / 3) * y + C (3 / 5)) (C (3 / 2)) ==
+  ⟨0, C (4 / 9) * y + C (2 / 5), 0⟩
+#guard pseudo (y ^ 4) (x * y ^ 2 + C 1) == ⟨2, x * y ^ 2 - C 1, C 1⟩
+#guard pseudo (y ^ 4 + C 1) (y + C 1) == ⟨4, y ^ 3 - y ^ 2 + y - C 1, C 2⟩
+#guard pseudo (x ^ 4 : P) (x ^ 2 + C 1 : P) == ⟨2, x ^ 2 - C 1, C 1⟩
+#guard pseudo (gy + C 1) (C 2 : G) == ⟨0, C (1 / 2) * gy + C (1 / 2), 0⟩
+#guard pseudo (gy ^ 4) (gx * gy ^ 2 + C 1) == ⟨2, gx * gy ^ 2 - C 1, C 1⟩
+#guard pseudo (C 1 : P0) (C 2) == ⟨0, C (1 / 2), 0⟩
+#guard pseudo (C 1 : P0) 0 == ⟨0, 0, C 1⟩
+
+end GeneralPseudoExamples
