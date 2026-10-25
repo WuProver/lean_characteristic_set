@@ -1,0 +1,155 @@
+module
+
+public import CharacteristicSet.Computable.PseudoDivision
+public import CharacteristicSetBridge.Initial
+public import CharacteristicSetTheory.PseudoDivision
+
+/-! Exact correspondence and sufficient internal bound for Hex pseudo-division. -/
+
+public section
+
+namespace CharacteristicSet.Bridge
+
+open Hex HexMvPolyTheory MvPolynomial
+open scoped HexMvPolyTheory
+
+variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
+  [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [CommRing R] [DecidableEq R]
+  [NoZeroDivisors R]
+
+/-- Interpret all three fields without changing the elimination count. -/
+noncomputable def pseudoResultToMvPolynomial (p : Computable.PseudoResult (MvPoly n R cmp)) :
+    MvPolynomial.PseudoResult (MvPolynomial (Fin n) R) :=
+  ⟨p.exponent, toMvPolynomial p.quotient, toMvPolynomial p.remainder⟩
+
+omit [DecidableEq R] in
+/-- The cancellation bound used by the reference recursive algorithm. -/
+private theorem cancellation_degree_lt (i : Fin n) (f r : MvPolynomial (Fin n) R)
+    (h : f.degreeOf i ≠ 0) (hn : ¬ r.degreeOf i < f.degreeOf i) :
+    (f.initialOf i * r -
+      (r.initialOf i * X i ^ (r.degreeOf i - f.degreeOf i)) * f).degreeOf i <
+      r.degreeOf i := by
+  let I := f.initialOf i
+  let term := r.initialOf i * X i ^ (r.degreeOf i - f.degreeOf i)
+  change (I * r - term * f).degreeOf i < r.degreeOf i
+  suffices (I * r - term * f).degreeOf i ≤ r.degreeOf i - 1 by
+    exact (Nat.le_sub_one_iff_lt (lt_of_lt_of_le
+      (Nat.ne_zero_iff_zero_lt.mp h) (Nat.not_lt.mp hn))).mp this
+  have Id : I.degreeOf i = 0 := by rw [degreeOf_initialOf_self]
+  have hmul : (I * r).degreeOf i - 1 ≤ r.degreeOf i - 1 := by
+    apply Nat.sub_le_sub_right
+    rw [← zero_add (r.degreeOf i), ← Id]
+    exact degreeOf_mul_le ..
+  refine le_trans ?_ hmul
+  apply degreeOf_sub_lt_of_initialOf_eq
+  repeat1' rw [mul_assoc, mul_comm _ f, ← mul_assoc]
+  · rw [initialOf_mul_X_self_pow, initialOf_mul_eq, initialOf_mul_eq]
+    rw [initialOf_initialOf_self, initialOf_initialOf_self, mul_comm]
+  have f_ne : f ≠ 0 := ne_zero_of_degreeOf_ne_zero h
+  have I_ne : I ≠ 0 := initialOf_ne_zero i f_ne
+  have r_ne : r ≠ 0 := by
+    contrapose! hn
+    rw [hn, degreeOf_zero]
+    exact Nat.zero_lt_of_ne_zero h
+  have Ir_ne : r.initialOf i ≠ 0 := initialOf_ne_zero i r_ne
+  rw [degreeOf_mul_X_self_pow_eq_add_of_ne_zero _ _ (mul_ne_zero_iff.mpr ⟨Ir_ne, f_ne⟩)]
+  rw [degreeOf_mul_eq I_ne r_ne, degreeOf_mul_eq Ir_ne f_ne]
+  simpa [I] using (Nat.add_sub_of_le <| Nat.le_of_not_lt hn).symm
+
+/-- Every actual Hex elimination strictly decreases the selected degree. -/
+theorem pseudoOf_step_degree_lt (i : Fin n) (f r : MvPoly n R cmp)
+    (h : f.degreeOf i ≠ 0) (hn : ¬ r.degreeOf i < f.degreeOf i) :
+    (Computable.initialOf i f * r -
+      (Computable.initialOf i r * MvPoly.X i ^ (r.degreeOf i - f.degreeOf i)) * f).degreeOf i <
+      r.degreeOf i := by
+  simpa only [degreeOf_toMvPolynomial, toMvPolynomial_sub, toMvPolynomial_mul,
+    initialOf_toMvPolynomial, toMvPolynomial_pow, toMvPolynomial_X] using
+    cancellation_degree_lt i (toMvPolynomial f) (toMvPolynomial r)
+      (by simpa using h) (by simpa using hn)
+
+/-- Any bound larger than the current remainder degree gives the exact reference
+result. The zero-fuel branch is unreachable under this hypothesis. -/
+theorem pseudoOf_go_toMvPolynomial (i : Fin n) (f : MvPoly n R cmp)
+    (h : f.degreeOf i ≠ 0) (fuel s : Nat) (q r : MvPoly n R cmp)
+    (enough : r.degreeOf i < fuel) :
+    pseudoResultToMvPolynomial (Computable.pseudoOf.go i f fuel s q r) =
+      MvPolynomial.pseudoOf.go i (toMvPolynomial f) s (toMvPolynomial q)
+        (toMvPolynomial r) (by simpa using h) := by
+  induction fuel generalizing s q r with
+  | zero => omega
+  | succ fuel ih =>
+    rw [Computable.pseudoOf.go, MvPolynomial.pseudoOf.go]
+    by_cases hn : r.degreeOf i < f.degreeOf i
+    · simp only [← degreeOf_toMvPolynomial, hn, ↓reduceIte, pseudoResultToMvPolynomial]
+    · simp only [← degreeOf_toMvPolynomial, hn, ↓reduceIte]
+      have descent := pseudoOf_step_degree_lt i f r h hn
+      have next := ih (s + 1) (Computable.initialOf i f * q +
+        Computable.initialOf i r * MvPoly.X i ^ (r.degreeOf i - f.degreeOf i))
+        (Computable.initialOf i f * r -
+        (Computable.initialOf i r * MvPoly.X i ^ (r.degreeOf i - f.degreeOf i)) * f)
+        (by omega)
+      simpa only [toMvPolynomial_add, toMvPolynomial_mul, toMvPolynomial_sub,
+        initialOf_toMvPolynomial, toMvPolynomial_pow, toMvPolynomial_X,
+        degreeOf_toMvPolynomial] using next
+
+/-- Exact equality of exponent, quotient and remainder with the theory algorithm. -/
+theorem pseudoOf_toMvPolynomial (i : Fin n) (g f : MvPoly n R cmp) :
+    pseudoResultToMvPolynomial (Computable.pseudoOf i g f) =
+      (toMvPolynomial g).pseudoOf i (toMvPolynomial f) := by
+  unfold Computable.pseudoOf MvPolynomial.pseudoOf
+  by_cases h : f.degreeOf i = 0
+  · simp only [← degreeOf_toMvPolynomial, h, ↓reduceIte, ↓reduceDIte,
+      pseudoResultToMvPolynomial, toMvPolynomial_zero]
+  · simp only [← degreeOf_toMvPolynomial, h, ↓reduceIte, ↓reduceDIte]
+    simpa using pseudoOf_go_toMvPolynomial i f h (g.degreeOf i + 1) 0 0 g
+      (Nat.lt_succ_self _)
+
+/-- The actual bounded Hex loop reaches the stopping condition whenever its
+bound exceeds the starting degree; it cannot silently return a truncated state. -/
+theorem pseudoOf_go_stops (i : Fin n) (f : MvPoly n R cmp)
+    (h : f.degreeOf i ≠ 0) (fuel s : Nat) (q r : MvPoly n R cmp)
+    (enough : r.degreeOf i < fuel) :
+    (Computable.pseudoOf.go i f fuel s q r).remainder.degreeOf i < f.degreeOf i := by
+  have exactResult := congrArg MvPolynomial.PseudoResult.remainder
+    (pseudoOf_go_toMvPolynomial i f h fuel s q r enough)
+  have bound := MvPolynomial.degreeOf_pseudoOfGo_remainder_lt_of_degreeOf_ne_zero
+    (i := i) (f := toMvPolynomial f) (by simpa using h) s
+    (toMvPolynomial q) (toMvPolynomial r)
+  rw [← exactResult] at bound
+  simpa only [pseudoResultToMvPolynomial, ← degreeOf_toMvPolynomial] using bound
+
+/-- The computed exponent is the actual exponent of the theory algorithm. -/
+theorem pseudoOf_exponent (i : Fin n) (g f : MvPoly n R cmp) :
+    (Computable.pseudoOf i g f).exponent =
+      ((toMvPolynomial g).pseudoOf i (toMvPolynomial f)).exponent :=
+  congrArg MvPolynomial.PseudoResult.exponent (pseudoOf_toMvPolynomial i g f)
+
+/-- Exact interpretation of the computed quotient. -/
+theorem pseudoOf_quotient (i : Fin n) (g f : MvPoly n R cmp) :
+    toMvPolynomial (Computable.pseudoOf i g f).quotient =
+      ((toMvPolynomial g).pseudoOf i (toMvPolynomial f)).quotient :=
+  congrArg MvPolynomial.PseudoResult.quotient (pseudoOf_toMvPolynomial i g f)
+
+/-- Exact interpretation of the computed remainder. -/
+theorem pseudoOf_remainder (i : Fin n) (g f : MvPoly n R cmp) :
+    toMvPolynomial (Computable.pseudoOf i g f).remainder =
+      ((toMvPolynomial g).pseudoOf i (toMvPolynomial f)).remainder :=
+  congrArg MvPolynomial.PseudoResult.remainder (pseudoOf_toMvPolynomial i g f)
+
+/-- Reconstruction holds as an equality of Hex polynomials. -/
+theorem pseudoOf_equation (i : Fin n) (g f : MvPoly n R cmp) :
+    Computable.initialOf i f ^ (Computable.pseudoOf i g f).exponent * g =
+      (Computable.pseudoOf i g f).quotient * f + (Computable.pseudoOf i g f).remainder := by
+  apply toMvPolynomial_injective
+  simpa only [toMvPolynomial_mul, toMvPolynomial_pow, initialOf_toMvPolynomial,
+    toMvPolynomial_add, pseudoOf_exponent, pseudoOf_quotient, pseudoOf_remainder] using
+    MvPolynomial.pseudoOf_equation i (toMvPolynomial g) (toMvPolynomial f)
+
+/-- Positive-degree divisors yield a remainder of strictly smaller degree. -/
+theorem pseudoOf_remainder_degree_lt (i : Fin n) (g f : MvPoly n R cmp)
+    (h : f.degreeOf i ≠ 0) :
+    (Computable.pseudoOf i g f).remainder.degreeOf i < f.degreeOf i := by
+  rw [Computable.pseudoOf, ite_eq_right h]
+  exact pseudoOf_go_stops i f h (g.degreeOf i + 1) 0 0 g (Nat.lt_succ_self _)
+
+end CharacteristicSet.Bridge

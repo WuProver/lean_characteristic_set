@@ -50,3 +50,36 @@ def gy : G := X 1
 #guard initial (gx * gy * gy + C 1) == gx
 #eval (mainVar (gx * gx + gy), mainDegree (gx * gx + gy),
   (initial (gx * gx + gy)).termsList.map fun (m, c) => (m.toList, c))
+
+
+-- Full integer outputs, including the degree-zero convention and degree jumps.
+namespace PseudoExamples
+
+abbrev Z := MvPoly 2 Int Mono.lex
+def x : Z := X 0
+def y : Z := X 1
+
+#guard pseudoOf 1 (y ^ 4) (0 : Z) == ⟨1, y ^ 4, 0⟩
+#guard pseudoOf 1 (y ^ 4) (C 3 : Z) == ⟨1, y ^ 4, 0⟩
+#guard pseudoOf 1 (y ^ 4) x == ⟨1, y ^ 4, 0⟩
+#guard pseudoOf 1 (0 : Z) (y + C 1) == ⟨0, 0, 0⟩
+#guard pseudoOf 1 y (y ^ 2 + C 1) == ⟨0, 0, y⟩
+#guard pseudoOf 1 (x * y ^ 2 + C 1) (x * y ^ 2 + C 1) == ⟨1, x, 0⟩
+#guard pseudoOf 1 (y ^ 4 + C 1) (y + C 1) ==
+  ⟨4, y ^ 3 - y ^ 2 + y - C 1, C 2⟩
+#guard pseudoOf 1 (y ^ 4) (x * y ^ 2 + C 1) == ⟨2, x * y ^ 2 - C 1, C 1⟩
+-- Selected variable is independent of the monomial storage order.
+#guard pseudoOf 0 (x ^ 4) (y * x ^ 2 + C 1) == ⟨2, y * x ^ 2 - C 1, C 1⟩
+#eval let p := pseudoOf 1 (y ^ 4) (x * y ^ 2 + C 1)
+  (p.exponent, p.quotient.termsList.map fun (m, c) => (m.toList, c),
+    p.remainder.termsList.map fun (m, c) => (m.toList, c))
+
+abbrev ZG := MvPoly 2 Int Mono.grevlex
+def gx : ZG := X 0
+def gy : ZG := X 1
+#guard pseudoOf 1 (gy ^ 4) (gx * gy ^ 2 + C 1) == ⟨2, gx * gy ^ 2 - C 1, C 1⟩
+#guard pseudoOf 0 (gx ^ 4) (gy * gx ^ 2 + C 1) == ⟨2, gy * gx ^ 2 - C 1, C 1⟩
+#guard pseudoOf 1 (gy ^ 4 + C 1) (gy + C 1) ==
+  ⟨4, gy ^ 3 - gy ^ 2 + gy - C 1, C 2⟩
+
+end PseudoExamples
