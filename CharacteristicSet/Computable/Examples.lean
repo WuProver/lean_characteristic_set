@@ -104,3 +104,23 @@ namespace GeneralPseudoExamples
 #guard pseudo (C 1 : P0) 0 == ⟨0, 0, C 1⟩
 
 end GeneralPseudoExamples
+
+-- Ordered lists run from right to left; the reversed list need not be triangular.
+namespace SequencePseudoExamples
+
+#guard setPseudoRem (x * y + C (2 / 3)) [] == x * y + C (2 / 3)
+#guard setPseudoRem (y ^ 4 + C 1) [y + C 1] == C 2
+#guard setPseudoRem (0 : P) [x + C 1, 0, y + C 1] == 0
+#guard setPseudoRem y [0, x, y - x, 0] == 0
+#guard setPseudoRem (x * y + C 1) [x, C (3 / 2), y] == 0
+#guard setPseudoRem (x * y ^ 4 + C 4) [x + C 1, y + C 1] == C 3
+#guard setPseudoRem (x * y ^ 3 + C 3) [x + C 1, y + C 1] == C 4
+#guard setPseudoRem y [x, y - x] == 0
+#guard setPseudoRem y [y - x, x] == x
+#guard setPseudoRem gy [gx, gy - gx] == 0
+#guard setPseudoRem gy [gy - gx, gx] == gx
+#guard setPseudoRem (gx * gy ^ 4 + C 4) [gx + C 1, gy + C 1] == C 3
+#guard setPseudoRem (C (2 / 3) : P0) [0, C (3 / 2), 0] == 0
+#guard setPseudoRem (C (2 / 3) : P0) [0, 0] == C (2 / 3)
+
+end SequencePseudoExamples

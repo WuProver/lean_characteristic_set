@@ -109,4 +109,34 @@ setup_benchmark constant t => t * (Nat.log2 t + 1) with prep := prep_constant wh
   tags := #["pseudo"]
 }
 
+/-- Ordered rational divisors, all constructed before timing. -/
+structure SequenceInput where
+  dividend : RatPoly
+  divisors : List RatPoly
+
+instance : Hashable SequenceInput where
+  hash s := hash (hash s.dividend, s.divisors.map hash)
+
+/-- The fixed triangular list [x+1, y+1], with dividend x*y^d+d. -/
+def prep_sequence (d : Nat) : SequenceInput :=
+  let x : MvPoly 2 Rat Mono.lex := MvPoly.X 0
+  let y : MvPoly 2 Rat Mono.lex := MvPoly.X 1
+  ⟨⟨x * y ^ d + MvPoly.C (d : Rat)⟩, [⟨x + MvPoly.C 1⟩, ⟨y + MvPoly.C 1⟩]⟩
+
+/-- Successive remainders with full rational output hashing.
+The growing intermediate quotient in `pseudo` motivates the same diagnostic
+quadratic-times-log model as `successive`; the list length stays fixed at two. -/
+@[noinline] def sequence (s : SequenceInput) : RatPoly :=
+  ⟨CharacteristicSet.Computable.setPseudoRem s.dividend.value (s.divisors.map RatPoly.value)⟩
+
+setup_benchmark sequence d => d * d * (Nat.log2 d + 1) with prep := prep_sequence where {
+  paramSchedule := .custom #[16, 32, 64, 128]
+  paramFloor := 16
+  paramCeiling := 128
+  targetInnerNanos := 1000000000
+  maxSecondsPerCall := 5.0
+  outerTrials := 3
+  tags := #["pseudo"]
+}
+
 end CharacteristicSetBench.PseudoDivision

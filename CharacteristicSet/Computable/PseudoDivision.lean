@@ -55,4 +55,19 @@ def pseudo [Inv R] (g f : MvPoly n R cmp) : PseudoResult (MvPoly n R cmp) :=
     | none => ⟨0, MvPoly.C (f.coeff Mono.zero)⁻¹ * g, 0⟩
     | some i => pseudoOf i g f
 
+/-- Successively pseudo-divide by an ordered list, from right to left.
+An empty list preserves `g`; zero and constant divisors retain `pseudo`'s semantics.
+No triangularity, sorting, or filtering is required for this computation. -/
+def setPseudoRem [Inv R] (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp)) :
+    MvPoly n R cmp :=
+  ps.foldr (fun f r => (pseudo r f).remainder) g
+
+@[simp] theorem setPseudoRem_nil [Inv R] (g : MvPoly n R cmp) :
+    setPseudoRem g [] = g := rfl
+
+/-- The head divisor acts after the entire tail. -/
+@[simp] theorem setPseudoRem_cons [Inv R] (g f : MvPoly n R cmp)
+    (ps : List (MvPoly n R cmp)) :
+    setPseudoRem g (f :: ps) = (pseudo (setPseudoRem g ps) f).remainder := rfl
+
 end CharacteristicSet.Computable

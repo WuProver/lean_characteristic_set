@@ -253,6 +253,46 @@ theorem pseudo_of_mainVar (g f : MvPoly n R cmp) (i : Fin n)
   unfold Computable.pseudo
   simp only [pseudo_termsList_isEmpty_iff, hn, ↓reduceIte, h]
 
+/-- Exact right-to-left semantics for every ordered Hex list, without triangularity. -/
+theorem setPseudoRem_toMvPolynomial (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp)) :
+    toMvPolynomial (Computable.setPseudoRem g ps) =
+      (ps.map toMvPolynomial).foldr
+        (fun f r => (MvPolynomial.pseudo r f).remainder) (toMvPolynomial g) := by
+  induction ps with
+  | nil => rfl
+  | cons f ps ih =>
+    simp only [Computable.setPseudoRem_cons, List.map_cons, List.foldr_cons]
+    rw [pseudo_remainder, ih]
+
+/-- A list representing a theory triangular set computes its remainder-only algorithm. -/
+theorem setPseudoRem_eq_setPseudoRem (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    toMvPolynomial (Computable.setPseudoRem g ps) = (toMvPolynomial g).setPseudoRem S := by
+  rw [setPseudoRem_toMvPolynomial, hps]
+  rfl
+
+/-- The actual Hex output also agrees with the full theory certificate algorithm. -/
+theorem setPseudoRem_eq_setPseudo_remainder (g : MvPoly n R cmp)
+    (ps : List (MvPoly n R cmp)) (S : TriangularSet (Fin n) R)
+    (hps : ps.map toMvPolynomial = S.toList) :
+    toMvPolynomial (Computable.setPseudoRem g ps) =
+      ((toMvPolynomial g).setPseudo S).remainder := by
+  rw [setPseudoRem_eq_setPseudoRem g ps S hps, MvPolynomial.setPseudo_remainder_eq_setPseudoRem]
+
+/-- Reduction to the whole set requires the ordered list to represent a triangular set. -/
+theorem setPseudoRem_reducedToSet (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    (toMvPolynomial (Computable.setPseudoRem g ps)).reducedToSet S := by
+  rw [setPseudoRem_eq_setPseudo_remainder g ps S hps]
+  exact MvPolynomial.setPseudo_remainder_reducedToSet (toMvPolynomial g) S
+
+/-- The computed remainder satisfies the theory relation for a represented triangular set. -/
+theorem setPseudoRem_isSetRemainder (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    (toMvPolynomial (Computable.setPseudoRem g ps)).IsSetRemainder (toMvPolynomial g) S := by
+  rw [setPseudoRem_eq_setPseudo_remainder g ps S hps]
+  exact MvPolynomial.setPseudo_remainder_isSetRemainder (toMvPolynomial g) S
+
 end Field
 
 end CharacteristicSet.Bridge
