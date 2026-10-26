@@ -2,6 +2,7 @@ module
 
 public import CharacteristicSet.Computable.PseudoDivision
 public import CharacteristicSetBridge.Initial
+public import CharacteristicSetBridge.Reduced
 public import CharacteristicSetTheory.PseudoDivision
 
 /-! Exact correspondence and sufficient internal bound for Hex pseudo-division. -/
@@ -292,6 +293,14 @@ theorem setPseudoRem_isSetRemainder (g : MvPoly n R cmp) (ps : List (MvPoly n R 
     (toMvPolynomial (Computable.setPseudoRem g ps)).IsSetRemainder (toMvPolynomial g) S := by
   rw [setPseudoRem_eq_setPseudo_remainder g ps S hps]
   exact MvPolynomial.setPseudo_remainder_isSetRemainder (toMvPolynomial g) S
+
+/-- The actual successive remainder passes the executable whole-list check for
+a list representing a theory triangular set. -/
+theorem setPseudoRem_reducedToSet_eq_true (g : MvPoly n R cmp)
+    (ps : List (MvPoly n R cmp)) (S : TriangularSet (Fin n) R)
+    (hps : ps.map toMvPolynomial = S.toList) :
+    Computable.reducedToSet (Computable.setPseudoRem g ps) ps = true :=
+  (reducedToSet_iff_of_toList _ ps S hps).mpr (setPseudoRem_reducedToSet g ps S hps)
 
 end Field
 

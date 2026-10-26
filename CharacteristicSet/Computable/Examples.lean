@@ -124,3 +124,34 @@ namespace SequencePseudoExamples
 #guard setPseudoRem (C (2 / 3) : P0) [0, 0] == C (2 / 3)
 
 end SequencePseudoExamples
+
+-- Reduction uses the divisor's main variable, even when q has a higher one.
+namespace ReducedExamples
+
+#guard [0, C 3, x, y].all (fun p : P => reducedTo 0 p)
+#guard !(reducedTo x (0 : P))
+#guard !(reducedTo x (C 3 : P))
+#guard reducedTo (C 3 : P) (x ^ 2)
+#guard reducedTo x (x ^ 2)
+#guard !(reducedTo (x ^ 2) (x ^ 2))
+#guard !(reducedTo (x ^ 3) (x ^ 2))
+#guard reducedTo (y ^ 100) (x ^ 2)
+#guard !(reducedTo (x ^ 2 + y) (x ^ 2))
+#guard reducedToSet (x ^ 2 + y) []
+#guard reducedToSet (C 3 : P) [x ^ 2, y ^ 2]
+#guard !(reducedToSet x [x, y ^ 2, x ^ 2])
+#guard !(reducedToSet x [y ^ 2, x ^ 2, x])
+#guard reducedToSet x [y ^ 2, x ^ 2, y ^ 2]
+#guard reducedToSet x [x ^ 2, y ^ 2, y ^ 2]
+#guard reducedToSet (0 : P) [0, C 3, x]
+#guard reducedTo (gy ^ 100) (gx ^ 2)
+#guard !(reducedTo (gx ^ 2 + gy) (gx ^ 2))
+#guard reducedToSet (0 : P0) [0, C 3]
+#guard !(reducedTo (C 3 : P0) (C 4))
+#guard !(reducedTo (C 3 : P0) 0)
+#guard reducedToSet (C 3 : P0) []
+#guard reducedToSet (setPseudoRem (x * y ^ 4 + C 4) [x + C 1, y + C 1])
+  [x + C 1, y + C 1]
+#guard reducedToSet (setPseudoRem gy [gx, gy - gx]) [gx, gy - gx]
+
+end ReducedExamples
