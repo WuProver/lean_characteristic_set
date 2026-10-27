@@ -180,3 +180,27 @@ def c : L := X 2
 #guard takeConcat [(C 2 : P0)] 0 == []
 
 end TakeConcatExamples
+
+
+-- Standard basic sets check complete lists and stable equal-rank choices.
+namespace BasicSetExamples
+
+#guard basicSet ([] : List P) == []
+#guard basicSet ([0, 0] : List P) == []
+#guard basicSet [0, y, 0, x, 0] == [x, y]
+#guard basicSet [y, C 3, x] == [C 3]
+#guard basicSet [y, x, x, y] == [x, y]
+#guard basicSet [y ^ 3, x ^ 2, y ^ 2, x] == [x, y ^ 2]
+#guard basicSet [x * y + C 1, x] == [x]
+#guard basicSet [y, x + C 1, x + C 2] == [x + C 1, y]
+#guard basicSet [y, x + C 2, x + C 1] == [x + C 2, y]
+#guard basicSet [C 2, C 3, x] == [C 2]
+#guard basicSet [gy ^ 3, gx ^ 2, gy ^ 2, gx] == [gx, gy ^ 2]
+#guard basicSet [gy, gx + C 2, gx + C 1] == [gx + C 2, gy]
+#guard basicSet [gx * gy + C 1, gx] == [gx]
+#guard basicSet ([0, C 3, C 2] : List P0) == [C 3]
+#guard basicSet ([0, 0] : List P0) == []
+#guard basicSet [TakeConcatExamples.c, TakeConcatExamples.b, TakeConcatExamples.a] ==
+  [TakeConcatExamples.a, TakeConcatExamples.b, TakeConcatExamples.c]
+
+end BasicSetExamples
