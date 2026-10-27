@@ -155,3 +155,28 @@ namespace ReducedExamples
 #guard reducedToSet (setPseudoRem gy [gx, gy - gx]) [gx, gy - gx]
 
 end ReducedExamples
+
+-- Prefix replacement compares main variables, even for ordinary unordered lists.
+namespace TakeConcatExamples
+
+abbrev L := MvPoly 3 Rat Mono.lex
+def a : L := X 0
+def b : L := X 1
+def c : L := X 2
+
+#guard takeConcat ([] : List L) b == [b]
+#guard takeConcat ([] : List L) 0 == []
+#guard takeConcat [a, b, c] 0 == []
+#guard takeConcat [a, b, c] (C 3) == [C 3]
+#guard takeConcat [a, b, c] (a ^ 2) == [a ^ 2]
+#guard takeConcat [a, b, c] (b ^ 5) == [a, b ^ 5]
+#guard takeConcat [a, b] c == [a, b, c]
+#guard takeConcat [C 2, a, b] (a ^ 2) == [C 2, a ^ 2]
+#guard takeConcat [a, c, a] b == [a, b]
+#guard takeConcat [0, a] b == [0, a, b]
+#guard takeConcat [gx, gy] (gy ^ 5) == [gx, gy ^ 5]
+#guard takeConcat [C 2, gx] gy == [C 2, gx, gy]
+#guard takeConcat [(C 2 : P0)] (C 3) == [C 3]
+#guard takeConcat [(C 2 : P0)] 0 == []
+
+end TakeConcatExamples
