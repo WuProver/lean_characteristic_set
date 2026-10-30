@@ -5,7 +5,7 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSetTheory.AscendingSet
+public import CharacteristicSetTheory.BasicSet
 public import CharacteristicSetTheory.PseudoDivision
 public import Mathlib.RingTheory.Nullstellensatz
 
@@ -146,39 +146,36 @@ namespace MvPolynomial
 
 namespace List
 
-variable {is_as : TriangularSet σ R → Prop} [AscendingSetTheory σ R is_as]
+variable (B : BasicSetSpec σ R)
 
 /-! ### Characteristic Set Algorithm -/
 
 -- A helper lemma: adding pseudo-remainders strictly decreases the order.
 lemma characteristicSetGo_decreasing (l₀ l : List (MvPolynomial σ R))
     (BS : TriangularSet σ R) (lBS RS : List (MvPolynomial σ R))
-    (hRS : RS ≠ []) (hBS : BS = l.basicSet is_as) (hlBS : lBS = BS.toList)
+    (hRS : RS ≠ []) (hBS : BS = B.basicSet l) (hlBS : lBS = BS.toList)
     (hRS1 : RS = ((l \ lBS).map fun p ↦ (p.setPseudo BS).remainder).filter (· ≠ 0)) :
-    (l₀ ++ RS ++ lBS).basicSet is_as < l.basicSet is_as := by
+    B.basicSet (l₀ ++ RS ++ lBS) < B.basicSet l := by
   rw [hRS1, hlBS, hBS] at hRS ⊢
-  apply TriangularSet.lt_of_lt_of_equiv ?_ l.basicSet_toList_equiv
-  apply basicSet_append_lt_of_exists_reducedToSet
+  apply B.basicSet_append_toList_lt
   have ⟨p, hp⟩ := List.exists_mem_of_ne_nil _ hRS
   refine ⟨p, List.mem_append_right _ hp, of_decide_eq_true (List.mem_filter.mp hp).2, ?_⟩
   have ⟨q, _, hq2⟩ := List.mem_map.mp (List.mem_filter.mp hp).1
-  suffices l.basicSet is_as ≈ (l.basicSet is_as).toList.basicSet is_as by
-    apply (reducedToSet_congr_right this).mp
-    exact hq2 ▸ q.setPseudo_remainder_reducedToSet _
-  exact Setoid.symm l.basicSet_toList_equiv
+  exact hq2 ▸ q.setPseudo_remainder_reducedToSet _
 
+-- Keep the nonrecursive remainder map unchanged in the generated induction principle.
+set_option wf.preprocess false in
 /-- The recursive algorithm for computing the Characteristic Set -/
-noncomputable def characteristicSet.go (is_as : TriangularSet σ R → Prop)
-    [AscendingSetTheory σ R is_as] [Finite σ]
+noncomputable def characteristicSet.go [Finite σ]
     (l₀ l : List (MvPolynomial σ R)) : TriangularSet σ R :=
-  let BS := l.basicSet is_as
+  let BS := B.basicSet l
   let lBS := BS.toList
   let RS : List _ := ((l \ lBS).map fun p ↦ (p.setPseudo BS).remainder).filter (· ≠ 0)
-  if RS = [] then BS
-  else go is_as l₀ (l₀ ++ RS ++ lBS)
-  termination_by l.basicSet is_as
+  if _h : RS = [] then BS
+  else go l₀ (l₀ ++ RS ++ lBS)
+  termination_by B.basicSet l
   decreasing_by
-    exact characteristicSetGo_decreasing l₀ l _ _ _ (by assumption) rfl rfl rfl
+    exact characteristicSetGo_decreasing B l₀ l _ _ _ (by assumption) rfl rfl rfl
 
 /--
 Computes the Characteristic Set of a polynomial list `l`.
@@ -190,18 +187,17 @@ Algorithm:
 5. If not, set `l = l₀ ++ RS ++ BS` and go to step 2.
 Termination is guaranteed by the well-ordering of orders.
 -/
-noncomputable def characteristicSet (is_as : TriangularSet σ R → Prop)
-    [AscendingSetTheory σ R is_as] [Finite σ] (l : List (MvPolynomial σ R)) : TriangularSet σ R :=
-  characteristicSet.go is_as l l
+noncomputable def characteristicSet [Finite σ] (l : List (MvPolynomial σ R)) : TriangularSet σ R :=
+  characteristicSet.go B l l
 
 variable [Finite σ] (l₀ l : List (MvPolynomial σ R))
 
 lemma zero_isSetRemainder_characteristicSetGo : l₀ ⊆ l → ∀ p ∈ l₀,
-    (0 : MvPolynomial σ R).IsSetRemainder p (characteristicSet.go is_as l₀ l) := by
-  induction l using characteristicSet.go.induct is_as l₀ with
+    (0 : MvPolynomial σ R).IsSetRemainder p (characteristicSet.go B l₀ l) := by
+  induction l using characteristicSet.go.induct B l₀ with
   | case1 l BS lBS RS h =>
     intro hl p hp1
-    rw [characteristicSet.go, ite_eq_left h]
+    rw [characteristicSet.go, dite_eq_left h]
     apply isSetRemainder_of_eq_setPseudo_remainder
     rcases em (p ∈ lBS) with hp2 | hp2
     · exact setPseudo_remainder_eq_zero_of_mem BS (mem_toList_iff.mp hp2)
@@ -209,29 +205,29 @@ lemma zero_isSetRemainder_characteristicSetGo : l₀ ⊆ l → ∀ p ∈ l₀,
     exact (h p <| List.mem_diff_of_mem (hl hp1) hp2)
   | case2 l BS lBS RS h ih =>
     intro hl
-    rw [characteristicSet.go, ite_eq_right h]
+    rw [characteristicSet.go, dite_eq_right h]
     exact ih (List.subset_append_of_subset_left lBS (List.subset_append_left _ _))
 
 variable (K : Type*) [CommSemiring K] [Algebra R K] (l₀ l : List (MvPolynomial σ R))
 
 lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingSet K l →
-    vanishingSet K l₀ ⊆ vanishingSet K (characteristicSet.go is_as l₀ l) := by
+    vanishingSet K l₀ ⊆ vanishingSet K (characteristicSet.go B l₀ l) := by
   simp only [vanishingSet, Set.ofPred_subset_ofPred]
-  induction l using characteristicSet.go.induct is_as l₀ with
+  induction l using characteristicSet.go.induct B l₀ with
   | case1 l BS lBS RS h =>
     intro hl x hx p hp
-    rw [characteristicSet.go, ite_eq_left h] at hp
+    rw [characteristicSet.go, dite_eq_left h] at hp
     have hx : ∀ p ∈ l, aeval x p = 0 := (Set.ext_iff.mp hl x).mp hx
-    exact hx p <| l.basicSet_subset hp
+    exact hx p <| B.basicSet_subset l hp
   | case2 l BS lBS RS h ih =>
     intro hl
-    rw [characteristicSet.go, ite_eq_right h]
+    rw [characteristicSet.go, dite_eq_right h]
     refine ih (Set.ext fun x ↦ ?_)
     simp only [Set.mem_ofPred_eq, List.append_assoc, List.mem_append]
     have hl := Set.mem_ofPred_eq ▸ Set.mem_ofPred_eq ▸ (Set.ext_iff.mp hl x)
     refine ⟨fun hx p hp ↦ ?_, fun hx p hp ↦ hx _ (Or.inl hp)⟩
     refine Or.elim hp (hx _) fun hp ↦ ?_
-    have hBS : ∀ ⦃q⦄, q ∈ BS → aeval x q = 0 := fun q hq ↦ (hl.mp hx) q <| l.basicSet_subset hq
+    have hBS : ∀ ⦃q⦄, q ∈ BS → aeval x q = 0 := fun q hq ↦ (hl.mp hx) q <| B.basicSet_subset l hq
     refine Or.elim hp (fun hp ↦ ?_) (fun hp ↦ hBS <| mem_toList_iff.mp hp)
     have ⟨⟨g, hg1, hg2⟩, hp⟩ : (∃ a ∈ l \ lBS, (a.setPseudo BS).remainder = p) ∧ ¬p = 0 :=
         by simpa [RS] using hp
@@ -245,39 +241,62 @@ lemma characteristicSetGo_vanishingSet_subset : vanishingSet K l₀ = vanishingS
 
 /-- The computed `characteristicSet` satisfies the required properties. -/
 theorem characteristicSet_isCharacteristicSet :
-    (l.characteristicSet is_as).IsCharacteristicSet K l where
-  left := zero_isSetRemainder_characteristicSetGo l l fun _ ↦ id
-  right := characteristicSetGo_vanishingSet_subset K l l rfl
+    (l.characteristicSet B).IsCharacteristicSet K l where
+  left := zero_isSetRemainder_characteristicSetGo B l l fun _ ↦ id
+  right := characteristicSetGo_vanishingSet_subset B K l l rfl
 
-lemma characteristicSetGo_le_basicSet : characteristicSet.go is_as l₀ l ≤ l.basicSet is_as := by
-  induction l using characteristicSet.go.induct is_as l₀ with
-  | case1 l BS lBS RS h => rw [characteristicSet.go, ite_eq_left h]
+lemma characteristicSetGo_le_basicSet : characteristicSet.go B l₀ l ≤ B.basicSet l := by
+  induction l using characteristicSet.go.induct B l₀ with
+  | case1 l BS lBS RS h => rw [characteristicSet.go, dite_eq_left h]
   | case2 l BS lBS RS h ih =>
-    rw [characteristicSet.go, ite_eq_right h]
+    rw [characteristicSet.go, dite_eq_right h]
     refine le_trans ih (le_of_lt ?_)
-    exact characteristicSetGo_decreasing l₀ l _ _ _ h rfl rfl rfl
+    exact characteristicSetGo_decreasing B l₀ l _ _ _ h rfl rfl rfl
 
-theorem characteristicSet_le_basicSet : l.characteristicSet is_as ≤ l.basicSet is_as :=
-  characteristicSetGo_le_basicSet l l
+theorem characteristicSet_le_basicSet : l.characteristicSet B ≤ B.basicSet l :=
+  characteristicSetGo_le_basicSet B l l
 
-lemma characteristicSetGo_isAscendingSet : is_as (characteristicSet.go is_as l₀ l) := by
-  induction l using characteristicSet.go.induct is_as l₀ with
-  | case1 l BS lBS =>
-    expose_names
-    rw [characteristicSet.go, ite_eq_left h]
-    exact l.basicSet_isAscendingSet
-  | case2 l BS lBS RS =>
-    expose_names
-    rw [characteristicSet.go, ite_eq_right h]
-    exact ih1
+/-- The algorithm returns a basic set of one of its intermediate lists. -/
+lemma characteristicSetGo_eq_basicSet :
+    ∃ s, characteristicSet.go B l₀ l = B.basicSet s := by
+  induction l using characteristicSet.go.induct B l₀ with
+  | case1 l BS lBS RS h =>
+    rw [characteristicSet.go, dite_eq_left h]
+    exact ⟨l, rfl⟩
+  | case2 l BS lBS RS h ih =>
+    rw [characteristicSet.go, dite_eq_right h]
+    exact ih
 
-theorem characteristicSet_isAscendingSet : is_as (l.characteristicSet is_as) :=
-  characteristicSetGo_isAscendingSet l l
+theorem characteristicSet_eq_basicSet :
+    ∃ s, l.characteristicSet B = B.basicSet s :=
+  characteristicSetGo_eq_basicSet B l l
+
+theorem characteristicSet_toList_equiv :
+    B.basicSet (l.characteristicSet B).toList ≈ l.characteristicSet B := by
+  obtain ⟨s, hs⟩ := characteristicSet_eq_basicSet B l
+  rw [hs]
+  exact B.basicSet_toList_equiv s
+
+theorem characteristicSet_toList_le :
+    B.basicSet (l.characteristicSet B).toList ≤ l.characteristicSet B := by
+  obtain ⟨s, hs⟩ := characteristicSet_eq_basicSet B l
+  rw [hs]
+  exact B.basicSet_toList_le s
+
+theorem characteristicSet_initial_reduced (p : MvPolynomial σ R)
+    (hp : p ∈ l.characteristicSet B) (hmax : p.vars.max ≠ ⊥) :
+    p.initial.reducedToSet (l.characteristicSet B) := by
+  obtain ⟨s, hs⟩ := characteristicSet_eq_basicSet B l
+  rw [hs] at hp ⊢
+  exact B.initial_reduced s p hp hmax
 
 protected alias cs := characteristicSet
 protected alias cs_isCharacteristicSet := characteristicSet_isCharacteristicSet
 protected alias cs_le_basicSet := characteristicSet_le_basicSet
-protected alias cs_isAscendingSet := characteristicSet_isAscendingSet
+protected alias cs_eq_basicSet := characteristicSet_eq_basicSet
+protected alias cs_toList_equiv := characteristicSet_toList_equiv
+protected alias cs_toList_le := characteristicSet_toList_le
+protected alias cs_initial_reduced := characteristicSet_initial_reduced
 
 /-! ### Zero Decomposition -/
 
@@ -286,53 +305,46 @@ Decomposes the zero set of `l` into a union of zero sets of triangular sets.
 The algorithm recursively computes the characteristic set `CS`
 and adds branches for the initials of `CS`.
 -/
-noncomputable def zeroDecomposition (is_as : TriangularSet σ R → Prop)
-    [AscendingSetTheory σ R is_as] (l : List (MvPolynomial σ R)) : List (TriangularSet σ R) :=
-  let CS := l.characteristicSet is_as
+noncomputable def zeroDecomposition (l : List (MvPolynomial σ R)) : List (TriangularSet σ R) :=
+  let CS := l.characteristicSet B
   -- Recurse on: Initial(p) added to the system
   let subDecomp := (CS.toList.filter fun p ↦ p.vars.max ≠ ⊥).attach.map
-    fun ⟨p, _⟩ ↦ zeroDecomposition is_as (p.initial :: CS.toList ++ l)
+    fun ⟨p, _⟩ ↦ zeroDecomposition (p.initial :: CS.toList ++ l)
   CS :: subDecomp.flatten
-  termination_by l.basicSet is_as
+  termination_by B.basicSet l
   decreasing_by
     -- Proof that order(p.initial :: CS ++ l) < order(l)
-    change ([p.initial] ++ CS.toList ++ l).basicSet is_as < l.basicSet is_as
+    change B.basicSet ([p.initial] ++ CS.toList ++ l) < B.basicSet l
     -- 1. Adding elements can only decrease order
-    apply lt_of_le_of_lt (basicSet_ge_of_subset <| List.subset_append_left _ l)
+    apply lt_of_le_of_lt (B.basicSet_ge_of_subset <| List.subset_append_left _ l)
     -- 2. Order(CS) ≤ Order(l)
     apply lt_of_lt_of_le ?_
-      (le_trans (basicSet_toList_le_of_isAscendingSet l.cs_isAscendingSet) l.cs_le_basicSet)
-    -- 3. Adding initial to CS strictly decreases order because initial is reduced wrt CS
-    apply basicSet_append_lt_of_exists_reducedToSet
-    use p.initial
-    simp only [List.mem_cons, List.not_mem_nil, or_false, ne_eq, true_and]
-    -- Get properties of p from filter/attach
-    have hp : p ∈ CS ∧ ¬p.vars.max = ⊥ :=  by expose_names; simpa using property
-    refine ⟨initial_ne_zero (ne_zero_of_mem hp.1), fun q hq ↦ ?_⟩
-    have : p.initial.reducedToSet CS :=
-      initial_reducedToSet_of_max_vars_ne_bot' l.cs_isAscendingSet hp.1 hp.2
-    exact this q <| mem_toList_iff.mp <| CS.toList.basicSet_subset hq
+      (le_trans (l.cs_toList_le B) (l.cs_le_basicSet B))
+    -- 3. Adding an initial strictly decreases order.
+    have hp : p ∈ CS ∧ ¬p.vars.max = ⊥ := by expose_names; simpa using property
+    exact B.basicSet_cons_lt (initial_ne_zero (ne_zero_of_mem hp.1))
+      (B.reducedToSet_basicSet (l.cs_initial_reduced B p hp.1 hp.2))
 
-theorem isAscendingSet_of_mem_zeroDecomposition :
-    ∀ CS ∈ l.zeroDecomposition is_as, is_as CS := by
-  induction l using zeroDecomposition.induct is_as with | case1 l CS ih =>
+theorem eq_basicSet_of_mem_zeroDecomposition :
+    ∀ CS ∈ l.zeroDecomposition B, ∃ s, CS = B.basicSet s := by
+  induction l using zeroDecomposition.induct B with | case1 l CS ih =>
   intro CS' hCS'
   have hCS' : CS' = CS ∨ ∃ p, (p ∈ CS ∧ ¬p.vars.max = ⊥) ∧
-      CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition is_as := by
+      CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition B := by
     unfold zeroDecomposition at hCS'; simpa using hCS'
   rcases hCS' with hCS' | ⟨p, ⟨hp1, hp2⟩, hp3⟩
-  · exact hCS' ▸ l.cs_isAscendingSet
+  · exact hCS' ▸ l.cs_eq_basicSet B
   exact ih p (List.mem_filter_of_mem (mem_toList_iff.mpr hp1) (decide_eq_true hp2)) _ hp3
 
 theorem zero_isSetRemainder_of_mem_zeroDecomposition :
-    ∀ CS ∈ l.zeroDecomposition is_as, ∀ g ∈ l, (0 : MvPolynomial σ R).IsSetRemainder g CS := by
-  induction l using zeroDecomposition.induct is_as with | case1 l CS ih =>
+    ∀ CS ∈ l.zeroDecomposition B, ∀ g ∈ l, (0 : MvPolynomial σ R).IsSetRemainder g CS := by
+  induction l using zeroDecomposition.induct B with | case1 l CS ih =>
   intro CS' hCS'
   have hCS' : CS' = CS ∨ ∃ p, (p ∈ CS ∧ ¬p.vars.max = ⊥) ∧
-      CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition is_as := by
+      CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition B := by
     unfold zeroDecomposition at hCS'; simpa using hCS'
   rcases hCS' with hCS' | ⟨p, ⟨hp1, hp2⟩, hp3⟩
-  · exact hCS' ▸ zero_isSetRemainder_characteristicSetGo l l fun _ ↦ id
+  · exact hCS' ▸ zero_isSetRemainder_characteristicSetGo B l l fun _ ↦ id
   have := ih p (List.mem_filter_of_mem (mem_toList_iff.mpr hp1) (decide_eq_true hp2)) _ hp3
   intro g hg
   exact this g <| List.mem_cons.mpr <| Or.inr <| List.mem_append.mpr (Or.inr hg)
@@ -345,16 +357,16 @@ in `zeroDecomposition`, excluding the zeros of their initials.
 `Zero(l) = ⋃_{CS ∈ ZD(l)} Zero(CS/IP(CS))`.
 -/
 theorem vanishingSet_eq_zeroDecomposition_union :
-    vanishingSet K l = ⋃ CS ∈ l.zeroDecomposition is_as,
+    vanishingSet K l = ⋃ CS ∈ l.zeroDecomposition B,
       vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) := by
-  induction l using zeroDecomposition.induct is_as with | case1 l CS ih =>
+  induction l using zeroDecomposition.induct B with | case1 l CS ih =>
   -- 1. Unfold recursion
   suffices vanishingSet K l = vanishingSet K CS \ vanishingSet' K (initialProd CS.toFinset) ∪
       ⋃ p ∈ CS.toList.filter fun p ↦ p.vars.max ≠ ⊥,
-        ⋃ CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition is_as,
+        ⋃ CS' ∈ (p.initial :: CS.toList ++ l).zeroDecomposition B,
           vanishingSet K CS' \ vanishingSet' K (initialProd CS'.toFinset) by
     rw [zeroDecomposition]; simpa using this
-  have is_cs : IsCharacteristicSet K (characteristicSet is_as l) l := l.cs_isCharacteristicSet K
+  have is_cs : IsCharacteristicSet K (characteristicSet B l) l := l.cs_isCharacteristicSet B K
   -- 2. Apply decomposition theorem to the recursive structure
   suffices ⋃ p ∈ CS, vanishingSet K l ∩ vanishingSet' K p.initial =
       ⋃ p ∈ CS.toList.filter fun p ↦ p.vars.max ≠ ⊥,

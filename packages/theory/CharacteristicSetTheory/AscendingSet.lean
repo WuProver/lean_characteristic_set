@@ -5,7 +5,7 @@ Authors: Yuxuan Xiao
 -/
 module
 
-public import CharacteristicSetTheory.Rank
+public import CharacteristicSetTheory.BasicSet
 
 /-!
 # Ascending sets and basic sets
@@ -16,9 +16,10 @@ A basic set is the "smallest" ascending set contained in a given set of polynomi
 
 ## Main declarations
 
-* `AscendingSetTheory`: A typeclass abstracting the ascending-set predicate
-  (e.g., strong vs. weak reduction) and the algorithm to compute a basic set
-  from a list of polynomials.
+* `TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`: Standard and weak
+  ascending-set predicates.
+* `IsAscendingSet.basicSetSpec` and `IsWeakAscendingSet.basicSetSpec`: Two implementations
+  of `BasicSetSpec`, using the standard and weak basic set algorithms respectively.
 
 ## References
 * [Wen-Tsun Wu, *Basic principles of mechanical theorem proving in elementary geometries*]
@@ -30,35 +31,6 @@ A basic set is the "smallest" ascending set contained in a given set of polynomi
 @[expose] public section
 
 open MvPolynomial
-
-/--
-The abstract theory of Ascending Sets.
-This class allows us to define what it means for a `TriangularSet` to be an "Ascending Set".
-Different instances can implement Ritt's strong ascending sets or Wu's weak ascending sets.
--/
-class AscendingSetTheory (σ R : Type*) [CommSemiring R] [DecidableEq R] [LinearOrder σ]
-    (isAscendingSet : TriangularSet σ R → Prop) where
-  decidableReducedTo : DecidablePred isAscendingSet := by infer_instance
-  /-- A key property linking the ascending set structure to the initial.
-  If `S` is an ascending set, the initial of any non-constant element in `S`
-  must be reduced with respect to `S`. -/
-  initial_reducedToSet_of_max_vars_ne_bot : ∀ ⦃S : TriangularSet σ R⦄ ⦃i : ℕ⦄,
-    isAscendingSet S → (S i).vars.max ≠ ⊥ → (S i).initial.reducedToSet S
-  /-- Computes a Basic Set from a list of polynomials. -/
-  basicSet : List (MvPolynomial σ R) → TriangularSet σ R
-  /-- The output is always an Ascending Set. -/
-  basicSet_isAscendingSet (l : List (MvPolynomial σ R)) : isAscendingSet (basicSet l)
-  /-- The output is a subset of the input. -/
-  basicSet_subset (l : List (MvPolynomial σ R)) : ∀ ⦃c⦄, c ∈ basicSet l → c ∈ l
-  /-- Minimality condition: the output is ≤ any other ascending set contained in the input. -/
-  basicSet_minimal (l : List (MvPolynomial σ R)) :
-      ∀ ⦃S⦄, isAscendingSet S → (∀ ⦃p⦄, p ∈ S → p ∈ l) → basicSet l ≤ S
-  /-- Order reduction property: appending a reduced element strictly decreases the basic set order.
-  Crucial for proving termination of zero decomposition. -/
-  basicSet_append_lt_of_exists_reducedToSet : ∀ ⦃l1 l2 : List (MvPolynomial σ R)⦄,
-      (∃ p ∈ l2, p ≠ 0 ∧ p.reducedToSet (basicSet l1)) → basicSet (l2 ++ l1) < basicSet l1
-
-attribute [instance_reducible, instance 900] AscendingSetTheory.decidableReducedTo
 
 variable {R σ : Type*} [CommSemiring R] [LinearOrder σ] [DecidableEq R]
 
@@ -105,17 +77,31 @@ noncomputable instance : @DecidablePred (TriangularSet σ R) IsWeakAscendingSet 
 theorem isWeakAscendingSet_of_isAscendingSet {S : TriangularSet σ R} :
     IsAscendingSet S → IsWeakAscendingSet S :=  fun h _ _ hij hj ↦ initial_reducedTo (h hij hj)
 
+theorem initial_reducedToSet_of_max_vars_ne_bot_of_isWeakAscendingSet
+    {S : TriangularSet σ R} {i : ℕ} (h : S.IsWeakAscendingSet)
+    (hc : (S i).vars.max ≠ ⊥) : (S i).initial.reducedToSet S := by
+  intro p ⟨j, hj, hp⟩
+  rw [← hp]
+  rcases lt_trichotomy i j with hij | hij | hij
+  · exact initial_reducedTo (reducedTo_of_max_vars_lt (max_vars_lt_of_index_lt hj hij))
+  · exact hij ▸ initial_reducedTo_self hc
+  · exact (isWeakAscendingSet_iff.mp h) hij hj
+
 theorem initial_reducedToSet_of_max_vars_ne_bot
-    {isAscendingSet : TriangularSet σ R → Prop} [AscendingSetTheory σ R isAscendingSet]
-    {S : TriangularSet σ R} {i : ℕ} :
-    isAscendingSet S → (S i).vars.max ≠ ⊥ → (S i).initial.reducedToSet S :=
-  fun h1 h2 ↦ AscendingSetTheory.initial_reducedToSet_of_max_vars_ne_bot h1 h2
+    {S : TriangularSet σ R} {i : ℕ} (h : S.IsAscendingSet)
+    (hc : (S i).vars.max ≠ ⊥) : (S i).initial.reducedToSet S :=
+  initial_reducedToSet_of_max_vars_ne_bot_of_isWeakAscendingSet
+    (isWeakAscendingSet_of_isAscendingSet h) hc
+
+theorem initial_reducedToSet_of_max_vars_ne_bot_of_isWeakAscendingSet'
+    {S : TriangularSet σ R} {p : MvPolynomial σ R} (h : S.IsWeakAscendingSet) :
+    p ∈ S → p.vars.max ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_i, _, hi⟩ hc ↦
+  hi ▸ initial_reducedToSet_of_max_vars_ne_bot_of_isWeakAscendingSet h (hi ▸ hc)
 
 theorem initial_reducedToSet_of_max_vars_ne_bot'
-    {isAscendingSet : TriangularSet σ R → Prop} [AscendingSetTheory σ R isAscendingSet]
-    {S : TriangularSet σ R} {p : MvPolynomial σ R} (h : isAscendingSet S) :
-    p ∈ S → p.vars.max ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_, _, hi2⟩ hc ↦
-  hi2 ▸ initial_reducedToSet_of_max_vars_ne_bot h (hi2 ▸ hc)
+    {S : TriangularSet σ R} {p : MvPolynomial σ R} (h : S.IsAscendingSet) :
+    p ∈ S → p.vars.max ≠ ⊥ → p.initial.reducedToSet S := fun ⟨_i, _, hi⟩ hc ↦
+  hi ▸ initial_reducedToSet_of_max_vars_ne_bot h (hi ▸ hc)
 
 theorem isAscendingSet_single (p : MvPolynomial σ R) : (single p).IsAscendingSet :=
   fun i _ hij hj ↦ False.elim <| Nat.not_lt_zero i <| lt_of_lt_of_le hij <|
@@ -192,61 +178,6 @@ theorem isWeakAscendingSet_takeConcat (hp : p.initial.reducedToSet S) :
   exact TriangularSet.take_subset S _ <| mem_def.mpr hn
 
 end TriangularSet
-
-namespace MvPolynomial
-
-namespace List
-
-variable {isAscendingSet : TriangularSet σ R → Prop} [AscendingSetTheory σ R isAscendingSet]
-variable (l : List (MvPolynomial σ R)) {l1 l2 : List (MvPolynomial σ R)} {S T : TriangularSet σ R}
-
-/-- The Basic Set of a list `l`, as computed by the `AscendingSetTheory` instance. -/
-def basicSet (isAscendingSet : TriangularSet σ R → Prop) [AscendingSetTheory σ R isAscendingSet]
-    (l : List (MvPolynomial σ R)) : TriangularSet σ R :=
-  AscendingSetTheory.basicSet isAscendingSet l
-
-theorem basicSet_subset : ↑(l.basicSet isAscendingSet) ⊆ {p | p ∈ l} :=
-  AscendingSetTheory.basicSet_subset l
-
-theorem basicSet_minimal : ∀ ⦃S⦄, isAscendingSet S → ↑S ⊆ {p | p ∈ l} →
-    (l.basicSet isAscendingSet) ≤ S :=
-  fun _ hS ↦ AscendingSetTheory.basicSet_minimal l hS
-
-theorem basicSet_isAscendingSet : isAscendingSet (l.basicSet isAscendingSet) :=
-  AscendingSetTheory.basicSet_isAscendingSet l
-
-theorem basicSet_toList_equiv :
-    (l.basicSet isAscendingSet).toList.basicSet isAscendingSet ≈ l.basicSet isAscendingSet := by
-  refine And.intro ?_ ?_
-  <;> apply basicSet_minimal
-  · exact basicSet_isAscendingSet _
-  · intro p hp
-    exact TriangularSet.mem_toList_iff.mpr hp
-  · exact basicSet_isAscendingSet _
-  intro p hp
-  exact l.basicSet_subset <| TriangularSet.mem_toList_iff.mp <| basicSet_subset _ hp
-
-theorem basicSet_ge_of_subset : l1 ⊆ l2 → l2.basicSet isAscendingSet ≤ l1.basicSet isAscendingSet :=
-  fun h ↦ l2.basicSet_minimal l1.basicSet_isAscendingSet fun _ hp ↦ h <| l1.basicSet_subset hp
-
-theorem basicSet_append_comm :
-    (l1 ++ l2).basicSet isAscendingSet ≈ (l2 ++ l1).basicSet isAscendingSet :=
-  have (l1 l2 : List (MvPolynomial σ R)) : l2 ++ l1 ⊆ l1 ++ l2 := List.append_subset.mpr ⟨
-    List.subset_append_of_subset_right l1 fun _ ↦ id,
-    List.subset_append_of_subset_left l2 fun _ ↦ id⟩
-  And.intro (basicSet_ge_of_subset <| this l1 l2) (basicSet_ge_of_subset <| this l2 l1)
-
-theorem basicSet_append_lt_of_exists_reducedToSet
-    (h : ∃ p ∈ l2, p ≠ 0 ∧ p.reducedToSet (l1.basicSet isAscendingSet)) :
-      (l2 ++ l1).basicSet isAscendingSet < l1.basicSet isAscendingSet :=
-  AscendingSetTheory.basicSet_append_lt_of_exists_reducedToSet h
-
-theorem _root_.TriangularSet.basicSet_toList_le_of_isAscendingSet {S : TriangularSet σ R}
-    (hS : isAscendingSet S) : S.toList.basicSet isAscendingSet ≤ S := by
-  apply S.toList.basicSet_minimal hS
-  simp only [TriangularSet.mem_toList_iff, SetLike.setOfPred_mem_eq, subset_refl]
-
-end MvPolynomial.List
 
 open TriangularSet
 
@@ -439,32 +370,43 @@ protected lemma basicSet_minimal : ∀ ⦃S : TriangularSet σ R⦄, S.IsAscendi
       Option.all_true S hS1 (by simp) (fun p hp1 _ ↦ List.mem_filter.mpr ?_)
   exact ⟨List.mem_mergeSort.mpr (hS2 hp1), decide_eq_true <| ne_zero_of_mem hp1⟩
 
-/-- The Standard Basic Set algorithm satisfies the abstract `AscendingSetTheory` interface. -/
-noncomputable instance : AscendingSetTheory σ R IsAscendingSet where
-  initial_reducedToSet_of_max_vars_ne_bot := fun p i h hc hp ⟨j, hj1, hj2⟩ ↦ by
-    match em (i = j) with
-    | .inl hij =>
-      rw [← hj2, ← hij]
-      exact initial_reducedTo_self hc
-    | .inr hij =>
-      apply initial_reducedTo
-      rw [← hj2]
-      match lt_or_gt_of_ne hij with
-      | .inl hij => exact reducedTo_of_max_vars_lt <| max_vars_lt_of_index_lt hj1 hij
-      | .inr hij => exact (isAscendingSet_iff.mp h) hij hj1
+private theorem basicSet_toList_equiv :
+    basicSet (basicSet l).toList ≈ basicSet l := by
+  apply TriangularSet.equiv_of_le_of_ge
+  · exact IsAscendingSet.basicSet_minimal _ (IsAscendingSet.basicSet_isAscendingSet l)
+      (fun _ hp ↦ mem_toList_iff.mpr hp)
+  · exact IsAscendingSet.basicSet_minimal l (IsAscendingSet.basicSet_isAscendingSet _)
+      (fun _ hp ↦ IsAscendingSet.basicSet_subset l
+        (mem_toList_iff.mp (IsAscendingSet.basicSet_subset _ hp)))
+
+private theorem basicSet_ge_of_subset {l₁ l₂ : List (MvPolynomial σ R)}
+    (h : l₁ ⊆ l₂) : basicSet l₂ ≤ basicSet l₁ :=
+  IsAscendingSet.basicSet_minimal l₂ (IsAscendingSet.basicSet_isAscendingSet l₁)
+    (fun _ hp ↦ h (IsAscendingSet.basicSet_subset l₁ hp))
+
+private theorem basicSet_append_lt_of_exists_reducedToSet
+    {l1 l2 : List (MvPolynomial σ R)}
+    (h : ∃ p ∈ l2, p ≠ 0 ∧ p.reducedToSet (basicSet l1)) :
+    basicSet (l2 ++ l1) < basicSet l1 := by
+  obtain ⟨p, hp1, hp2, hp3⟩ := h
+  let S := (basicSet l1).takeConcat p
+  have hS1 : S.IsAscendingSet := isAscendingSet_takeConcat
+    hp3 (IsAscendingSet.basicSet_isAscendingSet l1)
+  have hS2 : S < basicSet l1 := takeConcat_lt_of_reducedToSet hp2 hp3
+  refine lt_of_le_of_lt (IsAscendingSet.basicSet_minimal _ hS1 fun q hq ↦ ?_) hS2
+  refine List.mem_append.mpr <| or_iff_not_imp_left.mpr fun hmem ↦ ?_
+  apply IsAscendingSet.basicSet_subset l1
+  exact takeConcat_subset q hq (ne_of_mem_of_not_mem hp1 hmem).symm
+
+/-- The standard basic set algorithm implements the basic set interface. -/
+noncomputable def basicSetSpec : BasicSetSpec σ R where
   basicSet := basicSet
-  basicSet_isAscendingSet := IsAscendingSet.basicSet_isAscendingSet
   basicSet_subset := IsAscendingSet.basicSet_subset
-  basicSet_minimal := IsAscendingSet.basicSet_minimal
-  basicSet_append_lt_of_exists_reducedToSet l1 l2 := fun ⟨p, hp1, hp2, hp3⟩ ↦ by
-    let S := (basicSet l1).takeConcat p
-    have hS1 : S.IsAscendingSet := isAscendingSet_takeConcat
-      hp3 (IsAscendingSet.basicSet_isAscendingSet l1)
-    have hS2 : S < basicSet l1 := takeConcat_lt_of_reducedToSet hp2 hp3
-    refine lt_of_le_of_lt (IsAscendingSet.basicSet_minimal _ hS1 fun q hq ↦ ?_) hS2
-    refine List.mem_append.mpr <| or_iff_not_imp_left.mpr fun hmem ↦ ?_
-    apply IsAscendingSet.basicSet_subset l1
-    exact takeConcat_subset q hq (ne_of_mem_of_not_mem hp1 hmem).symm
+  basicSet_toList_equiv := by exact IsAscendingSet.basicSet_toList_equiv
+  basicSet_append_lt := by exact IsAscendingSet.basicSet_append_lt_of_exists_reducedToSet
+  basicSet_ge_of_subset := by exact IsAscendingSet.basicSet_ge_of_subset
+  initial_reduced := fun l _ hp hmax ↦
+    initial_reducedToSet_of_max_vars_ne_bot' (IsAscendingSet.basicSet_isAscendingSet l) hp hmax
 
 end IsAscendingSet
 
@@ -665,32 +607,43 @@ protected lemma basicSet_minimal : ∀ ⦃S : TriangularSet σ R⦄, S.IsWeakAsc
       Option.all_true S hS1 (by simp) (fun p hp1 _ ↦ List.mem_filter.mpr ?_)
   exact ⟨List.mem_mergeSort.mpr (hS2 hp1), decide_eq_true <| ne_zero_of_mem hp1⟩
 
-/-- The Weak Basic Set algorithm satisfies the abstract `AscendingSetTheory` interface. -/
-noncomputable instance : AscendingSetTheory σ R IsWeakAscendingSet where
-  initial_reducedToSet_of_max_vars_ne_bot := fun p i h hc hp ⟨j, hj1, hj2⟩ ↦ by
-    match em (i = j) with
-    | .inl hij =>
-      rw [← hj2, ← hij]
-      exact initial_reducedTo_self hc
-    | .inr hij =>
-      rw [← hj2]
-      match lt_or_gt_of_ne hij with
-      | .inl hij =>
-        apply initial_reducedTo
-        exact reducedTo_of_max_vars_lt <| max_vars_lt_of_index_lt hj1 hij
-      | .inr hij => exact (isWeakAscendingSet_iff.mp h) hij hj1
+private theorem basicSet_toList_equiv :
+    basicSet (basicSet l).toList ≈ basicSet l := by
+  apply TriangularSet.equiv_of_le_of_ge
+  · exact IsWeakAscendingSet.basicSet_minimal _ (IsWeakAscendingSet.basicSet_isWeakAscendingSet l)
+      (fun _ hp ↦ mem_toList_iff.mpr hp)
+  · exact IsWeakAscendingSet.basicSet_minimal l (IsWeakAscendingSet.basicSet_isWeakAscendingSet _)
+      (fun _ hp ↦ IsWeakAscendingSet.basicSet_subset l
+        (mem_toList_iff.mp (IsWeakAscendingSet.basicSet_subset _ hp)))
+
+private theorem basicSet_ge_of_subset {l₁ l₂ : List (MvPolynomial σ R)}
+    (h : l₁ ⊆ l₂) : basicSet l₂ ≤ basicSet l₁ :=
+  IsWeakAscendingSet.basicSet_minimal l₂ (IsWeakAscendingSet.basicSet_isWeakAscendingSet l₁)
+    (fun _ hp ↦ h (IsWeakAscendingSet.basicSet_subset l₁ hp))
+
+private theorem basicSet_append_lt_of_exists_reducedToSet
+    {l1 l2 : List (MvPolynomial σ R)}
+    (h : ∃ p ∈ l2, p ≠ 0 ∧ p.reducedToSet (basicSet l1)) :
+    basicSet (l2 ++ l1) < basicSet l1 := by
+  obtain ⟨p, hp1, hp2, hp3⟩ := h
+  let S := (basicSet l1).takeConcat p
+  have hS1 : S.IsWeakAscendingSet := isWeakAscendingSet_takeConcat
+    (initial_reducedToSet hp3) (IsWeakAscendingSet.basicSet_isWeakAscendingSet l1)
+  have hS2 : S < basicSet l1 := takeConcat_lt_of_reducedToSet hp2 hp3
+  refine lt_of_le_of_lt (IsWeakAscendingSet.basicSet_minimal _ hS1 fun q hq ↦ ?_) hS2
+  refine List.mem_append.mpr <| or_iff_not_imp_left.mpr fun hmem ↦ ?_
+  apply IsWeakAscendingSet.basicSet_subset l1
+  exact takeConcat_subset q hq (ne_of_mem_of_not_mem hp1 hmem).symm
+
+/-- The weak basic set algorithm implements the basic set interface. -/
+noncomputable def basicSetSpec : BasicSetSpec σ R where
   basicSet := basicSet
-  basicSet_isAscendingSet := IsWeakAscendingSet.basicSet_isWeakAscendingSet
   basicSet_subset := IsWeakAscendingSet.basicSet_subset
-  basicSet_minimal := IsWeakAscendingSet.basicSet_minimal
-  basicSet_append_lt_of_exists_reducedToSet l1 l2 := fun ⟨p, hp1, hp2, hp3⟩ ↦ by
-    let S := (basicSet l1).takeConcat p
-    have hS1 : S.IsWeakAscendingSet := isWeakAscendingSet_takeConcat
-      (initial_reducedToSet hp3) (IsWeakAscendingSet.basicSet_isWeakAscendingSet l1)
-    have hS2 : S < basicSet l1 := takeConcat_lt_of_reducedToSet hp2 hp3
-    refine lt_of_le_of_lt (IsWeakAscendingSet.basicSet_minimal _ hS1 fun q hq ↦ ?_) hS2
-    refine List.mem_append.mpr <| or_iff_not_imp_left.mpr fun hmem ↦ ?_
-    apply IsWeakAscendingSet.basicSet_subset l1
-    exact takeConcat_subset q hq (ne_of_mem_of_not_mem hp1 hmem).symm
+  basicSet_toList_equiv := by exact IsWeakAscendingSet.basicSet_toList_equiv
+  basicSet_append_lt := by exact IsWeakAscendingSet.basicSet_append_lt_of_exists_reducedToSet
+  basicSet_ge_of_subset := by exact IsWeakAscendingSet.basicSet_ge_of_subset
+  initial_reduced := fun l _ hp hmax ↦
+    initial_reducedToSet_of_max_vars_ne_bot_of_isWeakAscendingSet'
+      (IsWeakAscendingSet.basicSet_isWeakAscendingSet l) hp hmax
 
 end IsWeakAscendingSet

@@ -1,3 +1,4 @@
 module
 
 public import CharacteristicSetTheory.CharacteristicSet
+public import CharacteristicSetTheory.AscendingSet
