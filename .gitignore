@@ -1,11 +1,9 @@
 .lake/
 .venv/
-.local/
+.vscode/
+.zed/
 /blueprint/print
 /blueprint/web
 /blueprint/lean_decls
 /blueprint/src/web.paux
 .DS_Store
-
-AGENTS.md
-CLAUDE.md
