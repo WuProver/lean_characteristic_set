@@ -4,7 +4,7 @@ defaultTargets = ["characteristic_bench"]
 
 [[require]]
 name = "CharacteristicSet"
-path = ".."
+path = "../packages/computable"
 
 [[require]]
 name = "lean-bench"

@@ -6,7 +6,7 @@
     "context": ".."
   },
 
-  "onCreateCommand": "lake -d packages/bridge exe cache get && lake -d packages/bridge build",
+  "onCreateCommand": "lake exe cache get && lake build",
 
   "hostRequirements": {
      "cpus": 4

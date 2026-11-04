@@ -18,9 +18,9 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 - [`TriangularSet`](./packages/theory/CharacteristicSetTheory/TriangularSet.lean): A finite ordered sequence of nonzero polynomials with strictly increasing classes.
 - [`TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): Ritt's strong ascending sets and Wu's weak ascending sets, respectively.
 - [`BasicSetSpec`](./packages/theory/CharacteristicSetTheory/BasicSet.lean): The interface required by the characteristic-set and zero-decomposition algorithms.
-- [`Computable.Standard.basicSet` and `Computable.Weak.basicSet`](./CharacteristicSet/Computable/AscendingSet.lean): Executable standard and weak basic sets on Hex polynomial lists, with matching `isAscendingSet` checks.
+- [`Computable.Standard.basicSet` and `Computable.Weak.basicSet`](./packages/computable/CharacteristicSet/Computable/AscendingSet.lean): Executable standard and weak basic sets on Hex polynomial lists, with matching `isAscendingSet` checks.
 - [`Bridge.Standard.basicSetSpec` and `Bridge.Weak.basicSetSpec`](./packages/bridge/CharacteristicSetBridge/BasicSet.lean): Specifications built from the executable algorithms for `Fin n` variables. The theory package provides the abstract interface; the bridge proves structure and rank minimality directly for the executable loops and supplies both implementations. Both preserve the complete ordered output, including stable equal-rank selection. The existing `Computable.basicSet` name remains a standard-algorithm compatibility entry point.
-- [`Computable.Standard.characteristicSet` and `Computable.Weak.characteristicSet`](./CharacteristicSet/Computable/CharacteristicSet.lean): Executable characteristic sets returning Hex polynomial lists without an iteration limit. Import `CharacteristicSet.Computable` to run either algorithm independently. Computation stays in Hex; the bridge separately proves termination by rank descent and mathematical correctness.
+- [`Computable.Standard.characteristicSet` and `Computable.Weak.characteristicSet`](./packages/computable/CharacteristicSet/Computable/CharacteristicSet.lean): Executable characteristic sets returning Hex polynomial lists without an iteration limit. Import `CharacteristicSet.Computable` to run either algorithm independently. Computation stays in Hex; the bridge separately proves termination by rank descent and mathematical correctness.
 - [`Bridge.Standard.characteristicSet_toMvPolynomial` and `Bridge.Weak.characteristicSet_toMvPolynomial`](./packages/bridge/CharacteristicSetBridge/CharacteristicSet.lean): Exact ordered correspondence with the theory algorithms. The `characteristicSet_terminates` theorem proves termination over fields; `characteristicSet_check` and `characteristicSet_correct` establish the corresponding ascending property and characteristic-set correctness for the actual output.
 - [`MvPolynomial.List.characteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The characteristic set of a list of polynomials.
 - [`MvPolynomial.List.zeroDecomposition`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): A list of triangular sets that decompose the zero set of a polynomial system.
@@ -38,9 +38,11 @@ Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomia
 
 | Package location | Import | Contents |
 | --- | --- | --- |
-| Repository root | `CharacteristicSet` | Executable polynomial foundations |
+| `packages/computable` | `CharacteristicSet` | Executable polynomial foundations, algorithms, and examples |
 | `packages/theory` | `CharacteristicSetTheory` | Mathematical definitions, algorithms, and proofs |
-| `packages/bridge` | `CharacteristicSetBridge` | Computation, theory, and correspondence proofs |
+| `packages/bridge` | `CharacteristicSetBridge` | Representation correspondence, termination, and correctness proofs |
+
+The repository root is the `CharacteristicSetWorkspace` aggregate package. It builds all three libraries and hosts API documentation tools; it defines no Lean library of its own. Computable and theory are independent packages, and bridge depends on both. Child packages link to the root `lean-toolchain`, keeping a single version while supporting tools that read the file directly.
 
 [Performance benchmarks](bench/README.md)
 
@@ -62,24 +64,54 @@ These tools help us manage development, track progress toward formalization, and
 
 To use this project, you'll need to have Lean 4 and its package manager lake installed. If you don’t already have Lean 4 set up, follow the [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
 
-Once Lean is installed, you can clone this repository and build the executable foundations:
+Clone the repository and build the complete project from the aggregate root:
 
-``` bash
+```bash
 git clone https://github.com/WuProver/lean_characteristic_set.git
 cd lean_characteristic_set
+lake exe cache get
 lake build
-# For the full theory and correctness bridges:
-lake -d packages/bridge exe cache get
+```
+
+To build only the executable algorithms without Mathlib or bridge dependencies:
+
+```bash
+lake -d packages/computable build
+```
+
+The other packages also support independent builds:
+
+```bash
+lake -d packages/theory build
 lake -d packages/bridge build
 ```
 
-Executable examples live in `CharacteristicSet/Computable/Examples/` and run without
-Mathlib or bridge imports. They are checked by the root package’s `lake build`:
+The root `lake build` explicitly builds every module of all three libraries,
+including the executable examples in
+`packages/computable/CharacteristicSet/Computable/Examples/`. To run the examples
+using only the computable package's dependencies:
 
 ```bash
+cd packages/computable
 lake env lean CharacteristicSet/Computable/Examples/Basic.lean
 lake env lean CharacteristicSet/Computable/Examples/CharacteristicSet.lean
 ```
+
+Generate API documentation and check blueprint declarations from the repository root:
+
+```bash
+lake build CharacteristicSetBridge:docs
+cd packages/bridge
+lake exe checkdecls ../../blueprint/lean_decls
+```
+
+The declaration checker runs in bridge because it loads the current root
+package's library modules. API documentation is generated in `.lake/build/doc`.
+
+Each build entry point has its own `lake-manifest.json`. When updating shared
+dependencies, keep their pinned revisions consistent across these manifests.
+Use `lake --keep-toolchain -d packages/<package> update ...` when updating a
+child package so Lake continues to use the shared root toolchain.
 
 ## References
 

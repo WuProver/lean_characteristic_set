@@ -4,7 +4,7 @@ image:
 
 tasks:
   - name: Build Lean workspace
-    init: lake -d packages/bridge exe cache get && lake -d packages/bridge build
+    init: lake exe cache get && lake build
 
 vscode:
   extensions:

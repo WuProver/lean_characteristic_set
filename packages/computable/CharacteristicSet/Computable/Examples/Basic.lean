@@ -1,7 +1,7 @@
 import CharacteristicSet.Computable
 import HexMvPoly.Ring
 
-/-! Executable acceptance examples. Run `lake env lean CharacteristicSet/Computable/Examples/Basic.lean`.
+/-! Executable acceptance examples. From `packages/computable`, run `lake env lean CharacteristicSet/Computable/Examples/Basic.lean`.
 All inputs and intermediate polynomials use Hex; there is no Mathlib import. -/
 
 open Hex Hex.MvPoly CharacteristicSet.Computable

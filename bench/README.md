@@ -2,6 +2,8 @@
 
 These benchmarks measure native execution of polynomial queries, initial extraction, rank comparison, reduction checks, list prefix replacement, standard basic sets, and specified-variable pseudo-division on sparse integer polynomials, plus general pseudo-division by a nonzero rational constant and successive remainders over an ordered rational divisor list.
 
+The benchmark package depends only on `packages/computable` and benchmark tooling.
+
 Run from the repository root; the script builds the native executable first:
 
 ```bash

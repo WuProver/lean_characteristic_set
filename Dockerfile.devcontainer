@@ -10,7 +10,7 @@ WORKDIR /home/vscode
 SHELL ["/bin/bash", "-c"]
 
 # Install the pinned toolchain in the image. Package dependencies are prepared
-# in the checked-out Bridge workspace by devcontainer.json.
+# in the checked-out root workspace by devcontainer.json.
 COPY --chown=vscode:vscode lean-toolchain .
 
 # Reinstall elan when the pinned toolchain changes.

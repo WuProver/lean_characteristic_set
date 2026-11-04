@@ -2,7 +2,7 @@ import CharacteristicSet.Computable
 import HexMvPoly.Ring
 
 /-! Executable characteristic-set regression examples, without Mathlib or bridge imports.
-Run from the repository root:
+Run from `packages/computable`:
 `lake env lean CharacteristicSet/Computable/Examples/CharacteristicSet.lean`. -/
 
 open Hex Hex.MvPoly CharacteristicSet.Computable
