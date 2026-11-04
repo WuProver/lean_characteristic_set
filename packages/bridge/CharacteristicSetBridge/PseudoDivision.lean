@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Yuxuan Xiao. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Yuxuan Xiao
+-/
 module
 
 public import CharacteristicSet.Computable.PseudoDivision
@@ -5,13 +10,13 @@ public import CharacteristicSetBridge.Initial
 public import CharacteristicSetBridge.Reduced
 public import CharacteristicSetTheory.PseudoDivision
 
-/-! Exact correspondence and sufficient internal bound for Hex pseudo-division. -/
+/-! Direct correctness proofs for the executable pseudo-division and its internal bound. -/
 
 public section
 
 namespace CharacteristicSet.Bridge
 
-open Hex HexMvPolyTheory MvPolynomial
+open Hex HexMvPolyTheory MvPolynomial TriangularSet
 open scoped HexMvPolyTheory
 
 section CommRing
@@ -19,45 +24,6 @@ section CommRing
 variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [CommRing R] [DecidableEq R]
   [NoZeroDivisors R]
-
-/-- Interpret all three fields without changing the elimination count. -/
-noncomputable def pseudoResultToMvPolynomial (p : Computable.PseudoResult (MvPoly n R cmp)) :
-    MvPolynomial.PseudoResult (MvPolynomial (Fin n) R) :=
-  ⟨p.exponent, toMvPolynomial p.quotient, toMvPolynomial p.remainder⟩
-
-omit [DecidableEq R] in
-/-- The cancellation bound used by the reference recursive algorithm. -/
-private theorem cancellation_degree_lt (i : Fin n) (f r : MvPolynomial (Fin n) R)
-    (h : f.degreeOf i ≠ 0) (hn : ¬ r.degreeOf i < f.degreeOf i) :
-    (f.initialOf i * r -
-      (r.initialOf i * X i ^ (r.degreeOf i - f.degreeOf i)) * f).degreeOf i <
-      r.degreeOf i := by
-  let I := f.initialOf i
-  let term := r.initialOf i * X i ^ (r.degreeOf i - f.degreeOf i)
-  change (I * r - term * f).degreeOf i < r.degreeOf i
-  suffices (I * r - term * f).degreeOf i ≤ r.degreeOf i - 1 by
-    exact (Nat.le_sub_one_iff_lt (lt_of_lt_of_le
-      (Nat.ne_zero_iff_zero_lt.mp h) (Nat.not_lt.mp hn))).mp this
-  have Id : I.degreeOf i = 0 := by rw [degreeOf_initialOf_self]
-  have hmul : (I * r).degreeOf i - 1 ≤ r.degreeOf i - 1 := by
-    apply Nat.sub_le_sub_right
-    rw [← zero_add (r.degreeOf i), ← Id]
-    exact degreeOf_mul_le ..
-  refine le_trans ?_ hmul
-  apply degreeOf_sub_lt_of_initialOf_eq
-  repeat1' rw [mul_assoc, mul_comm _ f, ← mul_assoc]
-  · rw [initialOf_mul_X_self_pow, initialOf_mul_eq, initialOf_mul_eq]
-    rw [initialOf_initialOf_self, initialOf_initialOf_self, mul_comm]
-  have f_ne : f ≠ 0 := ne_zero_of_degreeOf_ne_zero h
-  have I_ne : I ≠ 0 := initialOf_ne_zero i f_ne
-  have r_ne : r ≠ 0 := by
-    contrapose! hn
-    rw [hn, degreeOf_zero]
-    exact Nat.zero_lt_of_ne_zero h
-  have Ir_ne : r.initialOf i ≠ 0 := initialOf_ne_zero i r_ne
-  rw [degreeOf_mul_X_self_pow_eq_add_of_ne_zero _ _ (mul_ne_zero_iff.mpr ⟨Ir_ne, f_ne⟩)]
-  rw [degreeOf_mul_eq I_ne r_ne, degreeOf_mul_eq Ir_ne f_ne]
-  simpa [I] using (Nat.add_sub_of_le <| Nat.le_of_not_lt hn).symm
 
 /-- Every actual Hex elimination strictly decreases the selected degree. -/
 theorem pseudoOf_step_degree_lt (i : Fin n) (f r : MvPoly n R cmp)
@@ -70,95 +36,89 @@ theorem pseudoOf_step_degree_lt (i : Fin n) (f r : MvPoly n R cmp)
     cancellation_degree_lt i (toMvPolynomial f) (toMvPolynomial r)
       (by simpa using h) (by simpa using hn)
 
-/-- Any bound larger than the current remainder degree gives the exact reference
-result. The zero-fuel branch is unreachable under this hypothesis. -/
-theorem pseudoOf_go_toMvPolynomial (i : Fin n) (f : MvPoly n R cmp)
-    (h : f.degreeOf i ≠ 0) (fuel s : Nat) (q r : MvPoly n R cmp)
+omit [NoZeroDivisors R] in
+/-- The actual loop preserves reconstruction, for every fuel value. -/
+theorem pseudoOf_go_equation (i : Fin n) (g f : MvPoly n R cmp) (fuel s : ℕ)
+    (q r : MvPoly n R cmp)
+    (heq : (toMvPolynomial f).initialOf i ^ s * toMvPolynomial g =
+      toMvPolynomial q * toMvPolynomial f + toMvPolynomial r) :
+    let res := Computable.pseudoOf.go i f fuel s q r
+    (toMvPolynomial f).initialOf i ^ res.exponent * toMvPolynomial g =
+      toMvPolynomial res.quotient * toMvPolynomial f + toMvPolynomial res.remainder := by
+  induction fuel generalizing s q r with
+  | zero => exact heq
+  | succ fuel ih =>
+    rw [Computable.pseudoOf.go]
+    split
+    · exact heq
+    · apply ih
+      simp only [toMvPolynomial_add, toMvPolynomial_sub, toMvPolynomial_mul,
+        initialOf_toMvPolynomial, toMvPolynomial_pow, toMvPolynomial_X]
+      rw [pow_succ', mul_assoc, heq]
+      ring
+
+/-- Sufficient fuel reaches a remainder of smaller degree. -/
+theorem pseudoOf_go_stops (i : Fin n) (f : MvPoly n R cmp)
+    (h : f.degreeOf i ≠ 0) (fuel s : ℕ) (q r : MvPoly n R cmp)
     (enough : r.degreeOf i < fuel) :
-    pseudoResultToMvPolynomial (Computable.pseudoOf.go i f fuel s q r) =
-      MvPolynomial.pseudoOf.go i (toMvPolynomial f) s (toMvPolynomial q)
-        (toMvPolynomial r) (by simpa using h) := by
+    (Computable.pseudoOf.go i f fuel s q r).remainder.degreeOf i < f.degreeOf i := by
   induction fuel generalizing s q r with
   | zero => omega
   | succ fuel ih =>
-    rw [Computable.pseudoOf.go, MvPolynomial.pseudoOf.go]
-    by_cases hn : r.degreeOf i < f.degreeOf i
-    · simp only [← degreeOf_toMvPolynomial, hn, ↓reduceIte, pseudoResultToMvPolynomial]
-    · simp only [← degreeOf_toMvPolynomial, hn, ↓reduceIte]
-      have descent := pseudoOf_step_degree_lt i f r h hn
-      have next := ih (s + 1) (Computable.initialOf i f * q +
-        Computable.initialOf i r * MvPoly.X i ^ (r.degreeOf i - f.degreeOf i))
-        (Computable.initialOf i f * r -
-        (Computable.initialOf i r * MvPoly.X i ^ (r.degreeOf i - f.degreeOf i)) * f)
-        (by omega)
-      simpa only [toMvPolynomial_add, toMvPolynomial_mul, toMvPolynomial_sub,
-        initialOf_toMvPolynomial, toMvPolynomial_pow, toMvPolynomial_X,
-        degreeOf_toMvPolynomial] using next
+    rw [Computable.pseudoOf.go]
+    split
+    · assumption
+    · apply ih
+      have := pseudoOf_step_degree_lt i f r h (by assumption)
+      omega
 
-/-- Exact equality of exponent, quotient and remainder with the theory algorithm. -/
-theorem pseudoOf_toMvPolynomial (i : Fin n) (g f : MvPoly n R cmp) :
-    pseudoResultToMvPolynomial (Computable.pseudoOf i g f) =
-      (toMvPolynomial g).pseudoOf i (toMvPolynomial f) := by
-  unfold Computable.pseudoOf MvPolynomial.pseudoOf
-  by_cases h : f.degreeOf i = 0
-  · simp only [← degreeOf_toMvPolynomial, h, ↓reduceIte, ↓reduceDIte,
-      pseudoResultToMvPolynomial, toMvPolynomial_zero]
-  · simp only [← degreeOf_toMvPolynomial, h, ↓reduceIte, ↓reduceDIte]
-    simpa using pseudoOf_go_toMvPolynomial i f h (g.degreeOf i + 1) 0 0 g
-      (Nat.lt_succ_self _)
+omit [NoZeroDivisors R] in
+/-- Variables absent from the divisor cannot acquire a greater degree. -/
+theorem pseudoOf_go_degree_le (i j : Fin n) (f : MvPoly n R cmp)
+    (hi : i ≠ j) (hj : f.degreeOf j = 0) (fuel s : ℕ) (q r : MvPoly n R cmp) :
+    (Computable.pseudoOf.go i f fuel s q r).remainder.degreeOf j ≤ r.degreeOf j := by
+  induction fuel generalizing s q r with
+  | zero => exact le_rfl
+  | succ fuel ih =>
+    rw [Computable.pseudoOf.go]
+    split
+    · exact le_rfl
+    · refine le_trans (ih ..) ?_
+      simp only [degreeOf_toMvPolynomial] at hj ⊢
+      simp only [toMvPolynomial_sub, toMvPolynomial_mul, initialOf_toMvPolynomial,
+        toMvPolynomial_pow, toMvPolynomial_X]
+      apply le_trans (degreeOf_sub_le ..)
+      apply max_le <;> apply le_trans (degreeOf_mul_le ..)
+      · have hz : ((toMvPolynomial f).initialOf i).degreeOf j = 0 :=
+          Nat.eq_zero_of_le_zero (by
+            simpa only [hj] using degreeOf_initialOf_le i j (toMvPolynomial f))
+        simp [hz]
+      · rw [hj, add_zero]
+        apply le_trans (degreeOf_mul_le ..)
+        rw [degreeOf_X_pow_of_ne _ hi.symm, add_zero]
+        exact degreeOf_initialOf_le i j (toMvPolynomial r)
 
-/-- The actual bounded Hex loop reaches the stopping condition whenever its
-bound exceeds the starting degree; it cannot silently return a truncated state. -/
-theorem pseudoOf_go_stops (i : Fin n) (f : MvPoly n R cmp)
-    (h : f.degreeOf i ≠ 0) (fuel s : Nat) (q r : MvPoly n R cmp)
-    (enough : r.degreeOf i < fuel) :
-    (Computable.pseudoOf.go i f fuel s q r).remainder.degreeOf i < f.degreeOf i := by
-  have exactResult := congrArg MvPolynomial.PseudoResult.remainder
-    (pseudoOf_go_toMvPolynomial i f h fuel s q r enough)
-  have bound := MvPolynomial.degreeOf_pseudoOfGo_remainder_lt_of_degreeOf_ne_zero
-    (i := i) (f := toMvPolynomial f) (by simpa using h) s
-    (toMvPolynomial q) (toMvPolynomial r)
-  rw [← exactResult] at bound
-  simpa only [pseudoResultToMvPolynomial, ← degreeOf_toMvPolynomial] using bound
-
-/-- The computed exponent is the actual exponent of the theory algorithm. -/
-theorem pseudoOf_exponent (i : Fin n) (g f : MvPoly n R cmp) :
-    (Computable.pseudoOf i g f).exponent =
-      ((toMvPolynomial g).pseudoOf i (toMvPolynomial f)).exponent :=
-  congrArg MvPolynomial.PseudoResult.exponent (pseudoOf_toMvPolynomial i g f)
-
-/-- Exact interpretation of the computed quotient. -/
-theorem pseudoOf_quotient (i : Fin n) (g f : MvPoly n R cmp) :
-    toMvPolynomial (Computable.pseudoOf i g f).quotient =
-      ((toMvPolynomial g).pseudoOf i (toMvPolynomial f)).quotient :=
-  congrArg MvPolynomial.PseudoResult.quotient (pseudoOf_toMvPolynomial i g f)
-
-/-- Exact interpretation of the computed remainder. -/
-theorem pseudoOf_remainder (i : Fin n) (g f : MvPoly n R cmp) :
-    toMvPolynomial (Computable.pseudoOf i g f).remainder =
-      ((toMvPolynomial g).pseudoOf i (toMvPolynomial f)).remainder :=
-  congrArg MvPolynomial.PseudoResult.remainder (pseudoOf_toMvPolynomial i g f)
-
-/-- Reconstruction holds as an equality of Hex polynomials. -/
+omit [NoZeroDivisors R] in
 theorem pseudoOf_equation (i : Fin n) (g f : MvPoly n R cmp) :
     Computable.initialOf i f ^ (Computable.pseudoOf i g f).exponent * g =
       (Computable.pseudoOf i g f).quotient * f + (Computable.pseudoOf i g f).remainder := by
   apply toMvPolynomial_injective
-  simpa only [toMvPolynomial_mul, toMvPolynomial_pow, initialOf_toMvPolynomial,
-    toMvPolynomial_add, pseudoOf_exponent, pseudoOf_quotient, pseudoOf_remainder] using
-    MvPolynomial.pseudoOf_equation i (toMvPolynomial g) (toMvPolynomial f)
+  simp only [toMvPolynomial_mul, toMvPolynomial_pow, initialOf_toMvPolynomial, toMvPolynomial_add]
+  unfold Computable.pseudoOf
+  split_ifs with h
+  · simp only
+    rw [pow_one, initialOf_eq_of_degreeOf_eq_zero (by simpa using h),
+      toMvPolynomial_zero, add_zero, mul_comm]
+  · exact pseudoOf_go_equation i g f _ 0 0 g (by simp)
 
-/-- Positive-degree divisors yield a remainder of strictly smaller degree. -/
 theorem pseudoOf_remainder_degree_lt (i : Fin n) (g f : MvPoly n R cmp)
     (h : f.degreeOf i ≠ 0) :
     (Computable.pseudoOf i g f).remainder.degreeOf i < f.degreeOf i := by
   rw [Computable.pseudoOf, ite_eq_right h]
-  exact pseudoOf_go_stops i f h (g.degreeOf i + 1) 0 0 g (Nat.lt_succ_self _)
+  exact pseudoOf_go_stops i f h _ _ _ _ (Nat.lt_succ_self _)
 
 end CommRing
-
 section Field
-
 variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Field R] [DecidableEq R]
 
@@ -173,60 +133,6 @@ private theorem pseudo_termsList_isEmpty_iff (p : MvPoly n R cmp) :
     have hp : p = 0 := toMvPolynomial_injective (by simpa using h)
     subst p
     rfl
-
-/-- General pseudo-division agrees exactly with the theory, including constants. -/
-theorem pseudo_toMvPolynomial (g f : MvPoly n R cmp) :
-    pseudoResultToMvPolynomial (Computable.pseudo g f) =
-      (toMvPolynomial g).pseudo (toMvPolynomial f) := by
-  unfold Computable.pseudo MvPolynomial.pseudo
-  simp only [pseudo_termsList_isEmpty_iff]
-  split_ifs with h
-  · simp [pseudoResultToMvPolynomial]
-  · rw [← mainVar_toMvPolynomial]
-    cases Computable.mainVar f with
-    | none =>
-      simp only [pseudoResultToMvPolynomial, toMvPolynomial_mul, toMvPolynomial_C,
-        toMvPolynomial_zero, ← MvPolynomial.smul_eq_C_mul]
-      congr 2
-      simpa using (coeff_toMvPolynomial (Mono.zero : Mono n) f).symm
-    | some i => exact pseudoOf_toMvPolynomial i g f
-
-/-- The exponent counts exactly the eliminations performed by general pseudo-division. -/
-theorem pseudo_exponent (g f : MvPoly n R cmp) :
-    (Computable.pseudo g f).exponent =
-      ((toMvPolynomial g).pseudo (toMvPolynomial f)).exponent :=
-  congrArg MvPolynomial.PseudoResult.exponent (pseudo_toMvPolynomial g f)
-
-/-- Exact interpretation of the general pseudo-quotient. -/
-theorem pseudo_quotient (g f : MvPoly n R cmp) :
-    toMvPolynomial (Computable.pseudo g f).quotient =
-      ((toMvPolynomial g).pseudo (toMvPolynomial f)).quotient :=
-  congrArg MvPolynomial.PseudoResult.quotient (pseudo_toMvPolynomial g f)
-
-/-- Exact interpretation of the general pseudo-remainder. -/
-theorem pseudo_remainder (g f : MvPoly n R cmp) :
-    toMvPolynomial (Computable.pseudo g f).remainder =
-      ((toMvPolynomial g).pseudo (toMvPolynomial f)).remainder :=
-  congrArg MvPolynomial.PseudoResult.remainder (pseudo_toMvPolynomial g f)
-
-/-- General pseudo-division reconstructs the dividend as an equality in Hex. -/
-theorem pseudo_equation (g f : MvPoly n R cmp) :
-    Computable.initial f ^ (Computable.pseudo g f).exponent * g =
-      (Computable.pseudo g f).quotient * f + (Computable.pseudo g f).remainder := by
-  apply toMvPolynomial_injective
-  simpa only [toMvPolynomial_mul, toMvPolynomial_pow, initial_toMvPolynomial,
-    toMvPolynomial_add, pseudo_exponent, pseudo_quotient, pseudo_remainder] using
-    MvPolynomial.pseudo_equation (toMvPolynomial g) (toMvPolynomial f)
-
-/-- For a nonzero divisor, the interpreted output satisfies the theory's remainder relation. -/
-theorem pseudo_remainder_isRemainder (g f : MvPoly n R cmp) (h : f ≠ 0) :
-    (toMvPolynomial (Computable.pseudo g f).remainder).IsRemainder
-      (toMvPolynomial g) (toMvPolynomial f) := by
-  rw [pseudo_remainder]
-  apply MvPolynomial.pseudo_remainder_isRemainder
-  intro hf
-  apply h
-  exact toMvPolynomial_injective (by simpa using hf)
 
 /-- Zero divisors preserve the dividend, with zero exponent and quotient. -/
 theorem pseudo_zero (g : MvPoly n R cmp) :
@@ -254,54 +160,163 @@ theorem pseudo_of_mainVar (g f : MvPoly n R cmp) (i : Fin n)
   unfold Computable.pseudo
   simp only [pseudo_termsList_isEmpty_iff, hn, ↓reduceIte, h]
 
-/-- Exact right-to-left semantics for every ordered Hex list, without triangularity. -/
-theorem setPseudoRem_toMvPolynomial (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp)) :
-    toMvPolynomial (Computable.setPseudoRem g ps) =
-      (ps.map toMvPolynomial).foldr
-        (fun f r => (MvPolynomial.pseudo r f).remainder) (toMvPolynomial g) := by
+/-- Reconstruction of the concrete result, including zero and constant divisors. -/
+theorem pseudo_equation (g f : MvPoly n R cmp) :
+    Computable.initial f ^ (Computable.pseudo g f).exponent * g =
+      (Computable.pseudo g f).quotient * f + (Computable.pseudo g f).remainder := by
+  unfold Computable.pseudo
+  split_ifs with hz
+  · simp
+  · cases hv : Computable.mainVar f with
+    | none =>
+      apply toMvPolynomial_injective
+      have hc : (toMvPolynomial f).vars.max = ⊥ :=
+        (mainVar_toMvPolynomial f).symm.trans (by simpa only [WithBot.none_eq_bot] using hv)
+      have hf := vars_eq_empty_iff_eq_C.mp (Finset.max_eq_bot.mp hc)
+      have hn : (toMvPolynomial f).coeff 0 ≠ 0 := by
+        intro h
+        apply hz
+        apply (pseudo_termsList_isEmpty_iff _).mpr
+        simpa [h] using hf
+      simp only [toMvPolynomial_mul, toMvPolynomial_C, pow_zero, one_mul, add_zero]
+      have hcoeff : f.coeff Mono.zero = (toMvPolynomial f).coeff 0 := by
+        simpa using (coeff_toMvPolynomial (Mono.zero : Mono n) f).symm
+      rw [hf, hcoeff]
+      rw [mul_right_comm, ← map_mul, inv_mul_cancel₀ hn, map_one, one_mul]
+    | some i =>
+      have hi : Computable.initial f = Computable.initialOf i f := by
+        simp [Computable.initial, hv, hz]
+      rw [hi]
+      exact pseudoOf_equation i g f
+
+theorem pseudo_remainder_isRemainder (g f : MvPoly n R cmp) (h : f ≠ 0) :
+    (toMvPolynomial (Computable.pseudo g f).remainder).IsRemainder
+      (toMvPolynomial g) (toMvPolynomial f) := by
+  refine ⟨?_, (Computable.pseudo g f).exponent,
+    toMvPolynomial (Computable.pseudo g f).quotient, ?_⟩
+  · unfold Computable.pseudo
+    have hz : f.termsList.isEmpty ≠ true := by
+      intro hz
+      apply h
+      exact toMvPolynomial_injective (by simpa using (pseudo_termsList_isEmpty_iff _).mp hz)
+    simp only [hz, Bool.false_eq_true, ↓reduceIte]
+    cases hv : Computable.mainVar f with
+    | none => simp [toMvPolynomial_zero, zero_reducedTo]
+    | some i =>
+      have hc : (toMvPolynomial f).vars.max = some i := (mainVar_toMvPolynomial f).symm.trans hv
+      have hd : f.degreeOf i ≠ 0 := by
+        rw [degreeOf_toMvPolynomial]
+        exact mem_vars_iff_degreeOf_ne_zero.mp (Finset.mem_of_max hc)
+      by_cases hr : toMvPolynomial (Computable.pseudoOf i g f).remainder = 0
+      · rw [hr]; exact zero_reducedTo _
+      · exact (MvPolynomial.reducedTo_iff hc hr).mpr
+          (by simpa using pseudoOf_remainder_degree_lt i g f hd)
+  · have he := congrArg toMvPolynomial (pseudo_equation g f)
+    simpa only [toMvPolynomial_mul, toMvPolynomial_pow, toMvPolynomial_add,
+      initial_toMvPolynomial] using he
+
+theorem pseudo_degree_le (g f : MvPoly n R cmp) (j : Fin n) (hj : f.degreeOf j = 0) :
+    (Computable.pseudo g f).remainder.degreeOf j ≤ g.degreeOf j := by
+  unfold Computable.pseudo
+  split_ifs
+  · exact le_rfl
+  · cases hv : Computable.mainVar f with
+    | none => simp
+    | some i =>
+      have hc : (toMvPolynomial f).vars.max = some i := (mainVar_toMvPolynomial f).symm.trans hv
+      have hd : f.degreeOf i ≠ 0 := by
+        rw [degreeOf_toMvPolynomial]
+        exact mem_vars_iff_degreeOf_ne_zero.mp (Finset.mem_of_max hc)
+      have hi : i ≠ j := by intro h; subst j; contradiction
+      simp only [Computable.pseudoOf, hd, ↓reduceIte]
+      exact pseudoOf_go_degree_le i j f hi hj _ _ _ _
+
+/-- The list fold constructs a certificate without computing quotients at runtime. -/
+private theorem fold_certificate (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp)) :
+    HasPseudoCertificate (toMvPolynomial (Computable.setPseudoRem g ps))
+      (toMvPolynomial g) (ps.map toMvPolynomial) := by
   induction ps with
-  | nil => rfl
+  | nil => exact HasPseudoCertificate.nil _
   | cons f ps ih =>
-    simp only [Computable.setPseudoRem_cons, List.map_cons, List.foldr_cons]
-    rw [pseudo_remainder, ih]
+    rw [Computable.setPseudoRem_cons, List.map_cons]
+    apply HasPseudoCertificate.cons ih (Computable.pseudo (Computable.setPseudoRem g ps) f).exponent
+      (toMvPolynomial (Computable.pseudo (Computable.setPseudoRem g ps) f).quotient)
+    have he := congrArg toMvPolynomial (pseudo_equation (Computable.setPseudoRem g ps) f)
+    simpa only [toMvPolynomial_mul, toMvPolynomial_pow, toMvPolynomial_add,
+      initial_toMvPolynomial] using he
 
-/-- A list representing a theory triangular set computes its remainder-only algorithm. -/
-theorem setPseudoRem_eq_setPseudoRem (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
-    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
-    toMvPolynomial (Computable.setPseudoRem g ps) = (toMvPolynomial g).setPseudoRem S := by
-  rw [setPseudoRem_toMvPolynomial, hps]
-  rfl
+private theorem fold_reduced (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
+    (hn : ∀ f ∈ ps, f ≠ 0)
+    (hc : (ps.map toMvPolynomial).Pairwise (fun p q => p.vars.max < q.vars.max)) :
+    ∀ p ∈ ps, (toMvPolynomial (Computable.setPseudoRem g ps)).reducedTo (toMvPolynomial p) := by
+  induction ps with
+  | nil => simp
+  | cons f ps ih =>
+    intro p hp
+    rw [Computable.setPseudoRem_cons]
+    rcases List.mem_cons.mp hp with he | hp
+    · subst p
+      exact pseudo_remainder_isRemainder _ f (hn f (by simp)) |>.1
+    · have ih := ih (fun p hp => hn p (by simp [hp])) (by simpa using hc.of_cons) p hp
+      by_cases hr :
+          toMvPolynomial (Computable.pseudo (Computable.setPseudoRem g ps) f).remainder = 0
+      · rw [hr]; exact zero_reducedTo _
+      · have ht : toMvPolynomial (Computable.setPseudoRem g ps) ≠ 0 := by
+          intro hz
+          have he := pseudo_remainder_isRemainder (Computable.setPseudoRem g ps) f (hn f (by simp))
+          exact hr (isRemainder_eq_zero_of_dvd he (by rw [hz]; exact dvd_zero _))
+        have hv := max_vars_ne_bot_of_reducedTo ht ih
+        obtain ⟨j, hj⟩ := WithBot.ne_bot_iff_exists.mp hv
+        apply (MvPolynomial.reducedTo_iff hj.symm hr).mpr
+        apply lt_of_le_of_lt
+          (show _ ≤ (toMvPolynomial (Computable.setPseudoRem g ps)).degreeOf j from ?_)
+          ((MvPolynomial.reducedTo_iff hj.symm ht).mp ih)
+        simp only [← degreeOf_toMvPolynomial]
+        apply (show (Computable.pseudo (Computable.setPseudoRem g ps) f).remainder.degreeOf j ≤
+          (Computable.setPseudoRem g ps).degreeOf j from pseudo_degree_le _ _ j ?_)
+        rw [degreeOf_toMvPolynomial]
+        apply (iff_not_comm.mpr mem_vars_iff_degreeOf_ne_zero).mpr
+        apply Finset.notMem_of_max_lt_coe
+        have hh := (List.pairwise_cons.mp hc).1 (toMvPolynomial p) (List.mem_map.mpr ⟨p, hp, rfl⟩)
+        simpa [← hj] using hh
 
-/-- The actual Hex output also agrees with the full theory certificate algorithm. -/
-theorem setPseudoRem_eq_setPseudo_remainder (g : MvPoly n R cmp)
-    (ps : List (MvPoly n R cmp)) (S : TriangularSet (Fin n) R)
-    (hps : ps.map toMvPolynomial = S.toList) :
-    toMvPolynomial (Computable.setPseudoRem g ps) =
-      ((toMvPolynomial g).setPseudo S).remainder := by
-  rw [setPseudoRem_eq_setPseudoRem g ps S hps, MvPolynomial.setPseudo_remainder_eq_setPseudoRem]
-
-/-- Reduction to the whole set requires the ordered list to represent a triangular set. -/
-theorem setPseudoRem_reducedToSet (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
-    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
-    (toMvPolynomial (Computable.setPseudoRem g ps)).reducedToSet S := by
-  rw [setPseudoRem_eq_setPseudo_remainder g ps S hps]
-  exact MvPolynomial.setPseudo_remainder_reducedToSet (toMvPolynomial g) S
-
-/-- The computed remainder satisfies the theory relation for a represented triangular set. -/
 theorem setPseudoRem_isSetRemainder (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
     (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
     (toMvPolynomial (Computable.setPseudoRem g ps)).IsSetRemainder (toMvPolynomial g) S := by
-  rw [setPseudoRem_eq_setPseudo_remainder g ps S hps]
-  exact MvPolynomial.setPseudo_remainder_isSetRemainder (toMvPolynomial g) S
+  refine ⟨?_, hps ▸ fold_certificate g ps⟩
+  intro p hp
+  obtain ⟨q, hq, rfl⟩ := List.mem_map.mp (hps.symm ▸ mem_toList_iff.mpr hp)
+  apply fold_reduced g ps ?_ (hps.symm ▸ S.toList_pairwise) q hq
+  intro f hf hz
+  have := S.toList_non_zero (hps ▸ List.mem_map.mpr ⟨f, hf, rfl⟩)
+  exact this (by simp [hz])
 
-/-- The actual successive remainder passes the executable whole-list check for
-a list representing a theory triangular set. -/
+/-- The concrete result is reduced with respect to the represented triangular set. -/
+theorem setPseudoRem_reducedToSet (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    (toMvPolynomial (Computable.setPseudoRem g ps)).reducedToSet S :=
+  (setPseudoRem_isSetRemainder g ps S hps).1
+
 theorem setPseudoRem_reducedToSet_eq_true (g : MvPoly n R cmp)
     (ps : List (MvPoly n R cmp)) (S : TriangularSet (Fin n) R)
     (hps : ps.map toMvPolynomial = S.toList) :
     Computable.reducedToSet (Computable.setPseudoRem g ps) ps = true :=
   (reducedToSet_iff_of_toList _ ps S hps).mpr (setPseudoRem_reducedToSet g ps S hps)
 
-end Field
+/-- Interpret the executable remainder as an implementation of the theory interface. -/
+noncomputable def setRemainderSpec : PseudoDivisionSpec (Fin n) R where
+  remainder g S := toMvPolynomial (Computable.setPseudoRem (ofMvPolynomial (cmp := cmp) g)
+    (S.toList.map (ofMvPolynomial (cmp := cmp))))
+  isSetRemainder g S := by
+    simpa [List.map_map, Function.comp_def] using
+      setPseudoRem_isSetRemainder (ofMvPolynomial (cmp := cmp) g)
+        (S.toList.map (ofMvPolynomial (cmp := cmp))) S (by simp [List.map_map, Function.comp_def])
 
+theorem setPseudoRem_eq_remainder (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    toMvPolynomial (Computable.setPseudoRem g ps) =
+      (setRemainderSpec (cmp := cmp)).remainder (toMvPolynomial g) S := by
+  simp [setRemainderSpec, ← hps, List.map_map, Function.comp_def]
+
+end Field
 end CharacteristicSet.Bridge

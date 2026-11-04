@@ -40,7 +40,7 @@ def pseudoOf.go (i : Fin n) (f : MvPoly n R cmp) :
         go i f fuel (s + 1) (I * q + term) (I * r - term * f)
 
 /-- Pseudo-divide `g` by `f` in variable `i`, counting only actual eliminations.
-A divisor of degree zero (including zero) returns `(1, g, 0)`, as in the theory.
+A divisor of degree zero (including zero) returns `(1, g, 0)`.
 All computation stays in the Hex representation. -/
 def pseudoOf (i : Fin n) (g f : MvPoly n R cmp) : PseudoResult (MvPoly n R cmp) :=
   if f.degreeOf i = 0 then ⟨1, g, 0⟩

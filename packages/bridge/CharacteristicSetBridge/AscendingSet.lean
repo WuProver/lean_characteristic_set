@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The CharacteristicSet Authors. All rights reserved.
+Copyright (c) 2026 Yuxuan Xiao. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The CharacteristicSet Authors
+Authors: Yuxuan Xiao
 -/
 module
 

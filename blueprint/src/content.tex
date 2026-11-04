@@ -117,8 +117,18 @@
 \end{definition}
 
 \begin{definition}
+    \label{def:PseudoDivisionSpec}
+    \lean{MvPolynomial.PseudoDivisionSpec}
+    \leanok
+    \uses{def:IsSetRemainder}
+    A remainder operation assigning to every polynomial $g$ and triangular set $S$
+    a polynomial $r$ satisfying $IsSetRemainder(r,g,S)$.
+    The characteristic-set and zero-decomposition theorems apply to any such operation.
+\end{definition}
+
+\begin{definition}
     \label{def:pseudoOf}
-    \lean{MvPolynomial.pseudoOf}
+    \lean{CharacteristicSet.Computable.pseudoOf}
     \leanok
     \uses{def:initialOf}
     Pseudo-division of $g$ by $f$ with respect to $i$.
@@ -128,7 +138,7 @@
 
 \begin{definition}
     \label{def:pseudo}
-    \lean{MvPolynomial.pseudo}
+    \lean{CharacteristicSet.Computable.pseudo}
     \leanok
     \uses{def:pseudoOf}
     Pseudo-division of $g$ by $f$ with respect to $mainVar(f)$.
@@ -138,13 +148,13 @@
 
 \begin{definition}
     \label{def:setPseudo}
-    \lean{MvPolynomial.setPseudo}
+    \lean{CharacteristicSet.Computable.setPseudoRem}
     \leanok
     \uses{def:TriangularSet, def:initial, def:pseudo}
     Pseudo-divides $g$ successively by elements of $S$.
     Typically, this involves dividing by $S_{l-1}$, then $S_{l-2}$, ..., down to $S_0$.
 
-    Returns a triple containing the exponents, the quotients and the remainder.
+    Returns the remainder; the bridge proves the existence of an algebraic certificate.
 \end{definition}
 
 \begin{definition}
@@ -213,7 +223,7 @@
     \label{def:characteristicSet}
     \lean{MvPolynomial.List.characteristicSet}
     \leanok
-    \uses{def:TriangularSet, def:BasicSetSpec, def:setPseudo, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
+    \uses{def:TriangularSet, def:BasicSetSpec, def:PseudoDivisionSpec, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
     Computes the Characteristic Set of a polynomial list $l$ using an explicitly supplied basic-set specification. The executable entry points are \texttt{Computable.Standard.characteristicSet} and \texttt{Computable.Weak.characteristicSet}; the bridge proves exact equality of their interpreted outputs with this algorithm.
 
     Algorithm:
@@ -459,7 +469,7 @@
 
 \begin{lemma}
     \label{lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
-    \lean{MvPolynomial.degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
+    \lean{CharacteristicSet.Bridge.pseudoOf_remainder_degree_lt}
     \leanok
     \uses{def:pseudoOf}
     $deg_i(r) < deg_i(f)$ where $r$ is the remainder of $g$ by $f$ w.r.t. $i$ if $deg_i(f) \ne 0$.
@@ -473,7 +483,7 @@
 
 \begin{theorem}
     \label{thm:pseudo_remainder_isRemainder}
-    \lean{MvPolynomial.pseudo_remainder_isRemainder}
+    \lean{CharacteristicSet.Bridge.pseudo_remainder_isRemainder}
     \leanok
     \uses{def:IsRemainder, def:pseudo}
     The remainder $r$ of $g$ by $f$ is reduced with respect to $f$ and
@@ -488,7 +498,7 @@
 
 \begin{lemma}
     \label{lem:degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero}
-    \lean{MvPolynomial.degreeOf_pseudo_remainder_le_of_degreeOf_eq_zero}
+    \lean{CharacteristicSet.Bridge.pseudo_degree_le}
     \leanok
     \uses{def:pseudo}
     The remainder $r$ of $g$ by $f$ satisfies $deg_i(r) \le deg_i(g)$ if $deg_i(f) = 0$
@@ -502,7 +512,7 @@
 
 \begin{theorem}
     \label{thm:setPseudo_remainder_isSetRemainder}
-    \lean{MvPolynomial.setPseudo_remainder_isSetRemainder}
+    \lean{CharacteristicSet.Bridge.setPseudoRem_isSetRemainder}
     \leanok
     \uses{def:IsSetRemainder, def:setPseudo}
     The remainder $r$ of $g$ by a set $S$ is reduced with respect to $S$ and
@@ -517,43 +527,29 @@
 
 \begin{theorem}
     \label{thm:pseudo_remainder_eq_zero_of_dvd}
-    \lean{MvPolynomial.pseudo_remainder_eq_zero_of_dvd}
+    \lean{MvPolynomial.isRemainder_eq_zero_of_dvd}
     \leanok
     \uses{def:pseudo}
-    The remainder of $g$ by $f$ is $0$ if $f$ is a divisor of $g$.
+    Every legal remainder of $g$ by $f$ is $0$ if $f$ is a divisor of $g$.
 \end{theorem}
 
 \begin{proof}
     \leanok
-    \uses{lem:degreeOf_pseudoOf_remainder_lt_of_degreeOf_ne_zero}
-    % TODO
-\end{proof}
-
-\begin{theorem}
-    \label{thm:pseudo_remainder_eq_of_degreeOf_eq_zero}
-    \lean{MvPolynomial.pseudo_remainder_eq_of_degreeOf_eq_zero}
-    \leanok
-    \uses{def:pseudo}
-    The remainder of $g$ by $f$ is $g$ if $deg_c(g) = 0$ where $c = mainVar(f)$.
-\end{theorem}
-
-\begin{proof}
-    \leanok
-    \uses{thm:pseudo_remainder_eq_zero_of_dvd}
+    \uses{def:IsRemainder}
     % TODO
 \end{proof}
 
 \begin{theorem}
     \label{thm:setPseudo_remainder_eq_zero_of_mem}
-    \lean{MvPolynomial.setPseudo_remainder_eq_zero_of_mem}
+    \lean{MvPolynomial.zero_isSetRemainder_of_mem}
     \leanok
     \uses{def:setPseudo}
-    The remainder of $p$ by a set $S$ is $0$ if $p$ is in $S$.
+    Zero is a legal remainder of $p$ by $S$ if $p$ is in $S$, independently of the chosen algorithm.
 \end{theorem}
 
 \begin{proof}
     \leanok
-    \uses{thm:pseudo_remainder_eq_zero_of_dvd, thm:pseudo_remainder_eq_of_degreeOf_eq_zero}
+    \uses{thm:pseudo_remainder_eq_zero_of_dvd}
     % TODO
 \end{proof}
 

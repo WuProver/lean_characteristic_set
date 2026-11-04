@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 The CharacteristicSet Authors. All rights reserved.
+Copyright (c) 2026 Yuxuan Xiao. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The CharacteristicSet Authors
+Authors: Yuxuan Xiao
 -/
 module
 
@@ -18,6 +18,8 @@ open Hex HexMvPolyTheory MvPolynomial TriangularSet
 open scoped HexMvPolyTheory
 variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Field R] [DecidableEq R]
+
+local notation "D" => (setRemainderSpec (cmp := cmp))
 
 private theorem zero_iff (p : MvPoly n R cmp) :
     p.termsList.isEmpty = true ↔ toMvPolynomial p = 0 := by
@@ -36,7 +38,7 @@ private theorem remainders_map (ps bs : List (MvPoly n R cmp))
     ((((bs.foldl List.erase ps).map (fun p => Computable.setPseudoRem p bs)).filter
       (fun p => !p.termsList.isEmpty)).map toMvPolynomial) =
     (((ps.map toMvPolynomial) \ S.toList).map
-      (fun p => (p.setPseudo S).remainder)).filter (· ≠ 0) := by
+      (fun p => (D).remainder p S)).filter (· ≠ 0) := by
   have hd : (bs.foldl List.erase ps).map toMvPolynomial =
       (ps.map toMvPolynomial) \ S.toList := by
     rw [← List.diff_eq_foldl, List.map_diff toMvPolynomial_injective, hbs]
@@ -51,14 +53,14 @@ private theorem remainders_map (ps bs : List (MvPoly n R cmp))
   rw [show (fun p : MvPoly n R cmp => decide (toMvPolynomial p ≠ 0)) =
     (fun p => decide (p ≠ 0)) ∘ toMvPolynomial from rfl, ← List.filter_map, List.map_map]
   have hm : (fun p : MvPoly n R cmp => toMvPolynomial (Computable.setPseudoRem p bs)) =
-      (fun p => (toMvPolynomial p).setPseudo S |>.remainder) := by
+      (fun p => (D).remainder (toMvPolynomial p) S) := by
     funext p
-    exact setPseudoRem_eq_setPseudo_remainder p bs S hbs
+    exact setPseudoRem_eq_remainder p bs S hbs
   change List.filter _ (List.map (fun p => toMvPolynomial (Computable.setPseudoRem p bs)) _) = _
   rw [hm]
   congr 1
   simpa only [List.map_map, Function.comp_def] using
-    congrArg (List.map (fun p => (p.setPseudo S).remainder)) hd
+    congrArg (List.map (fun p => (D).remainder p S)) hd
 
 section Generic
 variable (basic : List (MvPoly n R cmp) → List (MvPoly n R cmp))
@@ -76,7 +78,7 @@ private theorem step_decreasing (original current next : List (MvPoly n R cmp))
   rw [List.map_append, List.map_append]
   rw [remainders_map _ _ (B.basicSet (current.map toMvPolynomial)) (hB current).symm,
     ← hB current]
-  apply MvPolynomial.List.characteristicSetGo_decreasing B
+  apply MvPolynomial.List.characteristicSetGo_decreasing B D
     (original.map toMvPolynomial) (current.map toMvPolynomial) _ _ _ _ rfl rfl rfl
   intro he
   apply hs
@@ -97,7 +99,7 @@ include hB in
 private theorem go_map
     (original current : List (MvPoly n R cmp)) :
     (Computable.characteristicSet.go basic original current).map toMvPolynomial =
-      (MvPolynomial.List.characteristicSet.go B
+      (MvPolynomial.List.characteristicSet.go B D
         (original.map toMvPolynomial) (current.map toMvPolynomial)).toList := by
   induction current using
       (InvImage.wf (fun ps : List (MvPoly n R cmp) =>
@@ -108,7 +110,7 @@ private theorem go_map
       (fun p => Computable.setPseudoRem p bs)).filter (fun p => !p.termsList.isEmpty)
     let S := B.basicSet (current.map toMvPolynomial)
     let rems := (((current.map toMvPolynomial) \ S.toList).map
-      (fun p => (p.setPseudo S).remainder)).filter (· ≠ 0)
+      (fun p => (D).remainder p S)).filter (· ≠ 0)
     have hm : rs.map toMvPolynomial = rems := remainders_map current bs S (hB current).symm
     have hn : rs = [] ↔ rems = [] := by rw [← hm, List.map_eq_nil_iff]
     by_cases hr : rs = []
@@ -149,15 +151,15 @@ theorem characteristicSet_terminates (original : List (MvPoly n R cmp)) :
 /-- Exact ordered output, with the same coefficients as the theory algorithm. -/
 theorem characteristicSet_toMvPolynomial (ps : List (MvPoly n R cmp)) :
     (Computable.Standard.characteristicSet ps).map toMvPolynomial =
-      (MvPolynomial.List.characteristicSet (basicSetSpec cmp)
+      (MvPolynomial.List.characteristicSet (basicSetSpec cmp) D
         (ps.map toMvPolynomial)).toList :=
   go_map _ (basicSetSpec cmp) (basicSetSpec_toList cmp) ps ps
 
 private theorem theory_characteristicSet_ascending (ps : List (MvPoly n R cmp)) :
-    (MvPolynomial.List.characteristicSet (basicSetSpec cmp)
+    (MvPolynomial.List.characteristicSet (basicSetSpec cmp) D
       (ps.map toMvPolynomial)).IsAscendingSet := by
   obtain ⟨l, hl⟩ := MvPolynomial.List.characteristicSet_eq_basicSet
-    (basicSetSpec cmp) (ps.map toMvPolynomial)
+    (basicSetSpec cmp) D (ps.map toMvPolynomial)
   rw [hl]
   exact basicSetSpec_isAscendingSet cmp l
 
@@ -176,7 +178,7 @@ theorem characteristicSet_correct (K : Type*) [CommSemiring K] [Algebra R K]
       S.IsAscendingSet ∧ S.IsCharacteristicSet K (ps.map toMvPolynomial) :=
   ⟨_, characteristicSet_toMvPolynomial ps, theory_characteristicSet_ascending ps,
     MvPolynomial.List.characteristicSet_isCharacteristicSet
-      (basicSetSpec cmp) K (ps.map toMvPolynomial)⟩
+      (basicSetSpec cmp) D K (ps.map toMvPolynomial)⟩
 
 end Standard
 
@@ -191,15 +193,15 @@ theorem characteristicSet_terminates (original : List (MvPoly n R cmp)) :
 /-- Exact ordered output, with the same coefficients as the theory algorithm. -/
 theorem characteristicSet_toMvPolynomial (ps : List (MvPoly n R cmp)) :
     (Computable.Weak.characteristicSet ps).map toMvPolynomial =
-      (MvPolynomial.List.characteristicSet (basicSetSpec cmp)
+      (MvPolynomial.List.characteristicSet (basicSetSpec cmp) D
         (ps.map toMvPolynomial)).toList :=
   go_map _ (basicSetSpec cmp) (basicSetSpec_toList cmp) ps ps
 
 private theorem theory_characteristicSet_ascending (ps : List (MvPoly n R cmp)) :
-    (MvPolynomial.List.characteristicSet (basicSetSpec cmp)
+    (MvPolynomial.List.characteristicSet (basicSetSpec cmp) D
       (ps.map toMvPolynomial)).IsWeakAscendingSet := by
   obtain ⟨l, hl⟩ := MvPolynomial.List.characteristicSet_eq_basicSet
-    (basicSetSpec cmp) (ps.map toMvPolynomial)
+    (basicSetSpec cmp) D (ps.map toMvPolynomial)
   rw [hl]
   exact basicSetSpec_isAscendingSet cmp l
 
@@ -218,7 +220,7 @@ theorem characteristicSet_correct (K : Type*) [CommSemiring K] [Algebra R K]
       S.IsWeakAscendingSet ∧ S.IsCharacteristicSet K (ps.map toMvPolynomial) :=
   ⟨_, characteristicSet_toMvPolynomial ps, theory_characteristicSet_ascending ps,
     MvPolynomial.List.characteristicSet_isCharacteristicSet
-      (basicSetSpec cmp) K (ps.map toMvPolynomial)⟩
+      (basicSetSpec cmp) D K (ps.map toMvPolynomial)⟩
 
 end Weak
 end CharacteristicSet.Bridge

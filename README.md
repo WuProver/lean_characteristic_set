@@ -14,7 +14,7 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 
 - [`MvPolynomial.mainDegree`](./packages/theory/CharacteristicSetTheory/MainDegree.lean): The multiset of occurrences of the largest variable in a polynomial. Its cardinality is the degree in that variable; it is empty for constants and zero.
 - [`MvPolynomial.rank` and `TriangularSet.rank`](./packages/theory/CharacteristicSetTheory/Rank.lean): The ranks used to order polynomials and triangular sets.
-- [`MvPolynomial.pseudo` and `MvPolynomial.setPseudo`](./packages/theory/CharacteristicSetTheory/PseudoDivision.lean): Pseudo-division by a polynomial or a triangular set.
+- [`IsRemainder`, `IsSetRemainder`, and `PseudoDivisionSpec`](./packages/theory/CharacteristicSetTheory/PseudoDivision.lean): Mathematical pseudo-division certificates and the remainder interface. Concrete pseudo-division runs in `computable`; `bridge` proves its correctness.
 - [`TriangularSet`](./packages/theory/CharacteristicSetTheory/TriangularSet.lean): A finite ordered sequence of nonzero polynomials with strictly increasing classes.
 - [`TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): Ritt's strong ascending sets and Wu's weak ascending sets, respectively.
 - [`BasicSetSpec`](./packages/theory/CharacteristicSetTheory/BasicSet.lean): The interface required by the characteristic-set and zero-decomposition algorithms.
@@ -30,7 +30,7 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomials $PS \subseteq K[x_\sigma]$, we establish the following core results:
 
 - [`Bridge.Standard.basicSet_minimal` and `Bridge.Weak.basicSet_minimal`](./packages/bridge/CharacteristicSetBridge/BasicSetCorrectness.lean): The computed basic set is minimal among ascending sets contained in the input list, for either ascending-set predicate.
-- [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The computed characteristic set $CS$ has zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
+- [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): For any `PseudoDivisionSpec`, the computed characteristic set $CS$ has legal zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
 - [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The zero set of a polynomial system is a finite union of quasi-varieties:
   $Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS / \text{InitialProd}(CS))$.
 
