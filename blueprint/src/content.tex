@@ -214,7 +214,7 @@
     \lean{MvPolynomial.List.characteristicSet}
     \leanok
     \uses{def:TriangularSet, def:BasicSetSpec, def:setPseudo, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
-    Computes the Characteristic Set of a polynomial list $l$ using an explicitly supplied ascending-set predicate.
+    Computes the Characteristic Set of a polynomial list $l$ using an explicitly supplied basic-set specification. The executable entry points are \texttt{Computable.Standard.characteristicSet} and \texttt{Computable.Weak.characteristicSet}; the bridge proves exact equality of their interpreted outputs with this algorithm.
 
     Algorithm:
     \begin{enumerate}

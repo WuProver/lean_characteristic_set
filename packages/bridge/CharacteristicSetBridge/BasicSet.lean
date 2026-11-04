@@ -53,6 +53,10 @@ noncomputable def basicSetSpec : BasicSetSpec (Fin n) R where
   initial_reduced := fun l _ hp hmax ↦
     initial_reducedToSet_of_max_vars_ne_bot' (basicSet_isAscendingSet (cmp := cmp) l) hp hmax
 
+/-- The specification retains the ascending property of its implementation. -/
+theorem basicSetSpec_isAscendingSet : ((basicSetSpec cmp).basicSet l).IsAscendingSet :=
+  basicSet_isAscendingSet (cmp := cmp) l
+
 /-- On Hex inputs, the new specification returns the exact executable output. -/
 theorem basicSetSpec_toList (ps : List (MvPoly n R cmp)) :
     ((basicSetSpec cmp).basicSet (ps.map toMvPolynomial)).toList =
@@ -103,6 +107,10 @@ noncomputable def basicSetSpec : BasicSetSpec (Fin n) R where
   initial_reduced := fun l _ hp hmax ↦
     initial_reducedToSet_of_max_vars_ne_bot_of_isWeakAscendingSet'
       (basicSet_isAscendingSet (cmp := cmp) l) hp hmax
+
+/-- The specification retains the ascending property of its implementation. -/
+theorem basicSetSpec_isAscendingSet : ((basicSetSpec cmp).basicSet l).IsWeakAscendingSet :=
+  basicSet_isAscendingSet (cmp := cmp) l
 
 /-- On Hex inputs, the new specification returns the exact executable output. -/
 theorem basicSetSpec_toList (ps : List (MvPoly n R cmp)) :

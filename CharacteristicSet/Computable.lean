@@ -8,4 +8,6 @@ public import CharacteristicSet.Computable.AscendingSet
 public import CharacteristicSet.Computable.TriangularSet
 public import CharacteristicSet.Computable.PseudoDivision
 
+public import CharacteristicSet.Computable.CharacteristicSet
+
 /-! Mathlib-free executable foundations for characteristic sets on Hex polynomials. -/
