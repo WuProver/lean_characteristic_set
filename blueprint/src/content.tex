@@ -166,18 +166,18 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:AscendingSetTheory}
-    \lean{AscendingSetTheory}
+    \label{def:BasicSetSpec}
+    \lean{BasicSetSpec}
     \leanok
     \uses{def:TriangularSet, def:IsAscendingSet, def:reducedToSet, def:TriangularSet.rank}
-    The interface for algorithms computing Basic Sets, parameterized by an ascending-set predicate.
-    Any instance of this class provides a "basicSet" function that computes a minimal ascending set
-    contained in a given list of polynomials.
+    The interface required by characteristic-set and zero-decomposition algorithms.
+    It provides a basic-set function together with subset, rank, and initial-reduction properties.
+    The bridge package supplies standard and weak implementations from executable Hex algorithms.
 \end{definition}
 
 \begin{definition}
-    \label{def:IsAscendingSet.basicSet}
-    \lean{IsAscendingSet.basicSet}
+    \label{def:Standard.basicSet}
+    \lean{CharacteristicSet.Computable.Standard.basicSet}
     \leanok
     \uses{def:TriangularSet, def:reducedToSet, def:TriangularSet.rank}
     Computes the Standard Basic Set of a list of polynomials.
@@ -192,8 +192,8 @@
 \end{definition}
 
 \begin{definition}
-    \label{def:IsWeakAscendingSet.basicSet}
-    \lean{IsWeakAscendingSet.basicSet}
+    \label{def:Weak.basicSet}
+    \lean{CharacteristicSet.Computable.Weak.basicSet}
     \leanok
     \uses{def:initial, def:TriangularSet, def:reducedToSet, def:TriangularSet.rank}
     Computes the Weak Basic Set of a list of polynomials.
@@ -213,7 +213,7 @@
     \label{def:characteristicSet}
     \lean{MvPolynomial.List.characteristicSet}
     \leanok
-    \uses{def:TriangularSet, def:AscendingSetTheory, def:setPseudo, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
+    \uses{def:TriangularSet, def:BasicSetSpec, def:setPseudo, inst:TriangularSet.instWellFoundedLT, thm:basicSet_append_lt_of_exists_reducedToSet}
     Computes the Characteristic Set of a polynomial list $l$ using an explicitly supplied ascending-set predicate.
 
     Algorithm:
@@ -572,10 +572,10 @@
 \end{proof}
 
 \begin{theorem}
-    \label{inst:IsAscendingSet.basicSet_minimal}
-    \lean{IsAscendingSet.basicSet_minimal}
+    \label{inst:Standard.basicSet_minimal}
+    \lean{CharacteristicSet.Bridge.Standard.basicSet_minimal}
     \leanok
-    \uses{def:IsAscendingSet, def:AscendingSetTheory, def:IsAscendingSet.basicSet}
+    \uses{def:IsAscendingSet, def:BasicSetSpec, def:Standard.basicSet}
     The algorithm computes a minimal standard ascending set contained in the input list.
 \end{theorem}
 
@@ -586,10 +586,10 @@
 \end{proof}
 
 \begin{theorem}
-    \label{inst:IsWeakAscendingSet.basicSet_minimal}
-    \lean{IsWeakAscendingSet.basicSet_minimal}
+    \label{inst:Weak.basicSet_minimal}
+    \lean{CharacteristicSet.Bridge.Weak.basicSet_minimal}
     \leanok
-    \uses{def:isWeakAscendingSet, def:AscendingSetTheory, def:IsWeakAscendingSet.basicSet}
+    \uses{def:isWeakAscendingSet, def:BasicSetSpec, def:Weak.basicSet}
     The algorithm computes a minimal weak ascending set contained in the input list.
 \end{theorem}
 
@@ -601,9 +601,9 @@
 
 \begin{theorem}
     \label{thm:basicSet_append_lt_of_exists_reducedToSet}
-    \lean{MvPolynomial.List.basicSet_append_lt_of_exists_reducedToSet}
+    \lean{BasicSetSpec.basicSet_append_lt}
     \leanok
-    \uses{def:AscendingSetTheory}
+    \uses{def:BasicSetSpec}
     Appending an element which is reduced w.r.t. the basic set of list strictly decreases the order.
     Crucial for proving termination of characteristic set and zero decomposition algorithms.
 \end{theorem}
@@ -689,7 +689,7 @@
     \label{thm:characteristicSet_le_basicSet}
     \lean{MvPolynomial.List.characteristicSet_le_basicSet}
     \leanok
-    \uses{def:characteristicSet, def:TriangularSet.rank, def:AscendingSetTheory}
+    \uses{def:characteristicSet, def:TriangularSet.rank, def:BasicSetSpec}
     The rank of the computed characteristic set is at most the rank of the basic set of the input list.
 \end{theorem}
 

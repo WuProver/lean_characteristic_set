@@ -17,8 +17,9 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 - [`MvPolynomial.pseudo` and `MvPolynomial.setPseudo`](./packages/theory/CharacteristicSetTheory/PseudoDivision.lean): Pseudo-division by a polynomial or a triangular set.
 - [`TriangularSet`](./packages/theory/CharacteristicSetTheory/TriangularSet.lean): A finite ordered sequence of nonzero polynomials with strictly increasing classes.
 - [`TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): Ritt's strong ascending sets and Wu's weak ascending sets, respectively.
-- [`AscendingSetTheory`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): An interface parameterized by the ascending-set predicate, providing the basic-set algorithm and its properties.
-- [`MvPolynomial.List.basicSet`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): The minimal ascending set contained in a list of polynomials.
+- [`BasicSetSpec`](./packages/theory/CharacteristicSetTheory/BasicSet.lean): The interface required by the characteristic-set and zero-decomposition algorithms.
+- [`Computable.Standard.basicSet` and `Computable.Weak.basicSet`](./CharacteristicSet/Computable/AscendingSet.lean): Executable standard and weak basic sets on Hex polynomial lists, with matching `isAscendingSet` checks.
+- [`Bridge.Standard.basicSetSpec` and `Bridge.Weak.basicSetSpec`](./packages/bridge/CharacteristicSetBridge/BasicSet.lean): Specifications built from the executable algorithms for `Fin n` variables. The theory package provides the abstract interface; the bridge proves structure and rank minimality directly for the executable loops and supplies both implementations. Both preserve the complete ordered output, including stable equal-rank selection. The existing `Computable.basicSet` name remains a standard-algorithm compatibility entry point.
 - [`MvPolynomial.List.characteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The characteristic set of a list of polynomials.
 - [`MvPolynomial.List.zeroDecomposition`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): A list of triangular sets that decompose the zero set of a polynomial system.
 
@@ -26,7 +27,7 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 
 Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomials $PS \subseteq K[x_\sigma]$, we establish the following core results:
 
-- [`MvPolynomial.List.basicSet_minimal`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): The computed basic set is minimal among ascending sets contained in the input list, for either ascending-set predicate.
+- [`Bridge.Standard.basicSet_minimal` and `Bridge.Weak.basicSet_minimal`](./packages/bridge/CharacteristicSetBridge/BasicSet.lean): The computed basic set is minimal among ascending sets contained in the input list, for either ascending-set predicate.
 - [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The computed characteristic set $CS$ has zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
 - [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The zero set of a polynomial system is a finite union of quasi-varieties:
   $Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS / \text{InitialProd}(CS))$.

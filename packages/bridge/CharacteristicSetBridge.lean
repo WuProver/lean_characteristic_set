@@ -7,6 +7,7 @@ public import CharacteristicSetBridge.Initial
 public import CharacteristicSetBridge.Rank
 public import CharacteristicSetBridge.Reduced
 public import CharacteristicSetBridge.AscendingSet
+public import CharacteristicSetBridge.BasicSet
 public import CharacteristicSetBridge.TriangularSet
 public import CharacteristicSetBridge.PseudoDivision
 

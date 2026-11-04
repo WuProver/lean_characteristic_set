@@ -6,19 +6,22 @@ Authors: The CharacteristicSet Authors
 module
 
 public import CharacteristicSet.Computable.AscendingSet
+public import CharacteristicSetBridge.Initial
 public import CharacteristicSetBridge.Rank
 public import CharacteristicSetBridge.Reduced
 public import CharacteristicSetBridge.TriangularSet
 public import CharacteristicSetTheory.AscendingSet
 
-/-! Complete ordered output correspondence for the standard basic set. -/
+/-! Correctness of executable ascending-set checks and basic-set candidate preparation. -/
 
 public section
 
 namespace CharacteristicSet.Bridge
 
 open Hex HexMvPolyTheory
+
 open scoped HexMvPolyTheory
+
 variable {n : Nat} {R : Type*} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [CommSemiring R] [DecidableEq R]
 
@@ -63,114 +66,87 @@ theorem basicSetCandidates_toMvPolynomial (ps : List (MvPoly n R cmp)) :
   simp only [Bool.not_eq_true', decide_eq_true_eq, Function.comp_apply]
   exact (Bool.eq_false_iff).trans (not_congr (basicSet_zero_iff p))
 
-private theorem basicSet_head_not_reduced (b : MvPolynomial (Fin n) R)
-    (S : TriangularSet (Fin n) R) (hb : b ≠ 0) :
-    ¬ b.reducedToSet (S.takeConcat b) := by
-  intro h
-  exact MvPolynomial.not_reduceTo_self hb (h b (TriangularSet.mem_takeConcat S hb))
+/-- The executable encoding orders absent variables below present variables. -/
+theorem mainVar_lt_iff (p q : MvPoly n R cmp) :
+    Computable.variableIndex (Computable.mainVar p) <
+      Computable.variableIndex (Computable.mainVar q) ↔
+    (toMvPolynomial p).vars.max < (toMvPolynomial q).vars.max := by
+  rw [← mainVar_toMvPolynomial, ← mainVar_toMvPolynomial]
+  cases Computable.mainVar p with
+  | none =>
+    cases Computable.mainVar q with
+    | none => change 0 < 0 ↔ (⊥ : WithBot (Fin n)) < ⊥; simp
+    | some j => change 0 < j.val + 1 ↔ (⊥ : WithBot (Fin n)) < j; simp
+  | some i =>
+    cases Computable.mainVar q with
+    | none => change i.val + 1 < 0 ↔ (i : WithBot (Fin n)) < ⊥; simp
+    | some j => change i.val + 1 < j.val + 1 ↔ (i : WithBot (Fin n)) < j; simp
 
-private theorem basicSet_drop_head (b : MvPolynomial (Fin n) R)
-    (tail : List (MvPolynomial (Fin n) R))
-    (S : TriangularSet (Fin n) R) (hb : b ≠ 0) :
-    (b :: tail).filter (fun q => decide (q.reducedToSet (S.takeConcat b))) =
-      tail.filter (fun q => decide (q.reducedToSet (S.takeConcat b))) := by
-  simp [basicSet_head_not_reduced b S hb]
+theorem isTriangularSet_iff (ps : List (MvPoly n R cmp)) :
+    Computable.isTriangularSet ps = true ↔
+    ∃ S : TriangularSet (Fin n) R, ps.map toMvPolynomial = S.toList := by
+  have hc : Computable.isTriangularSet ps = true ↔
+      (∀ p ∈ ps.map toMvPolynomial, p ≠ 0) ∧
+      (ps.map toMvPolynomial).Pairwise (fun p q => p.vars.max < q.vars.max) := by
+    simp only [Computable.isTriangularSet, Bool.and_eq_true, List.all_eq_true,
+      Bool.not_eq_true', Bool.eq_false_iff, decide_eq_true_eq,
+      List.pairwise_map, mainVar_lt_iff, List.mem_map, forall_exists_index,
+      and_imp, forall_apply_eq_imp_iff₂]
+    simp only [ne_eq, basicSet_zero_iff]
+  rw [hc]
+  constructor
+  · rintro ⟨hn, ho⟩
+    exact ⟨⟨ps.map toMvPolynomial, fun h => hn 0 h rfl,
+      List.isChain_iff_pairwise.mpr ho⟩, rfl⟩
+  · rintro ⟨S, h⟩
+    rw [h]
+    exact ⟨fun _ hp => S.toList_non_zero hp, S.toList_pairwise⟩
 
-private theorem basicSet_filter_map (ps bs : List (MvPoly n R cmp)) (S : TriangularSet (Fin n) R)
-    (hbs : bs.map toMvPolynomial = S.toList) :
-    (ps.filter (fun p => Computable.reducedToSet p bs)).map toMvPolynomial =
-      (ps.map toMvPolynomial).filter (fun p => decide (p.reducedToSet S)) := by
-  rw [List.filter_map]
-  apply congrArg (List.map toMvPolynomial)
-  apply congrArg (fun b => ps.filter b)
-  funext p
-  apply Bool.eq_iff_iff.mpr
-  simp only [Function.comp_def, decide_eq_true_eq]
-  exact reducedToSet_iff_of_toList p bs S hbs
+private theorem pairwise_reduced_iff (S : TriangularSet (Fin n) R) :
+    S.toList.Pairwise (fun p q => q.reducedTo p) ↔ S.IsAscendingSet := by
+  simp only [List.pairwise_iff_getElem, TriangularSet.IsAscendingSet]
+  constructor
+  · intro h i j hij hj
+    exact (S.toList_getElem hj ▸ S.toList_getElem (lt_trans hij hj) ▸
+      h i j (lt_trans hij hj) hj hij)
+  · intro h i j hi hj hij
+    rw [S.toList_getElem hi, S.toList_getElem hj]
+    exact h hij hj
 
-/-- The loop agrees for nonzero candidates and any represented theory accumulator. -/
-theorem basicSet_go_toMvPolynomial (ps bs : List (MvPoly n R cmp)) :
-    ∀ (S : TriangularSet (Fin n) R) (_hbs : bs.map toMvPolynomial = S.toList)
-      (hnz : ∀ p ∈ ps.map toMvPolynomial, p ≠ 0),
-    (Computable.basicSet.go ps bs).map toMvPolynomial =
-      (IsAscendingSet.basicSet.go (ps.map toMvPolynomial) S hnz).toList := by
-  induction ps, bs using Computable.basicSet.go.induct with
-  | case1 bs =>
-    intro S hbs hnz
-    simpa [Computable.basicSet.go, IsAscendingSet.basicSet.go] using hbs
-  | case2 bs b tail bsNext ih =>
-    simp only [List.unattach_filter, List.unattach_attach] at ih
-    intro S hbs hnz
-    have hb : toMvPolynomial b ≠ 0 := hnz _ (by simp)
-    have ht := takeConcat_toMvPolynomial bs b S hbs
-    have hf := basicSet_filter_map tail (Computable.takeConcat bs b)
-      (S.takeConcat (toMvPolynomial b)) ht
-    have hf' :
-        (tail.filter (fun p => Computable.reducedToSet p
-          (Computable.takeConcat bs b))).map toMvPolynomial =
-        (toMvPolynomial b :: tail.map toMvPolynomial).filter
-          (fun p => decide (p.reducedToSet (S.takeConcat (toMvPolynomial b)))) := by
-      rw [basicSet_drop_head _ _ _ hb]
-      exact hf
-    rw [Computable.basicSet.go]
-    simp only [List.map_cons]
-    rw [IsAscendingSet.basicSet.go.eq_def]
-    dsimp only
-    have hnew : ∀ p ∈ (tail.filter (fun p => Computable.reducedToSet p
-        (Computable.takeConcat bs b))).map toMvPolynomial, p ≠ 0 := by
-      intro p hp
-      rw [hf] at hp
-      exact hnz p (List.mem_cons_of_mem _ (List.mem_of_mem_filter hp))
-    have ih' : (Computable.basicSet.go
-        (tail.filter (fun p => Computable.reducedToSet p (Computable.takeConcat bs b)))
-        (Computable.takeConcat bs b)).map toMvPolynomial =
-        (IsAscendingSet.basicSet.go
-          ((tail.filter (fun p => Computable.reducedToSet p
-            (Computable.takeConcat bs b))).map toMvPolynomial)
-          (S.takeConcat (toMvPolynomial b)) hnew).toList := by
-      simpa only [List.unattach_filter, List.unattach_attach] using
-        ih (S.takeConcat (toMvPolynomial b)) ht hnew
-    simpa only [hf'] using ih'
+private theorem pairwise_initial_reduced_iff (S : TriangularSet (Fin n) R) :
+    S.toList.Pairwise (fun p q => q.initial.reducedTo p) ↔ S.IsWeakAscendingSet := by
+  simp only [List.pairwise_iff_getElem, TriangularSet.IsWeakAscendingSet]
+  constructor
+  · intro h i j hij hj
+    exact (S.toList_getElem hj ▸ S.toList_getElem (lt_trans hij hj) ▸
+      h i j (lt_trans hij hj) hj hij)
+  · intro h i j hi hj hij
+    rw [S.toList_getElem hi, S.toList_getElem hj]
+    exact h hij hj
 
-/-- Exact equality of the entire ordered basic-set output, including stable
-selection among distinct polynomials of equal Wu rank. -/
-theorem basicSet_toMvPolynomial (ps : List (MvPoly n R cmp)) :
-    (Computable.basicSet ps).map toMvPolynomial =
-      (IsAscendingSet.basicSet (ps.map toMvPolynomial)).toList := by
-  have hnz : ∀ p ∈ (Computable.basicSetCandidates ps).map toMvPolynomial, p ≠ 0 := by
-    rw [basicSetCandidates_toMvPolynomial]
-    intro p hp
-    exact of_decide_eq_true (List.mem_filter.mp hp).2
-  unfold Computable.basicSet
-  have h := basicSet_go_toMvPolynomial (Computable.basicSetCandidates ps) [] ∅
-    (by simp) hnz
-  simpa only [basicSetCandidates_toMvPolynomial, IsAscendingSet.basicSet] using h
+namespace Standard
 
-/-- The interpreted result represents a strong ascending set contained in the
-input and minimal among all strong ascending sets contained in that input.
-The witness is the existing theory basic set, so no second runtime type is needed. -/
-theorem basicSet_spec (ps : List (MvPoly n R cmp)) :
-    ∃ S : TriangularSet (Fin n) R,
-      (Computable.basicSet ps).map toMvPolynomial = S.toList ∧
-      S.IsAscendingSet ∧
-      (∀ p ∈ S, p ∈ ps.map toMvPolynomial) ∧
-      (∀ T : TriangularSet (Fin n) R, T.IsAscendingSet →
-        (∀ p ∈ T, p ∈ ps.map toMvPolynomial) → S ≤ T) := by
-  exact ⟨IsAscendingSet.basicSet (ps.map toMvPolynomial),
-    basicSet_toMvPolynomial ps,
-    IsAscendingSet.basicSet_isAscendingSet _,
-    fun _ hp => IsAscendingSet.basicSet_subset _ hp,
-    fun _ hT hsub => IsAscendingSet.basicSet_minimal _ hT hsub⟩
+theorem isAscendingSet_iff_of_toList (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    Computable.Standard.isAscendingSet ps = true ↔ S.IsAscendingSet := by
+  have ht := isTriangularSet_iff ps |>.mpr ⟨S, hps⟩
+  rw [Computable.Standard.isAscendingSet, Bool.and_eq_true, ht, eq_self, true_and,
+    decide_eq_true_eq]
+  rw [← pairwise_reduced_iff, ← hps, List.pairwise_map]
+  simp only [reducedTo_iff]
 
-omit [DecidableEq R] in
-/-- Every selected Hex polynomial occurs in the original input. -/
-theorem basicSet_subset (ps : List (MvPoly n R cmp)) {p : MvPoly n R cmp}
-    (hp : p ∈ Computable.basicSet ps) : p ∈ ps := by
-  classical
-  have hmem : toMvPolynomial p ∈ (Computable.basicSet ps).map toMvPolynomial :=
-    List.mem_map.mpr ⟨p, hp, rfl⟩
-  rw [basicSet_toMvPolynomial, TriangularSet.mem_toList_iff] at hmem
-  obtain ⟨q, hq, heq⟩ := List.mem_map.mp (IsAscendingSet.basicSet_subset _ hmem)
-  exact toMvPolynomial_injective heq ▸ hq
+end Standard
 
+namespace Weak
+
+theorem isAscendingSet_iff_of_toList (ps : List (MvPoly n R cmp))
+    (S : TriangularSet (Fin n) R) (hps : ps.map toMvPolynomial = S.toList) :
+    Computable.Weak.isAscendingSet ps = true ↔ S.IsWeakAscendingSet := by
+  have ht := isTriangularSet_iff ps |>.mpr ⟨S, hps⟩
+  rw [Computable.Weak.isAscendingSet, Bool.and_eq_true, ht, eq_self, true_and,
+    decide_eq_true_eq]
+  rw [← pairwise_initial_reduced_iff, ← hps, List.pairwise_map]
+  simp only [reducedTo_iff, initial_toMvPolynomial]
+
+end Weak
 end CharacteristicSet.Bridge

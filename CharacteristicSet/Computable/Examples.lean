@@ -204,3 +204,41 @@ namespace BasicSetExamples
   [TakeConcatExamples.a, TakeConcatExamples.b, TakeConcatExamples.c]
 
 end BasicSetExamples
+
+namespace AscendingExamples
+
+#guard isTriangularSet ([] : List P)
+#guard !(isTriangularSet [x, 0, y])
+#guard !(isTriangularSet [y, x])
+#guard !(isTriangularSet [x, x])
+#guard isTriangularSet [C 2, x, y]
+#guard !(Standard.isAscendingSet [C 2, x])
+#guard !(Weak.isAscendingSet [C 2, x])
+#guard Standard.isAscendingSet ([] : List P)
+#guard Weak.isAscendingSet ([] : List P)
+#guard Standard.basicSet [x, y + x] == [x]
+#guard Weak.basicSet [x, y + x] == [x, y + x]
+#guard !(Standard.isAscendingSet [x, y + x])
+#guard Weak.isAscendingSet [x, y + x]
+#guard Weak.basicSet [y + x, y + C 1] == [y + x]
+#guard Weak.basicSet [x, x * y + C 1] == [x]
+#guard Weak.basicSet [y, x + C 2, x + C 1] == [x + C 2, y]
+#guard Weak.basicSet [y, x + C 1, x + C 2] == [x + C 1, y]
+#guard Weak.basicSet [0, x, y, x, 0] == [x, y]
+#guard Weak.basicSet ([0, 0] : List P) == []
+#guard Weak.basicSet [0, C 3, C 2, x] == [C 3]
+#guard Weak.basicSet [gx, gy + gx] == [gx, gy + gx]
+#guard Weak.isAscendingSet [gx, gy + gx]
+#guard Weak.basicSet ([0, C 3, C 2] : List P0) == [C 3]
+#guard Weak.basicSet ([0, 0] : List P0) == []
+#guard Standard.isAscendingSet ([C 3] : List P0)
+#guard Weak.isAscendingSet ([C 3] : List P0)
+-- Adjacent reduction holds, but the last polynomial fails against the first.
+#guard !(Standard.isAscendingSet
+  [TakeConcatExamples.a, TakeConcatExamples.b,
+    TakeConcatExamples.c + TakeConcatExamples.a])
+#guard !(Weak.isAscendingSet
+  [TakeConcatExamples.a, TakeConcatExamples.b,
+    TakeConcatExamples.a * TakeConcatExamples.c + C 1])
+
+end AscendingExamples
