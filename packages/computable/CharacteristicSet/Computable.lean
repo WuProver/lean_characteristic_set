@@ -9,5 +9,6 @@ public import CharacteristicSet.Computable.TriangularSet
 public import CharacteristicSet.Computable.PseudoDivision
 
 public import CharacteristicSet.Computable.CharacteristicSet
+public import CharacteristicSet.Computable.ZeroDecomposition
 
 /-! Mathlib-free executable foundations for characteristic sets on Hex polynomials. -/

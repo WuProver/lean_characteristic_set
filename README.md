@@ -24,6 +24,8 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 - [`Bridge.Standard.characteristicSet_toMvPolynomial` and `Bridge.Weak.characteristicSet_toMvPolynomial`](./packages/bridge/CharacteristicSetBridge/CharacteristicSet.lean): Exact ordered correspondence with the theory algorithms. The `characteristicSet_terminates` theorem proves termination over fields; `characteristicSet_check` and `characteristicSet_correct` establish the corresponding ascending property and characteristic-set correctness for the actual output.
 - [`MvPolynomial.List.characteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The characteristic set of a list of polynomials.
 - [`MvPolynomial.List.zeroDecomposition`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): A list of triangular sets that decompose the zero set of a polynomial system.
+- [`Computable.Standard.zeroDecomposition` and `Computable.Weak.zeroDecomposition`](./packages/computable/CharacteristicSet/Computable/ZeroDecomposition.lean): Executable initial branching, returning polynomial lists in the same order as the theory algorithm, with no iteration limit or termination argument.
+- [`Bridge.Standard.zeroDecomposition_toMvPolynomial` and `Bridge.Weak.zeroDecomposition_toMvPolynomial`](./packages/bridge/CharacteristicSetBridge/ZeroDecomposition.lean): Interpretation commutes with decomposition. Termination is proved by basic-set rank descent; `zeroDecomposition_correct` transports the theory's zero-set equality to the actual output.
 
 ### Main Statements
 

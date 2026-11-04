@@ -12,5 +12,6 @@ public import CharacteristicSetBridge.TriangularSet
 public import CharacteristicSetBridge.PseudoDivision
 
 public import CharacteristicSetBridge.CharacteristicSet
+public import CharacteristicSetBridge.ZeroDecomposition
 
 /-! Correctness bridges from Hex computations to the existing polynomial theory. -/
