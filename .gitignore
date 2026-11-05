@@ -7,3 +7,6 @@
 /blueprint/lean_decls
 /blueprint/src/web.paux
 .DS_Store
+
+/bench/config.local.toml
+__pycache__/

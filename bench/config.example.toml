@@ -1,0 +1,18 @@
+# Copy to config.local.toml; relative executable paths resolve against this file.
+# Bare executable names are looked up on PATH.
+[maple]
+executable = "maple"
+args = ["-q"]
+
+[mathematica]
+executable = "wolframscript"
+args = ["-file"]
+# For a standalone kernel instead:
+# executable = "/path/to/WolframKernel"
+# args = ["-script"]
+
+[sympy]
+executable = "python3"
+args = []
+# Use the Python environment in which requirements.txt was installed, e.g.:
+# executable = "../.venv/bin/python"

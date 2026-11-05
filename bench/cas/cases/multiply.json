@@ -1,0 +1,18 @@
+{
+  "id": "rational-bivariate-multiply",
+  "variables": ["x", "y"],
+  "lhs": [
+    {"powers": [1, 0], "num": "1", "den": "1"},
+    {"powers": [0, 0], "num": "1", "den": "2"}
+  ],
+  "rhs": [
+    {"powers": [0, 1], "num": "1", "den": "1"},
+    {"powers": [0, 0], "num": "-2", "den": "3"}
+  ],
+  "expected": [
+    {"powers": [1, 1], "num": "1", "den": "1"},
+    {"powers": [1, 0], "num": "-2", "den": "3"},
+    {"powers": [0, 1], "num": "1", "den": "2"},
+    {"powers": [0, 0], "num": "-1", "den": "3"}
+  ]
+}
