@@ -12,61 +12,48 @@ This project is a work in progress; feedback, fixes, and suggestions are highly 
 
 ### Definitions
 
-- [`MvPolynomial.mainDegree`](./packages/theory/CharacteristicSetTheory/MainDegree.lean): The multiset of occurrences of the largest variable in a polynomial. Its cardinality is the degree in that variable; it is empty for constants and zero.
+- [`MvPolynomial.mainDegree`](./packages/theory/CharacteristicSetTheory/MainDegree.lean): The degree in the largest variable, represented as a multiset.
 - [`MvPolynomial.rank` and `TriangularSet.rank`](./packages/theory/CharacteristicSetTheory/Rank.lean): The ranks used to order polynomials and triangular sets.
-- [`IsRemainder`, `IsSetRemainder`, and `PseudoDivisionSpec`](./packages/theory/CharacteristicSetTheory/PseudoDivision.lean): Mathematical pseudo-division certificates and the remainder interface. Concrete pseudo-division runs in `computable`; `bridge` proves its correctness.
 - [`TriangularSet`](./packages/theory/CharacteristicSetTheory/TriangularSet.lean): A finite ordered sequence of nonzero polynomials with strictly increasing classes.
-- [`TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): Ritt's strong ascending sets and Wu's weak ascending sets, respectively.
-- [`BasicSetSpec`](./packages/theory/CharacteristicSetTheory/BasicSet.lean): The interface required by the characteristic-set and zero-decomposition algorithms.
-- [`Computable.Standard.basicSet` and `Computable.Weak.basicSet`](./packages/computable/CharacteristicSet/Computable/AscendingSet.lean): Executable standard and weak basic sets on Hex polynomial lists, with matching `isAscendingSet` checks.
-- [`Bridge.Standard.basicSetSpec` and `Bridge.Weak.basicSetSpec`](./packages/bridge/CharacteristicSetBridge/BasicSet.lean): Specifications built from the executable algorithms for `Fin n` variables. The theory package provides the abstract interface; the bridge proves structure and rank minimality directly for the executable loops and supplies both implementations. Both preserve the complete ordered output, including stable equal-rank selection. The existing `Computable.basicSet` name remains a standard-algorithm compatibility entry point.
-- [`Computable.Standard.characteristicSet` and `Computable.Weak.characteristicSet`](./packages/computable/CharacteristicSet/Computable/CharacteristicSet.lean): Executable characteristic sets returning Hex polynomial lists without an iteration limit. Import `CharacteristicSet.Computable` to run either algorithm independently. Computation stays in Hex; the bridge separately proves termination by rank descent and mathematical correctness.
-- [`Bridge.Standard.characteristicSet_toMvPolynomial` and `Bridge.Weak.characteristicSet_toMvPolynomial`](./packages/bridge/CharacteristicSetBridge/CharacteristicSet.lean): Exact ordered correspondence with the theory algorithms. The `characteristicSet_terminates` theorem proves termination over fields; `characteristicSet_check` and `characteristicSet_correct` establish the corresponding ascending property and characteristic-set correctness for the actual output.
-- [`MvPolynomial.List.characteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The characteristic set of a list of polynomials.
-- [`MvPolynomial.List.zeroDecomposition`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): A list of triangular sets that decompose the zero set of a polynomial system.
-- [`Computable.Standard.zeroDecomposition` and `Computable.Weak.zeroDecomposition`](./packages/computable/CharacteristicSet/Computable/ZeroDecomposition.lean): Executable initial branching, returning polynomial lists in the same order as the theory algorithm, with no iteration limit or termination argument.
-- [`Bridge.Standard.zeroDecomposition_toMvPolynomial` and `Bridge.Weak.zeroDecomposition_toMvPolynomial`](./packages/bridge/CharacteristicSetBridge/ZeroDecomposition.lean): Interpretation commutes with decomposition. Termination is proved by basic-set rank descent; `zeroDecomposition_correct` transports the theory's zero-set equality to the actual output.
+- [`TriangularSet.IsAscendingSet` and `TriangularSet.IsWeakAscendingSet`](./packages/theory/CharacteristicSetTheory/AscendingSet.lean): Ritt's strong ascending sets and Wu's weak ascending sets.
+- [`PseudoDivisionSpec`](./packages/theory/CharacteristicSetTheory/PseudoDivision.lean): The specification for pseudo-division and its remainder.
+- [`BasicSetSpec`](./packages/theory/CharacteristicSetTheory/BasicSet.lean): The basic-set interface used by characteristic sets and zero decomposition.
 
 ### Main Statements
 
-Given a field $K$, an ordered finite index set $\sigma$, and a list of polynomials $PS \subseteq K[x_\sigma]$, we establish the following core results:
+For polynomial systems over a field, the project establishes:
 
-- [`Bridge.Standard.basicSet_minimal` and `Bridge.Weak.basicSet_minimal`](./packages/bridge/CharacteristicSetBridge/BasicSetCorrectness.lean): The computed basic set is minimal among ascending sets contained in the input list, for either ascending-set predicate.
-- [`MvPolynomial.List.characteristicSet_isCharacteristicSet`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): For any `PseudoDivisionSpec`, the computed characteristic set $CS$ has legal zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
-- [`MvPolynomial.List.vanishingSet_eq_zeroDecomposition_union`](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The zero set of a polynomial system is a finite union of quasi-varieties:
+- [Basic-set minimality](./packages/bridge/CharacteristicSetBridge/BasicSetCorrectness.lean): Standard and weak basic sets are minimal among the corresponding ascending sets contained in the input.
+- [Characteristic-set correctness](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The computed characteristic set $CS$ has zero pseudo-remainders for the input polynomials and satisfies $Zero(PS) \subseteq Zero(CS)$.
+- [Zero decomposition](./packages/theory/CharacteristicSetTheory/CharacteristicSet.lean): The zero set is a finite union of quasi-varieties:
   $Zero(PS) = \bigcup_{CS \in \mathcal{ZD}} Zero(CS / \text{InitialProd}(CS))$.
 
-### Packages and executable foundations
+### Example
 
-| Package location | Import | Contents |
+[Wallace–Simson theorem](./packages/bridge/CharacteristicSetBridge/Examples/Simson.lean): Collinearity of the three perpendicular feet, proved using the verified characteristic-set algorithm. Concrete computations use `native_decide`.
+
+## Packages
+
+The executable algorithms use [Hex](https://github.com/kim-em/hex-dev) for sparse multivariate polynomial arithmetic.
+
+| Package | Import | Contents |
 | --- | --- | --- |
-| `packages/computable` | `CharacteristicSet` | Executable polynomial foundations, algorithms, and examples |
+| `packages/computable` | `CharacteristicSet` | Executable algorithms and examples, without Mathlib |
 | `packages/theory` | `CharacteristicSetTheory` | Mathematical definitions, algorithms, and proofs |
-| `packages/bridge` | `CharacteristicSetBridge` | Representation correspondence, termination, and correctness proofs |
+| `packages/bridge` | `CharacteristicSetBridge` | Correspondence, termination, and correctness of the executable algorithms |
 
-The repository root is the `CharacteristicSetWorkspace` aggregate package. It builds all three libraries and hosts API documentation tools; it defines no Lean library of its own. Computable and theory are independent packages, and bridge depends on both. Child packages link to the root `lean-toolchain`, keeping a single version while supporting tools that read the file directly.
-
-[Performance benchmarks](bench/README.md)
+Computable and theory are independent; bridge depends on both. Standard and weak algorithms provide basic sets, characteristic sets, and zero decomposition. The repository root builds all three packages.
 
 ## Project Resources
 
-We maintain a set of web-based resources to track and explore the formalization effort:
-
-- 📘 **[Project Homepage](https://wuprover.github.io/lean_characteristic_set/)**
-
-- 📐 **[Formalization Blueprint](https://wuprover.github.io/lean_characteristic_set/blueprint/)**
-  A detailed list of definitions, lemmas, and theorems, including their proof status and logical dependencies.
-
-- 🔗 **[Dependency Graph](https://wuprover.github.io/lean_characteristic_set/blueprint/dep_graph_document.html)**
-  A visual representation of the dependency structure of the formalized components.
-
-These tools help us manage development, track progress toward formalization, and guide future contributors.
+- [Project Homepage](https://wuprover.github.io/lean_characteristic_set/)
+- [Formalization Blueprint](https://wuprover.github.io/lean_characteristic_set/blueprint/)
+- [Dependency Graph](https://wuprover.github.io/lean_characteristic_set/blueprint/dep_graph_document.html)
+- [Performance Benchmarks](bench/README.md)
 
 ## Build
 
-To use this project, you'll need to have Lean 4 and its package manager lake installed. If you don’t already have Lean 4 set up, follow the [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
-
-Clone the repository and build the complete project from the aggregate root:
+Install [Lean 4 and Lake](https://leanprover-community.github.io/get_started.html), then run:
 
 ```bash
 git clone https://github.com/WuProver/lean_characteristic_set.git
@@ -75,45 +62,11 @@ lake exe cache get
 lake build
 ```
 
-To build only the executable algorithms without Mathlib or bridge dependencies:
+To build only the executable algorithms:
 
 ```bash
 lake -d packages/computable build
 ```
-
-The other packages also support independent builds:
-
-```bash
-lake -d packages/theory build
-lake -d packages/bridge build
-```
-
-The root `lake build` explicitly builds every module of all three libraries,
-including the executable examples in
-`packages/computable/CharacteristicSet/Computable/Examples/`. To run the examples
-using only the computable package's dependencies:
-
-```bash
-cd packages/computable
-lake env lean CharacteristicSet/Computable/Examples/Basic.lean
-lake env lean CharacteristicSet/Computable/Examples/CharacteristicSet.lean
-```
-
-Generate API documentation and check blueprint declarations from the repository root:
-
-```bash
-lake build CharacteristicSetBridge:docs
-cd packages/bridge
-lake exe checkdecls ../../blueprint/lean_decls
-```
-
-The declaration checker runs in bridge because it loads the current root
-package's library modules. API documentation is generated in `.lake/build/doc`.
-
-Each build entry point has its own `lake-manifest.json`. When updating shared
-dependencies, keep their pinned revisions consistent across these manifests.
-Use `lake --keep-toolchain -d packages/<package> update ...` when updating a
-child package so Lake continues to use the shared root toolchain.
 
 ## References
 

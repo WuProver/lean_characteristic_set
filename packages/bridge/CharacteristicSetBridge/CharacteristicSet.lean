@@ -138,6 +138,38 @@ private theorem go_map
       simp only [List.map_append, hm]
       rw [show bs.map toMvPolynomial = S.toList from (hB current).symm]
 
+include hB in
+/-- Every common zero of the input is a common zero of the computed characteristic set. -/
+theorem characteristicSet_aeval_eq_zero (K : Type*) [CommSemiring K] [Algebra R K]
+    (ps : List (MvPoly n R cmp)) (x : Fin n → K)
+    (hz : ∀ p ∈ ps, aeval x (toMvPolynomial p) = 0) :
+    ∀ p ∈ Computable.characteristicSet basic ps, aeval x (toMvPolynomial p) = 0 := by
+  have hS := go_map basic B hB ps ps
+  have hcorrect := MvPolynomial.List.characteristicSet_isCharacteristicSet
+    B D K (ps.map toMvPolynomial)
+  have hx : x ∈ vanishingSet K (ps.map toMvPolynomial) := by
+    intro p hp
+    obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hp
+    exact hz q hq
+  intro p hp
+  exact hcorrect.2 hx _ (mem_toList_iff.mp (hS ▸ List.mem_map_of_mem hp))
+
+include hB in
+/-- A computed characteristic set and a zero pseudo-remainder certify a polynomial
+consequence wherever the computed initials do not vanish. -/
+theorem aeval_eq_zero_of_characteristicSet (K : Type*) [Field K] [Algebra R K]
+    (ps cs : List (MvPoly n R cmp)) (g : MvPoly n R cmp) (x : Fin n → K)
+    (hcs : Computable.characteristicSet basic ps = cs)
+    (hr : Computable.setPseudoRem g cs = 0)
+    (hz : ∀ p ∈ ps, aeval x (toMvPolynomial p) = 0)
+    (hi : ∀ a ∈ cs.map Computable.initial, aeval x (toMvPolynomial a) ≠ 0) :
+    aeval x (toMvPolynomial g) = 0 := by
+  apply setPseudoRem_aeval_eq_zero K g cs x hr
+  · simpa only [← hcs] using characteristicSet_aeval_eq_zero basic B hB K ps x hz
+  · intro p hp
+    rw [← initial_toMvPolynomial]
+    exact hi _ (List.mem_map_of_mem hp)
+
 end Generic
 
 namespace Standard

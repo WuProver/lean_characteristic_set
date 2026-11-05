@@ -245,6 +245,32 @@ private theorem fold_certificate (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp
     simpa only [toMvPolynomial_mul, toMvPolynomial_pow, toMvPolynomial_add,
       initial_toMvPolynomial] using he
 
+/-- A zero pseudo-remainder implies vanishing wherever the divisors vanish and
+all their initials are nonzero. No triangularity assumption is needed. -/
+theorem setPseudoRem_aeval_eq_zero (K : Type*) [Field K] [Algebra R K]
+    (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp)) (x : Fin n → K)
+    (hr : Computable.setPseudoRem g ps = 0)
+    (hz : ∀ p ∈ ps, MvPolynomial.aeval x (toMvPolynomial p) = 0)
+    (hi : ∀ p ∈ ps, MvPolynomial.aeval x (toMvPolynomial p).initial ≠ 0) :
+    MvPolynomial.aeval x (toMvPolynomial g) = 0 := by
+  obtain ⟨es, qs, he⟩ := fold_certificate g ps
+  have he := congrArg (MvPolynomial.aeval x) he
+  simp only [map_mul, map_prod, map_pow, map_add, map_sum, hr,
+    toMvPolynomial_zero, map_zero] at he
+  have hs : (∑ i : Fin (ps.map toMvPolynomial).length,
+      MvPolynomial.aeval x (qs i) *
+        MvPolynomial.aeval x (ps.map toMvPolynomial)[i.val]) = 0 := by
+    apply Finset.sum_eq_zero
+    intro i _
+    obtain ⟨p, hp, heq⟩ := List.mem_map.mp (List.getElem_mem i.isLt)
+    rw [← heq, hz p hp, mul_zero]
+  rw [hs, add_zero] at he
+  exact (mul_eq_zero.mp he).resolve_left (Finset.prod_ne_zero_iff.mpr fun i _ =>
+    pow_ne_zero _ (by
+      obtain ⟨p, hp, heq⟩ := List.mem_map.mp (List.getElem_mem i.isLt)
+      rw [← heq]
+      exact hi p hp))
+
 private theorem fold_reduced (g : MvPoly n R cmp) (ps : List (MvPoly n R cmp))
     (hn : ∀ f ∈ ps, f ≠ 0)
     (hc : (ps.map toMvPolynomial).Pairwise (fun p q => p.vars.max < q.vars.max)) :
