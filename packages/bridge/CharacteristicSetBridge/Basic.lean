@@ -43,17 +43,17 @@ private theorem list_max (xs : List (Fin n)) :
 /-- `Option.none` is exactly the bottom value used by the specification. -/
 theorem mainVar_toMvPolynomial (p : MvPoly n R cmp) :
     (Computable.mainVar p : WithBot (Fin n)) = (toMvPolynomial p).vars.max := by
-  rw [Computable.mainVar, vars_toMvPolynomial, list_max]
+  rw [Computable.mainVar_def, vars_toMvPolynomial, list_max]
 
 theorem mainDegree_toMvPolynomial (p : MvPoly n R cmp) :
     Computable.mainDegree p = (toMvPolynomial p).mainDegree.card := by
   cases h : Computable.mainVar p with
   | none =>
-    rw [Computable.mainDegree_of_none h]
+    rw [Computable.mainDegree_def, h, Option.elim_none]
     exact ((MvPolynomial.card_mainDegree_eq_zero_iff).mpr
       ((mainVar_toMvPolynomial p).symm.trans h)).symm
   | some i =>
-    rw [Computable.mainDegree_of_mainVar h, degreeOf_toMvPolynomial]
+    rw [Computable.mainDegree_def, h, Option.elim_some, degreeOf_toMvPolynomial]
     exact (MvPolynomial.card_mainDegree_eq_degreeOf
       ((mainVar_toMvPolynomial p).symm.trans h)).symm
 

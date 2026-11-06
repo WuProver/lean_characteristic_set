@@ -116,6 +116,52 @@ validate all products, including every item of every timed batch.
 
 ## Lean microbenchmarks
 
+### Experimental Basic.lean variants
+
+Compare the frozen original definitions and experimental alternatives against the
+production `mainVar` and `mainDegree`, compiled to their fast implementations
+through verified `csimp` equalities:
+
+```bash
+LEAN_NUM_THREADS=2 ./bench/run.sh basic-variants bench/.lake/basic-variants.json
+LEAN_NUM_THREADS=2 ./bench/run.sh basic-variants --verify
+```
+
+[BasicVariants.lean](CharacteristicSetBench/BasicVariants.lean) compares:
+
+- `var.original`: original definition (`degrees`, variable support, maximum).
+- `var.scan`: production `mainVar`, descending through coordinates above the
+  running main variable. Its proof-facing equation is `CharacteristicSet.Computable.mainVar_def`;
+  `mainVar_eq_fast` selects the native implementation.
+- `degree.original`: original definition (main variable, then `degreeOf`).
+- `degree.reuse`: compute `degrees` once and read the selected coordinate.
+- `degree.two-pass`: `var.scan` followed by `degreeOf`.
+- `degree.fused`: production `mainDegree`, maintaining the main variable and its
+  maximum exponent in one term fold. Its proof-facing equation is
+  `CharacteristicSet.Computable.mainDegree_def`; `mainDegree_eq_fast` selects the
+  native implementation.
+
+The original baselines spell out the old expressions directly, so they are not
+redirected by the `csimp` rules for `mainVar` and `mainDegree`.
+
+The 50 fixtures vary the number of variables (2/8/32/128), term count
+(128/2048/8192), main-variable position, and lex/grevlex ordering. Additional
+cases put the main variable in just the first or last lexicographic term;
+zero and constant polynomials include the zero-variable case. These synthetic
+inputs compare query implementations, not whole characteristic-set algorithms.
+
+Before timing, all variants are checked against a separate reference over raw
+exponent vectors, including a larger set of small fixtures and reversed insertion
+orders. This is executable validation, not a proof of equivalence.
+Each variant calibrates a warm batch to at least 20 ms, then runs seven trials
+with variant order rotated. Native timings include a scalar hash, the existing
+lean-bench opaque consumer, and loop overhead; input construction, validation,
+calibration and JSON output are excluded. The JSON retains raw batch timings,
+repeat counts and per-call median/min/max. In very small cases the consumer and
+loop overhead can be a substantial part of the result.
+
+### Registered microbenchmarks
+
 Run from the repository root; the script builds the native executable first:
 
 ```bash
