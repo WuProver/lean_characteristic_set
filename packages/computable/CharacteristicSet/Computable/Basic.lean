@@ -2,8 +2,9 @@ module
 
 public import HexMvPoly.Query
 
-/-! Proof-facing main-variable and main-degree queries, with verified fast implementations
-selected by `csimp` for native execution. -/
+/-! Standard main-variable and main-degree definitions, with verified `Internal`
+implementations selected by `csimp` for native execution. The optimization proofs
+explicitly depend on Hex's backing term-map representation. -/
 
 @[expose] public section
 
@@ -23,10 +24,10 @@ def mainVar (p : MvPoly n R cmp) : Option (Fin n) := p.vars.max?
 def mainDegree (p : MvPoly n R cmp) : Nat :=
   (mainVar p).elim 0 (fun i => p.degreeOf i)
 
-/-- Proof-facing equation; native compilation uses `mainVarFast` via `csimp`. -/
+/-- Proof-facing equation; native compilation uses `mainVarInternal` via `csimp`. -/
 theorem mainVar_def (p : MvPoly n R cmp) : mainVar p = p.vars.max? := rfl
 
-/-- Proof-facing equation; native compilation uses `mainDegreeFast` via `csimp`. -/
+/-- Proof-facing equation; native compilation uses `mainDegreeInternal` via `csimp`. -/
 theorem mainDegree_def (p : MvPoly n R cmp) :
     mainDegree p = (mainVar p).elim 0 (fun i => p.degreeOf i) := rfl
 
@@ -47,40 +48,16 @@ theorem mainDegree_of_none {p : MvPoly n R cmp}
 
 /-- Search descending coordinates strictly above the running main variable.
 `lower` is zero when no variable has been found, or the previous variable plus one. -/
-def mainVarFast.scanAbove (m : Mono n) (lower : Nat) :
+def mainVarInternal.scanAbove (m : Mono n) (lower : Nat) :
     (k : Nat) → k ≤ n → Option (Fin n)
   | 0, _ => none
   | k + 1, _ =>
     if lower ≤ k then
       let i : Fin n := ⟨k, by omega⟩
-      if m[i] == 0 then mainVarFast.scanAbove m lower k (by omega) else some i
+      if m[i] == 0 then mainVarInternal.scanAbove m lower k (by omega) else some i
     else none
 
-/-- Update the running main variable with one supported monomial. -/
-def mainVarFast.step (current : Option (Fin n)) (m : Mono n) : Option (Fin n) :=
-  match mainVarFast.scanAbove m (current.elim 0 (fun i => i.val + 1)) n (Nat.le_refl n) with
-  | some i => some i
-  | none => current
-
-/-- Fast main-variable query: scan terms directly, checking only coordinates above
-the running main variable. -/
-def mainVarFast (p : MvPoly n R cmp) : Option (Fin n) :=
-  p.foldTerms (fun current m _ => mainVarFast.step current m) none
-
-/-- Update the running main variable and its degree with one supported monomial. -/
-def mainDegreeFast.step (state : Option (Fin n) × Nat) (m : Mono n) :
-    Option (Fin n) × Nat :=
-  let (current, degree) := state
-  match mainVarFast.scanAbove m (current.elim 0 (fun i => i.val + 1)) n (Nat.le_refl n) with
-  | some i => (some i, m[i])
-  | none => (current, current.elim 0 (fun i => max degree m[i]))
-
-/-- Fast main-degree query: one term traversal tracks the main variable and its degree together. -/
-def mainDegreeFast (p : MvPoly n R cmp) : Nat :=
-  (p.foldTerms (fun state m _ => mainDegreeFast.step state m) (none, 0)).2
-
-open mainVarFast (scanAbove)
-open mainDegreeFast (step)
+open mainVarInternal (scanAbove)
 
 private theorem scanAbove_none (m : Mono n) (lower k : Nat) (hk : k ≤ n) :
     scanAbove m lower k hk = none ↔
@@ -163,6 +140,39 @@ private theorem top_some (d : Mono n) (i : Fin n) :
       · exact hji
       · exact False.elim (hj (hupper j (by omega)))⟩
 
+/- Representation-dependent proofs enable the following direct term traversals.
+Execution uses Hex's public `foldTerms`; `fold_profile` and `mainVar_eq_internal`
+unfold it to `termsInternal : Std.ExtTreeMap` and use the tree fold/list equation.
+This proof dependency makes the optimization Internal even though its execution
+uses public operations. The field is exported but documented as internal by Hex.
+There is no dependence on raw tree constructors, balance constants, or tree shape.
+These queries require canonical nonzero terms, not any particular traversal order. -/
+
+/-- Update the running main variable with one supported monomial. -/
+def mainVarInternal.step (current : Option (Fin n)) (m : Mono n) : Option (Fin n) :=
+  match mainVarInternal.scanAbove m (current.elim 0 (fun i => i.val + 1)) n (Nat.le_refl n) with
+  | some i => some i
+  | none => current
+
+/-- Fast main-variable query: scan terms directly, checking only coordinates above
+the running main variable. -/
+def mainVarInternal (p : MvPoly n R cmp) : Option (Fin n) :=
+  p.foldTerms (fun current m _ => mainVarInternal.step current m) none
+
+/-- Update the running main variable and its degree with one supported monomial. -/
+def mainDegreeInternal.step (state : Option (Fin n) × Nat) (m : Mono n) :
+    Option (Fin n) × Nat :=
+  let (current, degree) := state
+  match mainVarInternal.scanAbove m (current.elim 0 (fun i => i.val + 1)) n (Nat.le_refl n) with
+  | some i => (some i, m[i])
+  | none => (current, current.elim 0 (fun i => max degree m[i]))
+
+/-- Fast main-degree query: one term traversal tracks the main variable and its degree together. -/
+def mainDegreeInternal (p : MvPoly n R cmp) : Nat :=
+  (p.foldTerms (fun state m _ => mainDegreeInternal.step state m) (none, 0)).2
+
+open mainDegreeInternal (step)
+
 private def profile (d : Mono n) : Option (Fin n) × Nat :=
   (top d, (top d).elim 0 (fun i => d[i]))
 
@@ -218,33 +228,33 @@ private theorem fold_profile (p : MvPoly n R cmp) :
   exact List.foldl_hom profile (fun d term => profile_step d term.1)
 
 private theorem step_fst (state : Option (Fin n) × Nat) (m : Mono n) :
-    mainVarFast.step state.1 m = (step state m).1 := by
+    mainVarInternal.step state.1 m = (step state m).1 := by
   rcases state with ⟨current, degree⟩
   cases h : scanAbove m (current.elim 0 (fun i => i.val + 1)) n (Nat.le_refl n) <;>
-    simp [mainVarFast.step, step, h]
+    simp [mainVarInternal.step, step, h]
 
 /-- Compile the proof-facing main-variable definition to the direct scan. -/
-@[csimp] theorem mainVar_eq_fast : @mainVar = @mainVarFast := by
+@[csimp] theorem mainVar_eq_internal : @mainVar = @mainVarInternal := by
   funext n R cmp _ _ _ p
   symm
-  have hproj : p.foldTerms (fun current m _ => mainVarFast.step current m) none =
+  have hproj : p.foldTerms (fun current m _ => mainVarInternal.step current m) none =
       (p.foldTerms (fun state m _ => step state m) (none, 0)).1 := by
     unfold MvPoly.foldTerms
     rw [Std.ExtTreeMap.foldl_eq_foldl_toList, Std.ExtTreeMap.foldl_eq_foldl_toList]
     exact List.foldl_hom (Prod.fst : Option (Fin n) × Nat → Option (Fin n))
       (g₁ := fun state (term : Mono n × R) => step state term.1)
-      (g₂ := fun current (term : Mono n × R) => mainVarFast.step current term.1)
+      (g₂ := fun current (term : Mono n × R) => mainVarInternal.step current term.1)
       (init := (none, 0)) (l := p.termsInternal.toList)
       (fun state (term : Mono n × R) => step_fst state term.1)
-  rw [mainVarFast, hproj, fold_profile]
+  rw [mainVarInternal, hproj, fold_profile]
   change p.degrees.support.max? = p.vars.max?
   rw [MvPoly.vars_eq]
 
 /-- Compile the proof-facing main-degree definition to the fused traversal. -/
-@[csimp] theorem mainDegree_eq_fast : @mainDegree = @mainDegreeFast := by
+@[csimp] theorem mainDegree_eq_internal : @mainDegree = @mainDegreeInternal := by
   funext n R cmp _ _ _ p
   symm
-  rw [mainDegreeFast, fold_profile]
+  rw [mainDegreeInternal, fold_profile]
   unfold mainDegree mainVar profile top
   rw [MvPoly.vars_eq]
   cases p.degrees.support.max? with

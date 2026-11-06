@@ -130,16 +130,16 @@ LEAN_NUM_THREADS=2 ./bench/run.sh basic-variants --verify
 [BasicVariants.lean](CharacteristicSetBench/BasicVariants.lean) compares:
 
 - `var.original`: original definition (`degrees`, variable support, maximum).
-- `var.scan`: production `mainVar`, descending through coordinates above the
+- `var.internal`: production `mainVar`, descending through coordinates above the
   running main variable. Its proof-facing equation is `CharacteristicSet.Computable.mainVar_def`;
-  `mainVar_eq_fast` selects the native implementation.
+  `mainVar_eq_internal` selects the native `mainVarInternal` implementation.
 - `degree.original`: original definition (main variable, then `degreeOf`).
 - `degree.reuse`: compute `degrees` once and read the selected coordinate.
-- `degree.two-pass`: `var.scan` followed by `degreeOf`.
-- `degree.fused`: production `mainDegree`, maintaining the main variable and its
+- `degree.two-pass`: `var.internal` followed by `degreeOf`.
+- `degree.internal`: production `mainDegree`, maintaining the main variable and its
   maximum exponent in one term fold. Its proof-facing equation is
-  `CharacteristicSet.Computable.mainDegree_def`; `mainDegree_eq_fast` selects the
-  native implementation.
+  `CharacteristicSet.Computable.mainDegree_def`; `mainDegree_eq_internal` selects the
+  native `mainDegreeInternal` implementation.
 
 The original baselines spell out the old expressions directly, so they are not
 redirected by the `csimp` rules for `mainVar` and `mainDegree`.
@@ -159,6 +159,47 @@ lean-bench opaque consumer, and loop overhead; input construction, validation,
 calibration and JSON output are excluded. The JSON retains raw batch timings,
 repeat counts and per-call median/min/max. In very small cases the consumer and
 loop overhead can be a substantial part of the result.
+
+### Experimental Initial.lean variants
+
+```bash
+LEAN_NUM_THREADS=2 ./bench/run.sh initial-variants bench/.lake/initial-variants.json
+LEAN_NUM_THREADS=2 ./bench/run.sh initial-variants --verify
+```
+
+[InitialVariants.lean](CharacteristicSetBench/InitialVariants.lean) compares both
+`initialOf` and `initial` using standard baselines, the production Internal
+implementations, and two experimental candidates:
+
+- `original`: frozen list/filter/map/lookup definitions. The `initial` baseline
+  uses the current optimized `mainVar`, isolating this round of changes.
+- `initial.standard`: also freezes the nested `mainVar` expression, for a complete
+  standard-definition baseline.
+- `two-pass`: production calls compiled through `initialOf_eq_internal` and
+  `initial_eq_internal`; determine the degree, then build the retained terms directly,
+  and check zero using the cached term count.
+- `distinct`: an experimental two-pass fold inserting retained keys directly.
+  It relies on fixed-degree erasure being injective, constructs `MvPoly` through
+  its internal map field, and retains `0 + c` from the original constructor.
+  It has no formal extraction-equivalence proof and is used only by this benchmark.
+- `single-pass`: an experimental fold that resets its output whenever a higher
+  degree appears. This candidate has no formal equivalence proof and is used only
+  by this benchmark.
+
+The 46 fixtures cover 2/8/32 variables, 128/2048 terms, lex/grevlex order,
+one/half/all retained terms, and rising/falling degrees that exercise discarded
+partial outputs. Zero and constant cases include zero variables. Independent
+raw-term references check every variant before timing; additional verification
+checks every selected coordinate in smaller fixtures, including degree zero and
+non-main variables.
+
+Seven trials rotate variant order, with separate warm-up/calibration targeting
+20 ms batches for each variant. Timings include a full output hash and opaque
+consumer, exclude preparation and checks, and describe repeated warm inputs.
+JSON records raw batch timings, call counts, per-call samples, output term counts,
+and median/min/max. Full output consumption can dilute an extraction speedup,
+especially when every input term is retained; this is not a pure tree-building
+timer or a whole characteristic-set benchmark.
 
 ### Registered microbenchmarks
 

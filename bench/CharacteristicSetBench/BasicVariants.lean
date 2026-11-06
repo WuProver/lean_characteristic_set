@@ -2,8 +2,8 @@ import CharacteristicSet.Computable.Basic
 import LeanBench.Env
 import Lean
 
-/-! Query alternatives and the frozen original definition compared against the production
-fused traversal. Every fixture is checked before timing. -/
+/-! Frozen original queries and alternatives to the production Internal direct/fused
+traversals. Every fixture is checked before timing. -/
 namespace CharacteristicSetBench.BasicVariants
 
 open Hex Lean
@@ -21,22 +21,23 @@ variable {n : Nat} {cmp : Mono n → Mono n → Ordering}
 @[noinline] private def degreeTwoPass (p : P n cmp) : Nat :=
   (CharacteristicSet.Computable.mainVar p).elim 0 (fun i => p.degreeOf i)
 
-@[noinline] private def degreeFused (p : P n cmp) : Nat :=
+@[noinline] private def degreeInternal (p : P n cmp) : Nat :=
   CharacteristicSet.Computable.mainDegree p
 
 @[noinline] private def varOriginal (p : P n cmp) : Nat :=
   p.vars.max?.elim 0 (fun i => i.val + 1)
 
-@[noinline] private def varScan (p : P n cmp) : Nat :=
+@[noinline] private def varInternal (p : P n cmp) : Nat :=
   (CharacteristicSet.Computable.mainVar p).elim 0 (fun i => i.val + 1)
 
 @[noinline] private def degreeOriginal (p : P n cmp) : Nat :=
   p.vars.max?.elim 0 (fun i => p.degreeOf i)
 
 private def variants : Array (String × (P n cmp → Nat)) := #[
-  ("var.original", varOriginal), ("var.scan", varScan),
+  ("var.original", varOriginal), ("var.internal", varInternal),
   ("degree.original", degreeOriginal), ("degree.reuse", degreeReuse),
-  ("degree.two-pass", degreeTwoPass), ("degree.fused", degreeFused)]
+  ("degree.two-pass", degreeTwoPass),
+  ("degree.internal", degreeInternal)]
 
 /-- Coordinate zero gives unique monomials; all coefficients are nonzero.
 The rare cases place the only occurrence of the main variable at opposite
